@@ -79,6 +79,11 @@ export function renderMarkdown(report: Report, config: GuardConfig = defaultConf
     out.push('');
   }
 
+  for (const note of report.notes ?? []) {
+    out.push(`> **Note:** ${note}`);
+    out.push('');
+  }
+
   const infos = report.findings.filter(f => f.severity === 'info');
   if (infos.length > 0) {
     out.push(`<details><summary>${plural(infos.length, 'info finding')}</summary>`);
@@ -127,6 +132,10 @@ export function renderText(report: Report): string {
     out.push(`      ${f.consequence}`);
     if (f.hint) out.push(`      ${dim(f.hint)}`);
     if (f.suggestion) out.push(`      ${cyan('fix:')} ${f.suggestion.replacement.trim()}`);
+  }
+  for (const note of report.notes ?? []) {
+    out.push('');
+    out.push(`${cyan('note ')} ${note.replaceAll('`', '')}`);
   }
   return `${out.join('\n')}\n`;
 }

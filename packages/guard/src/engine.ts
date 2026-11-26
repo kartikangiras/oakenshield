@@ -4,8 +4,8 @@ import { defaultConfig, inScope } from './config.ts';
 import { addedLines, removedLines } from './diff.ts';
 import type { RepoView } from './repo.ts';
 import { RULE_IMPLS, RULES, RULES_BY_ID } from './rules/index.ts';
-import { buildContext, type RawFinding } from './rules/context.ts';
-import { scanLine } from './scanner.ts';
+import { buildContext, type RawFinding, type RuleContext } from './rules/context.ts';
+import { hasHit, scanLine } from './scanner.ts';
 import type { FileDiff, Finding, PullRequestInfo, Report, RuleId, ScannedLine, Severity, Snapshot, Verdict } from './types.ts';
 import { VERSION } from './version.ts';
 
@@ -67,8 +67,8 @@ export function runCheck(input: CheckInput): Report {
     linesAdded += a.length;
     linesRemoved += r.length;
     if (!files.includes(f)) continue;
-    if (f.newPath) for (const l of a) added.push(scanLine(f.newPath, l.line, l.text, 'added'));
-    if (f.oldPath) for (const l of r) removed.push(scanLine(f.oldPath, l.line, l.text, 'removed'));
+    if (f.newPath) for (const l of a) added.push(scanLine(f.newPath, l.line, l.text, 'added', config.calls));
+    if (f.oldPath) for (const l of r) removed.push(scanLine(f.oldPath, l.line, l.text, 'removed', config.calls));
   }
 
   const ctx = buildContext({ config, running, files, added, removed, repo: input.repo });
@@ -131,6 +131,8 @@ export function runCheck(input: CheckInput): Report {
     affected.set(String(f.experimentId), { id: f.experimentId, name: f.experimentName ?? '', flagKey: f.flagKey ?? '' });
   }
 
+  const notes = coverageNotes(ctx);
+
   return {
     version: 1,
     tool: 'experiment-guard',
@@ -148,7 +150,41 @@ export function runCheck(input: CheckInput): Report {
     counts,
     verdict,
     affectedExperiments: [...affected.values()],
+    ...(notes.length > 0 ? { notes } : {}),
   };
+}
+
+/**
+ * Says where Guard is blind: a running experiment's flag or event is named in the code, but never
+ * inside a call Guard recognises, which is what a project's own wrapper around the SDK looks like.
+ * A key that appears nowhere belongs to another codebase and gets no note.
+ */
+export function coverageNotes(ctx: RuleContext): string[] {
+  if (ctx.repo.kind === 'diff-only') return []; // only the pasted lines are visible, so nothing can be concluded
+  const unread: Record<'exposure' | 'conversion', Array<{ key: string; at: string }>> = { exposure: [], conversion: [] };
+  const look = (kind: 'exposure' | 'conversion', key: string) => {
+    if (unread[kind].some(u => u.key === key)) return;
+    const named = ctx.headLines(key).filter(l => l.lang !== 'other' && l.literals.has(key));
+    if (named.length === 0 || named.some(l => hasHit(l, kind, key))) return;
+    // The base code had a call Guard could read, so this pull request removed it: a finding, not a blind spot.
+    if (ctx.baseLines(key).some(l => hasHit(l, kind, key))) return;
+    unread[kind].push({ key, at: `${named[0].file}:${named[0].line}` });
+  };
+  for (const exp of ctx.running) {
+    look('exposure', exp.flagKey);
+    for (const event of exp.metricEvents) look('conversion', event);
+  }
+  const list = (items: Array<{ key: string; at: string }>) => items.map(u => `\`${u.key}\` (${u.at})`).join(', ');
+  const notes: string[] = [];
+  if (unread.exposure.length > 0) {
+    notes.push(`Guard cannot see where ${list(unread.exposure)} ${unread.exposure.length === 1 ? 'is' : 'are'} evaluated: the code names ${unread.exposure.length === 1 ? 'the flag' : 'these flags'}, but not inside a call Guard recognises. ` +
+      'If your code wraps the SDK, list the wrapper under `calls.exposure` in `.experiment-guard.yml`. Until then, removing or moving that call (EG002, EG008) goes unnoticed.');
+  }
+  if (unread.conversion.length > 0) {
+    notes.push(`Guard cannot see the call that sends ${list(unread.conversion)}: the code names ${unread.conversion.length === 1 ? 'the event' : 'these events'}, but not inside a call Guard recognises. ` +
+      'If your code wraps the SDK, list the wrapper under `calls.conversion` in `.experiment-guard.yml`. Removing or renaming the event is still caught (EG001); a new call with a name that almost matches (EG009) is not.');
+  }
+  return notes;
 }
 
 /** Exit code policy shared by the CLI and the Action. */
