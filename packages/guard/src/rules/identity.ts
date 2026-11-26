@@ -8,8 +8,11 @@ export const eg007: Rule = ctx => {
   const out: RawFinding[] = [];
   const extra = ctx.config.identityPatterns;
   // Changing existing identity code is risky; brand-new calls that pass an identifier are not.
+  // The same goes for your own patterns: one that the base code never used cannot have identified anyone yet.
+  // A pasted diff has no base tree to check, so every match counts there.
+  const established = (p: string) => ctx.repo.kind === 'diff-only' || ctx.baseLines(p).length > 0;
   const touches = (l: ScannedLine) =>
-    extra.some(p => l.text.includes(p)) || (l.side === 'removed' && hasHit(l, 'identity'));
+    extra.some(p => l.text.includes(p) && (l.side === 'removed' || established(p))) || (l.side === 'removed' && hasHit(l, 'identity'));
   const seen = new Set<string>();
   for (const l of [...ctx.removed, ...ctx.added]) {
     if (!touches(l) || seen.has(l.file)) continue;
