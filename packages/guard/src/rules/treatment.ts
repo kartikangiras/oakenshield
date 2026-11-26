@@ -1,6 +1,6 @@
 import { hasHit, hitValues, renameKind, replaceLiteral, scanText, langOf } from '../scanner.ts';
 import type { LiveExperiment } from '../types.ts';
-import { closest, hasLiteral, trimEvidence, type RawFinding, type Rule } from './context.ts';
+import { closest, firstWiredHere, hasLiteral, trimEvidence, type RawFinding, type Rule } from './context.ts';
 
 function keyIndex(running: LiveExperiment[]): Map<string, LiveExperiment> {
   const m = new Map<string, LiveExperiment>();
@@ -66,23 +66,134 @@ export const eg005: Rule = ctx => {
 
 const REGION = 40;
 
+const net = (text: string) => {
+  let depth = 0;
+  for (const ch of text) {
+    if (ch === '{' || ch === '(' || ch === '[') depth++;
+    else if (ch === '}' || ch === ')' || ch === ']') depth--;
+  }
+  return depth;
+};
+const indentOf = (text: string) => text.length - text.trimStart().length;
+const isComment = (text: string) => /^\s*(?:\/\/|\/?\*|#)/.test(text);
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// `?` as a ternary: not `?.`, `??` or the `?:` of an optional parameter.
+const JS_TERNARY = /(?<!\?)\?(?![.?:])/;
+const JS_GUARD = /\bif\s*\(.*\)\s*(?:return|throw|continue|break)\b/;
+const JS_CASE = /\bcase\s+['"`][^'"`\n]+['"`]\s*:/;
+
+/** Does the line choose between code paths, rather than compute or store a value? */
+export function branchesOn(text: string, lang: string): boolean {
+  if (lang === 'py') return /^\s*(?:if|elif|while)\b/.test(text) || /\sif\s.+\selse\s/.test(text) || /\s(?:and|or)\s/.test(text);
+  return /\b(?:if|while)\s*\(/.test(text) || JS_CASE.test(text) || /&&|\|\|/.test(text) || JS_TERNARY.test(text);
+}
+
 /**
- * Where the branch that starts on line `start` (0-based) ends: the line where its
- * braces close, a few lines for ternaries and one-liners, at most REGION lines.
+ * Where the branch that starts on line `start` (0-based) ends: where its brackets close,
+ * where the next `case` begins, the rest of the block after a guard clause, or the
+ * indented block in Python. At most REGION lines.
  */
 export function regionEnd(lines: string[], start: number, lang: string): number {
-  const cap = Math.min(lines.length - 1, start + (lang === 'py' ? 15 : REGION));
-  if (lang !== 'js') return cap;
-  let depth = 0;
-  let opened = false;
-  for (let i = start; i <= cap; i++) {
-    for (const ch of lines[i]) {
-      if (ch === '{') { depth++; opened = true; } else if (ch === '}') depth--;
+  const cap = Math.min(lines.length - 1, start + REGION);
+  const first = lines[start];
+
+  if (lang === 'py') {
+    if (!/:\s*(?:#.*)?$/.test(first)) return start; // an inline conditional, or a body on the same line
+    const indent = indentOf(first);
+    let end = start;
+    for (let i = start + 1; i <= cap; i++) {
+      if (lines[i].trim() === '') continue;
+      const deeper = indentOf(lines[i]) > indent;
+      if (!deeper && !(indentOf(lines[i]) === indent && /^\s*(?:elif\b|else\s*:)/.test(lines[i]))) break;
+      end = i;
     }
-    if (opened && depth <= 0) return i;
-    if (i === start && !opened) return Math.min(cap, start + 6);
+    return end;
   }
-  return cap;
+  if (lang !== 'js') return cap;
+
+  if (JS_CASE.test(first) && !/\bif\s*\(/.test(first)) {
+    let depth = 0;
+    for (let i = start + 1; i <= cap; i++) {
+      if (depth === 0 && /^\s*(?:case\b|default\s*:)/.test(lines[i])) return i - 1;
+      depth += net(lines[i]);
+      if (depth < 0) return i - 1;
+      if (depth === 0 && /^\s*break\s*;?\s*$/.test(lines[i])) return i;
+    }
+    return cap;
+  }
+
+  // `} else if (…) {` closes the previous block before it opens its own.
+  let depth = net(first.replace(/^\s*[}\])]+/, ''));
+  if (depth > 0) {
+    for (let i = start + 1; i <= cap; i++) {
+      depth += net(lines[i]);
+      if (depth <= 0) return i;
+    }
+    return cap;
+  }
+  if (JS_GUARD.test(first)) {
+    // A guard clause: the rest of the enclosing block runs for one arm only.
+    depth = 0;
+    for (let i = start + 1; i <= cap; i++) {
+      depth += net(lines[i]);
+      if (depth < 0) return i - 1;
+    }
+    return cap;
+  }
+  if (/[;,})\]]\s*(?:\/\/.*)?$/.test(first)) return start; // complete on its own line
+  // The statement runs on: a braceless if, or a ternary wrapped over the next lines.
+  const soft = Math.min(cap, start + 6);
+  depth = 0;
+  for (let i = start + 1; i <= soft; i++) {
+    depth += net(lines[i]);
+    if (depth < 0) return i - 1;
+    if (depth === 0 && /;\s*(?:\/\/.*)?$/.test(lines[i])) return i;
+  }
+  return soft;
+}
+
+/**
+ * The name a variant comparison is stored under, when the line only stores it:
+ * `const showUsd = flag.variant === 'show_usd';`. The branch is then wherever that name is tested.
+ */
+export function aliasOf(lines: string[], idx: number, lang: string): string | null {
+  const text = lines[idx];
+  const next = lines.slice(idx + 1).find(l => l.trim() !== '') ?? '';
+  if (lang === 'py') {
+    if (/\sif\s.+\selse\s/.test(text)) return null;
+    return text.match(/^\s*([A-Za-z_]\w*)\s*(?::\s*[\w[\], .]+)?=(?!=)/)?.[1] ?? null;
+  }
+  if (lang !== 'js') return null;
+  if (JS_TERNARY.test(text) || /^\s*\?(?![.?:])/.test(next) || /=>/.test(text)) return null;
+  const decl = /^\s*(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::[^=]+)?=(?!=)/;
+  const own = text.match(decl)?.[1];
+  if (own) return own;
+  // Formatters wrap a long assignment: the name sits on the line above.
+  const prev = idx > 0 ? lines[idx - 1] : '';
+  return /=\s*$/.test(prev) ? prev.match(decl)?.[1] ?? null : null;
+}
+
+/** Lines (0-based) after `idx`, in the same scope, that branch on `name`. */
+export function aliasUses(lines: string[], idx: number, name: string, lang: string): number[] {
+  const n = `(?<![\\w$.])${escapeRe(name)}(?![\\w$])`;
+  const tested = lang === 'py'
+    ? new RegExp(`^\\s*(?:if|elif|while)\\b.*${n}|\\sif\\s+(?:not\\s+)?${n}.*\\selse\\s|${n}\\s+(?:and|or)\\s|\\s(?:and|or)\\s+(?:not\\s+)?${n}`)
+    : new RegExp(`\\b(?:if|while)\\s*\\(.*${n}|${n}\\s*(?:&&|\\|\\||\\?(?![.?:]))|(?:&&|\\|\\|)\\s*!?\\s*${n}`);
+  const out: number[] = [];
+  const indent = indentOf(lines[idx]);
+  let depth = 0;
+  for (let i = idx + 1; i < lines.length; i++) {
+    const text = lines[i];
+    if (lang === 'py') {
+      if (text.trim() !== '' && indentOf(text) < indent) break;
+    } else {
+      depth += net(text);
+      if (depth < 0) break; // the block that declared the name has closed
+    }
+    if (!isComment(text) && tested.test(text)) out.push(i);
+  }
+  return out;
 }
 
 interface Branch {
@@ -104,21 +215,31 @@ export const eg006: Rule = ctx => {
   const keys = keyIndex(ctx.running);
   if (keys.size === 0) return out;
 
-  // Find branch regions on the head revision: lines comparing against a running key.
+  // Find branch regions on the head revision: code that only runs for one variation of a running experiment.
   const branches: Branch[] = [];
+  const firstWired = new Map<LiveExperiment, boolean>();
   for (const [key, exp] of keys) {
+    // A pull request that wires the experiment up for the first time has no earlier arm to change.
+    if (!firstWired.has(exp)) firstWired.set(exp, firstWiredHere(ctx, exp));
+    if (firstWired.get(exp)) continue;
     for (const hit of ctx.headLines(key)) {
       if (!hasHit(hit, 'variant', key)) continue;
+      const lang = langOf(hit.file);
       const content = ctx.headFile(hit.file);
       const lines = content ? content.split('\n') : [hit.text];
-      const startIdx = content ? hit.line - 1 : 0;
-      const endIdx = regionEnd(lines, startIdx, langOf(hit.file));
-      const regionText = lines.slice(startIdx, endIdx + 1).join('\n');
-      const components = new Set<string>();
-      if (langOf(hit.file) === 'js') {
-        for (const m of regionText.matchAll(/<([A-Z][A-Za-z0-9]*)\b/g)) components.add(m[1]);
+      const hitIdx = content ? hit.line - 1 : 0;
+      const alias = aliasOf(lines, hitIdx, lang);
+      const starts = alias ? aliasUses(lines, hitIdx, alias, lang) : branchesOn(lines[hitIdx], lang) ? [hitIdx] : [];
+      for (const startIdx of starts) {
+        const endIdx = regionEnd(lines, startIdx, lang);
+        const regionText = lines.slice(startIdx, endIdx + 1).join('\n');
+        const components = new Set<string>();
+        if (lang === 'js') {
+          for (const m of regionText.matchAll(/<([A-Z][A-Za-z0-9]*)\b/g)) components.add(m[1]);
+        }
+        const first = hit.line + (startIdx - hitIdx);
+        branches.push({ file: hit.file, start: first, end: first + (endIdx - startIdx), key, exp, components });
       }
-      branches.push({ file: hit.file, start: hit.line, end: hit.line + (endIdx - startIdx), key, exp, components });
     }
   }
   if (branches.length === 0) return out;
@@ -127,9 +248,9 @@ export const eg006: Rule = ctx => {
   const changedFiles = new Set([...ctx.added, ...ctx.removed].map(l => l.file));
   for (const file of changedFiles) {
     const addedHere = ctx.added.filter(l => l.file === file && l.text.trim() !== '');
-    // 1) Lines changed inside a branch region in the same file.
+    // 1) Lines changed inside a branch region in the same file. Edits to the comparison itself belong to EG005.
     for (const b of branches.filter(br => br.file === file)) {
-      const inside = addedHere.find(l => l.line > b.start && l.line <= b.end && !hasHit(l, 'variant'));
+      const inside = addedHere.find(l => l.line >= b.start && l.line <= b.end && !hasHit(l, 'variant'));
       const tag = `${b.exp.id}:${file}`;
       if (!inside || reported.has(tag)) continue;
       reported.add(tag);
