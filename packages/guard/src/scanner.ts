@@ -36,13 +36,45 @@ const PY: Pattern[] = [
   { kind: 'dynamic', re: /\b(track_event|get_experiment_flag|track_exposure_event)\s*\(\s*(?:f["']|[A-Za-z_][\w.]*\s*[,)])/g, group: 1 },
 ];
 
+/** A project's own functions that wrap the SDK (`calls` in .experiment-guard.yml). */
+export interface CustomCalls {
+  exposure: string[];
+  conversion: string[];
+}
+
+const customCache = new WeakMap<CustomCalls, Record<'js' | 'py', Pattern[]>>();
+
+function customPatterns(calls: CustomCalls, lang: 'js' | 'py'): Pattern[] {
+  let cached = customCache.get(calls);
+  if (!cached) {
+    const names = (list: string[]) => list.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    const build = (quote: string, dynamic: string): Pattern[] => {
+      const out: Pattern[] = [];
+      for (const kind of ['exposure', 'conversion'] as const) {
+        if (calls[kind].length === 0) continue;
+        out.push({ kind, re: new RegExp(`(?<![\\w$])(?:${names(calls[kind])})\\s*\\(\\s*([${quote}])([^${quote}\\n$]+)\\1`, 'g'), group: 2 });
+      }
+      const all = [...calls.exposure, ...calls.conversion];
+      if (all.length > 0) out.push({ kind: 'dynamic', re: new RegExp(`(?<![\\w$])(${names(all)})\\s*\\(\\s*(?:${dynamic})`, 'g'), group: 1 });
+      return out;
+    };
+    cached = {
+      js: build('\'"`', '`[^`]*\\$\\{|[A-Za-z_$][\\w$.]*\\s*[,)]'),
+      py: build('\'"', 'f["\']|[A-Za-z_][\\w.]*\\s*[,)]'),
+    };
+    customCache.set(calls, cached);
+  }
+  return cached[lang];
+}
+
 const LITERAL_RE = /(['"`])((?:(?!\1)[^\\\n]|\\.)*)\1/g;
 
 export const FLUSH_RE = /\b(?:flushEvents|flush_events|flush)\s*\(|\.close\s*\(|max_buffer_items\s*=\s*1\b/;
 
-export function scanText(text: string, lang: Lang): { hits: Hit[]; literals: Set<string> } {
+export function scanText(text: string, lang: Lang, calls?: CustomCalls): { hits: Hit[]; literals: Set<string> } {
   const hits: Hit[] = [];
-  const patterns = lang === 'js' ? JS : lang === 'py' ? PY : [];
+  const builtIn = lang === 'js' ? JS : lang === 'py' ? PY : [];
+  const patterns = calls && lang !== 'other' ? [...builtIn, ...customPatterns(calls, lang)] : builtIn;
   for (const p of patterns) {
     p.re.lastIndex = 0;
     for (const m of text.matchAll(p.re)) {
@@ -60,9 +92,9 @@ export function scanText(text: string, lang: Lang): { hits: Hit[]; literals: Set
   return { hits, literals };
 }
 
-export function scanLine(file: string, line: number, text: string, side: ScannedLine['side']): ScannedLine {
+export function scanLine(file: string, line: number, text: string, side: ScannedLine['side'], calls?: CustomCalls): ScannedLine {
   const lang = langOf(file);
-  const { hits, literals } = scanText(text, lang);
+  const { hits, literals } = scanText(text, lang, calls);
   return { file, line, text, side, lang, hits, literals };
 }
 

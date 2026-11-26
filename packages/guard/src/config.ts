@@ -35,6 +35,11 @@ export interface GuardConfig {
     redactSecrets: boolean;
   };
   identityPatterns: string[];
+  /** Your own functions that wrap the SDK, read the same way as getExperimentFlag and trackEvent. */
+  calls: {
+    exposure: string[];
+    conversion: string[];
+  };
   report: {
     url?: string;
   };
@@ -65,6 +70,7 @@ export function defaultConfig(): GuardConfig {
     override: { label: 'experiment-guard:override', minPermission: 'maintain' },
     ai: { enabled: false, modelEnv: 'GUARD_AI_MODEL', keyEnv: 'GUARD_AI_KEY', maxFindings: 5, redactSecrets: true },
     identityPatterns: [],
+    calls: { exposure: [], conversion: [] },
     report: {},
   };
 }
@@ -107,7 +113,7 @@ export function normalizeConfig(raw: YamlValue): { config: GuardConfig; warnings
   const warnings: string[] = [];
   const config = defaultConfig();
   const root = obj(raw, 'config');
-  const known = new Set(['version', 'flagsmith', 'scan', 'rules', 'override', 'ai', 'identity_patterns', 'report']);
+  const known = new Set(['version', 'flagsmith', 'scan', 'rules', 'override', 'ai', 'identity_patterns', 'calls', 'report']);
   for (const k of Object.keys(root)) if (!known.has(k)) warnings.push(`Unknown top-level key "${k}" ignored`);
 
   if (root.version !== undefined && root.version !== 1) throw new ConfigError('version must be 1');
@@ -151,6 +157,15 @@ export function normalizeConfig(raw: YamlValue): { config: GuardConfig; warnings
   config.ai.redactSecrets = bool(ai.redact_secrets, 'ai.redact_secrets', true);
 
   config.identityPatterns = list(root.identity_patterns, 'identity_patterns') ?? [];
+
+  const calls = obj(root.calls, 'calls');
+  for (const kind of ['exposure', 'conversion'] as const) {
+    const names = list(calls[kind], `calls.${kind}`) ?? [];
+    for (const n of names) {
+      if (!/^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/.test(n)) throw new ConfigError(`calls.${kind} must list function names such as track or analytics.track, got "${n}"`);
+    }
+    config.calls[kind] = names;
+  }
 
   const rep = obj(root.report, 'report');
   config.report.url = str(rep.url, 'report.url');
