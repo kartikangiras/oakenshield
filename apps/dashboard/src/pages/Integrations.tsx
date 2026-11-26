@@ -60,7 +60,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: your-github-user/oakenshield@main
+      - uses: kartikangiras/oakenshield@main
         with:
           flagsmith-environment: \${{ vars.FLAGSMITH_ENVIRONMENT }}
           report-url: \${{ vars.OAKENSHIELD_URL }}        # optional: send results here
@@ -77,6 +77,9 @@ scan:
   include: ["app/**", "src/**", "package.json"]
 identity_patterns:
   - fp_vid                    # storage keys or cookies behind your identity
+calls:                        # your own functions that wrap the SDK
+  exposure: [useVariant]
+  conversion: [track]
 rules:
   EG006: warn                 # block | warn | info | off
 override:

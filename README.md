@@ -25,7 +25,7 @@ Experiment Guard runs where code changes, not in a separate tool you have to rem
 | **Terminal and other CI** | CLI (`experiment-guard check`) | Check a branch or uncommitted work before pushing; exit code 1 on a block. |
 | **Dashboard** | `apps/server` + `apps/dashboard` | Results from every repository, experiment code maps, rule settings, and a playground. The dashboard's *Set up* page has copy-paste snippets for all of the above. |
 
-Nothing is published to npm or the GitHub Marketplace yet. To use it today, push this repository to GitHub and reference it as `<your-github-user>/oakenshield@main` from a workflow, and run the CLI and MCP server from a clone (`cd packages/guard && npm link` puts `experiment-guard` on your PATH).
+Nothing is published to npm or the GitHub Marketplace yet. To use it today, reference the Action as `kartikangiras/oakenshield@main` from a workflow, and run the CLI and MCP server from a clone (`cd packages/guard && npm link` puts `experiment-guard` on your PATH).
 
 ## What is in this repository
 
@@ -78,8 +78,8 @@ flowchart LR
 
 1. **Read Flagsmith.** For each running experiment: the flag, its variation keys, the metric events, the environment, and the segments that decide its audience (with the traits their rules match on). Through the Admin API with an API key, or the Flagsmith CLI authenticated by GitHub OIDC.
 2. **Diff.** `git diff base...head`, plus the head version of every touched file. Works on uncommitted changes (`--head WORKTREE`) and on pasted diffs.
-3. **Scan.** Find exposure calls (`useExperiment`, `getExperiment`, …), branches on variation keys, `trackEvent` calls, SDK versions, `enableEvents`, identity code.
-4. **Rules.** Thirteen rules. Only deterministic ones block by default, so a red check always means the code provably disagrees with Flagsmith. See [docs/rules.md](docs/rules.md).
+3. **Scan.** Find exposure calls (`useExperiment`, `getExperimentFlag`, …), branches on variation keys, `trackEvent` calls, SDK versions, `enableEvents`, identity code. Your own functions that wrap the SDK are read the same way once you list them under `calls`.
+4. **Rules.** Thirteen rules. Only deterministic ones block by default, so a red check always means the code provably disagrees with Flagsmith.
 5. **Report.** One PR comment, updated in place. Inline suggested changes where the fix is mechanical. A maintainer can add `experiment-guard:override`; the override and who added it are recorded.
 
 | Rule | Catches | Default |
@@ -97,6 +97,17 @@ flowchart LR
 | EG011 | Dynamic event or flag keys the guard cannot check | info |
 | EG012 | A trait the experiment's audience segment matches on is no longer sent | block |
 | EG013 | The value sent for an audience trait changes | warn |
+
+## How it uses Flagsmith
+
+Flagsmith is the source of truth for every check. Nothing about an experiment is written in this repository's config: the guard asks Flagsmith what is running and compares the code against the answer.
+
+| Flagsmith feature | Where | What it is used for |
+|---|---|---|
+| Experimentation, through the Admin API | `packages/guard/src/flagsmith.ts` | `environments/{key}/experiments/` lists the running experiments with their metrics and each metric's expected direction, so a guardrail is reported as a guardrail. `projects/{id}/features/{id}/` gives the variation keys. `projects/{id}/segments/{id}/` gives the traits the audience matches on. |
+| Flagsmith CLI with GitHub OIDC | `action.yml` | The same requests go through `flagsmith api`, so a workflow needs no stored API key. |
+| Webhooks | `apps/server` | A change to a running experiment's flag or audience segment raises an alert. An experiment that starts, ends or changes re-checks the open pull requests against the new state. |
+| JavaScript SDK and experiment events | `apps/dashboard`, `examples/demo-app` | The dashboard runs its own A/B test (`demo_start`), and the demo app runs the experiment the seeded pull requests break. |
 
 ## GitHub Action
 
@@ -119,10 +130,15 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: your-github-user/oakenshield@main   # this repository, once pushed
+      - uses: kartikangiras/oakenshield@main
         with:
           flagsmith-environment: ${{ vars.FLAGSMITH_ENVIRONMENT }}
+          # Without OIDC, store an organisation API key as a secret and pass it instead:
+          # auth: api-key
+          # flagsmith-api-key: ${{ secrets.FLAGSMITH_API_KEY }}
 ```
+
+**Make the check required.** A failed check only stops a merge when the branch requires it. Under **Settings → Rules → Rulesets**, add a ruleset for your default branch, turn on **Require status checks to pass**, and add the check `guard` (the job name above). Until you do, a blocking comment says that GitHub will still allow the merge.
 
 Inputs: `flagsmith-environment`, `flagsmith-project`, `flagsmith-api-url` (self-hosted), `auth` (`oidc` or `api-key`), `flagsmith-api-key`, `config`, `working-directory`, `fail-on` (`block`, `warn`, `never`), `report-url` and `report-token` (send results to a dashboard), `demo`.
 
@@ -143,12 +159,17 @@ scan:
   exclude: ["**/*.test.*"]
 identity_patterns:
   - fp_vid                    # storage keys or cookies behind your identity
+calls:                        # your own functions that wrap the SDK
+  exposure: [useVariant]      # read like getExperimentFlag and useExperiment
+  conversion: [track]         # read like trackEvent
 rules:
   EG006: warn                 # block | warn | info | off
 override:
   label: experiment-guard:override
   min_permission: maintain
 ```
+
+Guard recognises the SDK's own calls. If your code reaches the SDK through a wrapper with another name, list it under `calls`. When a running experiment's flag or event appears in your code but not inside a call Guard can read, the report carries a note that says so and points here.
 
 Silence a single line, with a reason that ends up in the report:
 
@@ -180,7 +201,7 @@ Oakenshield runs a real experiment on itself with Flagsmith Experimentation: doe
 |---|---|
 | ![The overview, which the control version opens on](docs/images/overview.png) | ![The guided screen, which the try_it version opens on](docs/images/guided.png) |
 
-Experiment Guard guards that experiment in this repository's own pull requests: rename an event, the flag or the variation, turn events off or pin an old SDK, and the PR is blocked. The hypothesis, decision rule, Flagsmith setup and how to read the result are in [docs/experiment.md](docs/experiment.md).
+Experiment Guard guards that experiment in this repository's own pull requests: rename an event, the flag or the variation, turn events off or pin an old SDK, and the PR is blocked.
 
 ## MCP for coding agents
 
@@ -237,6 +258,7 @@ apps/dashboard/src React dashboard, hand-written CSS and SVG charts
 ## Roadmap
 
 - New findings after an override need a fresh override (today the label covers later pushes too).
+- A rule for a conversion call that moves: EG008 covers the exposure call, but moving `trackEvent` also changes what counts.
 - Go, Java and Flutter call-site scanners (the SDK version rule already covers them; the scanner reads JS/TS and Python).
 - Pull the metric definitions straight from Flagsmith experiment results as the API grows.
 - GitLab merge request comments.
