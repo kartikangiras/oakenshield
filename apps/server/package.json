@@ -1,0 +1,19 @@
+{
+  "name": "@oakenshield/server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Oakenshield API: check history, live experiments, playground and an SSE stream for the dashboard.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "dependencies": {
+    "@oakenshield/guard": "0.1.0"
+  },
+  "scripts": {
+    "dev": "node --watch-path=src --watch-path=../../packages/guard/src src/main.ts",
+    "start": "node src/main.ts",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}
