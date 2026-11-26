@@ -1,0 +1,8 @@
+# Not part of the deployed demo (in addition to .gitignore)
+transcript.md
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+apps/server/.data/
