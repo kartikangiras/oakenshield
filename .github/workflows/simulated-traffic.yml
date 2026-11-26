@@ -1,0 +1,68 @@
+# Scripted visitors for the dashboard's own A/B test. These are not people.
+#
+# Each run builds the dashboard, serves it inside the runner and sends BATCH scripted visitors
+# through it in headless Chrome (scripts/traffic/visitors.mjs). Their events go to a Flagsmith
+# environment kept for simulation, never to the one real visitors use. The plan, the visitor model
+# and the stopping rule are in the README under "Our own A/B test".
+#
+# It is off until the repository variable SIMULATION_FLAGSMITH_ENVIRONMENT holds that environment's
+# client-side key, and it stops for good after BATCHES completed runs or at STOP_AT.
+name: Simulated traffic
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: simulated-traffic
+  cancel-in-progress: false
+
+env:
+  BATCH: 25
+  BATCHES: 32 # 800 visitors in all
+  STOP_AT: '2026-11-28T12:30:00Z'
+
+jobs:
+  visitors:
+    if: vars.SIMULATION_FLAGSMITH_ENVIRONMENT != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Decide whether another batch is due
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sent=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/simulated-traffic.yml/runs?status=success&per_page=1" --jq .total_count)
+          if [ "$sent" -ge "$BATCHES" ]; then
+            echo "All $BATCHES batches have been sent. Nothing to do." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$(date -u +%s)" -ge "$(date -u -d "$STOP_AT" +%s)" ]; then
+            echo "Past the stop time ($STOP_AT) with $sent of $BATCHES batches sent. Nothing to do." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Batch $((sent + 1)) of $BATCHES." >> "$GITHUB_STEP_SUMMARY"
+            echo "send=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v5
+        if: steps.plan.outputs.send == 'true'
+      - uses: actions/setup-node@v5
+        if: steps.plan.outputs.send == 'true'
+        with:
+          node-version: 24
+          cache: npm
+      - name: Build the dashboard
+        if: steps.plan.outputs.send == 'true'
+        run: npm install && npm run build
+      - name: Check the script against a local stand-in for Flagsmith
+        if: steps.plan.outputs.send == 'true'
+        run: |
+          PORT=9100 node scripts/e2e/flagsmith-standin.mjs &
+          sleep 2
+          node scripts/traffic/visitors.mjs --self-test --visitors 6 --environment oak_demo \
+            --api-url http://127.0.0.1:9100/api/v1/ --events-url http://127.0.0.1:9100/api/
+      - name: Send the scripted visitors
+        if: steps.plan.outputs.send == 'true'
+        run: node scripts/traffic/visitors.mjs --environment "${{ vars.SIMULATION_FLAGSMITH_ENVIRONMENT }}" --visitors "$BATCH"
