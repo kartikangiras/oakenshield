@@ -195,21 +195,126 @@ On demo data, *Set up → Flagsmith webhooks* has buttons that simulate each cas
 
 ## Our own A/B test
 
-Oakenshield runs a real experiment on itself with Flagsmith Experimentation: does the demo get more first-time visitors to run a check when it opens on a broken pull request (`try_it`) instead of the overview? The flag is `demo_start`; the metrics are `check_run` and, as a guardrail, `setup_snippet_copied`. It is off unless the server is started with `DASHBOARD_FLAGSMITH_ENVIRONMENT`.
+Oakenshield runs one experiment on itself with Flagsmith Experimentation, and Experiment Guard guards the code that experiment depends on.
+
+**The question.** When someone opens the demo for the first time, do more of them run a check if it opens on a broken pull request they can check with one button (`try_it`), instead of on the overview (control)?
+
+**The hypothesis.** `try_it` gets more first-time visitors to run a check. The risk is that it skips the overview, which is the screen that says why you would want this, so fewer visitors may go on to set it up. The guardrail metric watches for that.
 
 | Control: the overview | `try_it`: one broken pull request, one button |
 |---|---|
 | ![The overview, which the control version opens on](docs/images/overview.png) | ![The guided screen, which the try_it version opens on](docs/images/guided.png) |
 
-Experiment Guard guards that experiment in this repository's own pull requests: rename an event, the flag or the variation, turn events off or pin an old SDK, and the PR is blocked.
+| | |
+|---|---|
+| Flag | `demo_start`, multivariate: the value `overview` for control and one variation with the key `try_it` |
+| Who is enrolled | Visitors who open the dashboard at `/app/` with no page in the link. A link to a dashboard page is honoured and is not part of the test |
+| Identity | An anonymous random ID kept in `localStorage`, so a visitor keeps the version they were given |
+| Split | Every enrolled visitor, 50/50 |
+| Exposure | Recorded when the dashboard's home page reads the flag (`useExperiment('demo_start')` in `apps/dashboard/src/App.tsx`) |
+| Goal metric | **Ran a check**: the event `check_run`, expected to increase |
+| Guardrail metric | **Copied a set-up snippet**: the event `setup_snippet_copied`, must not decrease |
+
+**The decision rule, fixed before any data came in.** Roll out `try_it` if its chance to beat control on *Ran a check* is over 95%, the interval is clear of zero, and the guardrail is not losing (its chance to beat control stays above 5%). If the result is inconclusive, say so, show the interval and keep the test running. Act on nothing if the sample ratio check fires.
+
+The test is off unless the server is started with `DASHBOARD_FLAGSMITH_ENVIRONMENT`. Experiment Guard guards it in this repository's own pull requests: rename an event, the flag or the variation, turn events off or pin an old SDK, and the pull request is blocked.
+
+### Real visitors and scripted visitors are kept apart
+
+The demo of a developer tool does not get hundreds of first-time visitors in a few days. So the same experiment also runs on scripted visitors, in Flagsmith environments of their own. Scripted numbers are reported as simulated and are never added to the real ones.
+
+| Flagsmith environment | Who visits | What it is for |
+|---|---|---|
+| Production | People who open the public demo | The real test. No scripted traffic is sent here |
+| Simulation | Scripted visitors only | The scripted run described below |
+| Simulation dry run | Scripted visitors only | An A/A check of the whole pipeline before the scripted run |
+
+### How a scripted visitor behaves
+
+`scripts/traffic/visitors.mjs` opens the built dashboard in headless Chrome, one fresh browser profile per visitor, with identities named `sim-…` so they can be told apart in Flagsmith.
+
+```bash
+npm run build
+node scripts/traffic/visitors.mjs --environment <client-side key> --visitors 25   # add --aa for the dry run
+```
+
+**What is real.** The dashboard asks Flagsmith which version to show, the dashboard records the exposure, and the dashboard sends each event when a button is really clicked. The script never reads the flag and never sends an event itself.
+
+**What is modelled.** When a visitor clicks and when they leave. Every visitor follows the same rule, whichever version they were given:
+
+1. 40% leave from the first screen.
+2. The rest press the main button of the screen they are on until a check has run. That is two clicks from the overview (*Run a check*, then *Run Experiment Guard*) and one click from the guided screen.
+3. Then they open *Set up* and copy the snippet.
+
+Before every click, 30% of the visitors still there leave instead.
+
+**What this can and cannot show.** The model knows nothing about what persuades a person. The only difference between the versions is that one needs a click fewer, so the model itself predicts the result: about 29% of control visitors and 42% of `try_it` visitors run a check, and about 14% and 21% copy a snippet. The scripted run therefore shows that the experiment works end to end (assignment, exposure, events, Flagsmith's statistics and the decision rule) and what one click less is worth if people drop off at the same rate at every step. It does not show how real people respond to the guided screen, and it cannot test the worry behind the guardrail. Only the Production test can.
+
+### Traffic target and stopping rule
+
+- **Dry run (A/A).** 400 scripted visitors, about 200 per version. Every visitor ignores the first screen and opens the Playground from the address bar, so both versions get the same behaviour and any difference is noise. It passes if Flagsmith's counts match the script's own, the split shows no sample ratio mismatch and no metric shows a winner.
+- **Scripted run.** 800 scripted visitors, about 400 per version, sent by `.github/workflows/simulated-traffic.yml` in 32 batches of 25, one every half hour. With 400 per version a difference of about 9 points in *Ran a check* is found four times out of five; the 13 points the model implies, more than nine times out of ten.
+- **Stopping.** The run stops after the 32nd batch or at 12:30 UTC on 28 November 2026, whichever comes first. Results are read once, after it stops, and judged by the decision rule above. Nobody looks early and stops on a good day.
+- **Production.** Real visitors keep being counted on their own. With the handful of visitors a demo gets in a few days, expect that result to be inconclusive, and it will be reported as it stands.
+
+### Results
+
+**Dry run (A/A, simulated).** 400 scripted visitors on 26 November 2026. Flagsmith's counts match the script's own count exactly, for the exposures and for both events.
+
+| | Control | `try_it` | Chance that `try_it` beats control |
+|---|---|---|---|
+| Visitors | 224 | 176 | |
+| Ran a check | 59 (26.3%) | 49 (27.8%) | 63% |
+| Copied a set-up snippet | 27 (12.1%) | 22 (12.5%) | 55% |
+
+No metric shows a winner, which is right when both versions behave the same. The split is the weak spot: 224 to 176 is 56/44, and a chi-square test gives p = 0.016. Flagsmith reported no sample ratio value for this run, and the usual alarm line for a mismatch is p < 0.001, so this does not fire, but it is uneven enough to check. Flagsmith was asked which version 1,000 more identities would get, without any of them visiting: 482 `try_it` to 518 control, which is what an even split looks like. The scripted run is held to the line fixed here, before it starts: its result is not acted on if its split gives p < 0.001.
+
+**Scripted run (simulated).** Not finished. The numbers go here once it stops.
+
+**Production (real visitors).** Running.
 
 ## MCP for coding agents
+
+A coding agent renames an event as readily as a teammate does, and faster. The MCP server lets the agent check its own edit against what is running in Flagsmith before it finishes, instead of leaving that to a reviewer.
 
 ```bash
 claude mcp add experiment-guard -- node /path/to/oakenshield/packages/guard/bin/experiment-guard.js mcp
 ```
 
-Tools: `list_protected_experiments`, `check_experiment_impact` (checks uncommitted changes by default, or any refs or unified diff, and returns findings), `explain_rule`. Pass `--demo` to try it without Flagsmith; set `FLAGSMITH_API_KEY` and `GUARD_FLAGSMITH_ENVIRONMENT` for real data.
+| Tool | What the agent gets |
+|---|---|
+| `list_protected_experiments` | The experiments running in Flagsmith now: the flag, its variation keys, the metric events, the audience traits, and the files and lines that name them. In short, what not to rename |
+| `check_experiment_impact` | The verdict and findings for its uncommitted changes (or any refs, or a unified diff), each with the consequence and the exact line to put back |
+| `explain_rule` | What a rule means and how to fix it |
+
+Pass `--demo` to try it without Flagsmith; set `FLAGSMITH_API_KEY` and `GUARD_FLAGSMITH_ENVIRONMENT` for real data.
+
+**On a real project.** [aldor](https://github.com/kartikangiras/aldor) is an app where AI agents make payments that a person approves. Its experiment "Show the USD price on agent payments" is running in Flagsmith. A tidy-up that renames `payment_approved` to `paymentApproved` and the variation check `show_usd` to `showUsd` is two changed strings, the kind of edit that gets through review. `check_experiment_impact`, reading the live experiment, answers this (shortened):
+
+```json
+{
+  "verdict": "block",
+  "snapshot": { "source": "flagsmith-api", "running": 1 },
+  "findings": [
+    {
+      "rule": "EG001",
+      "file": "client/lib/useWalletPaymentQueue.ts", "line": 101,
+      "consequence": "Nothing in the codebase sends 'payment_approved' any more. Every conversion for \"Show the USD price on agent payments\" stops counting and its results freeze.",
+      "suggestion": { "replacement": "      trackEvent('payment_approved');" }
+    },
+    {
+      "rule": "EG005",
+      "file": "client/components/WalletPaymentModal.tsx", "line": 82,
+      "consequence": "The flag still serves 'show_usd', but this code now checks for 'showUsd'. Users bucketed into 'show_usd' see control code while being counted in 'show_usd'.",
+      "suggestion": { "replacement": "  const showUsd = amountDisplay.variant === 'show_usd';" }
+    }
+  ]
+}
+```
+
+**What it saves.** The check took 0.6 seconds, after about six seconds to read the experiments from Flagsmith once. The same event rename, opened as a pull request on aldor, is blocked by the Action in an 11-second job. Doing it by hand means opening Flagsmith, listing what is running, and searching the diff for every flag, variation key, metric event and audience trait, on every change. Nobody does that, which is how the rename ships. What a miss costs is the experiment's whole run so far: the data cannot be repaired afterwards, so the experiment starts again.
+
+**A person stays in charge.** Experiment Guard only reads from Flagsmith. It never changes a flag, an experiment or your code. A fix is a suggestion: the agent is handed the line to put back, and on a pull request a person accepts the suggested change with a click. A block can be lifted only by a person with the `maintain` role or higher adding the override label, and who did it is written into the report.
 
 ## Dashboard and API
 
