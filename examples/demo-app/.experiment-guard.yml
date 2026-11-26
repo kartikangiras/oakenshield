@@ -1,0 +1,9 @@
+# Experiment Guard config for the FirstPR demo app.
+version: 1
+flagsmith:
+  environment: demo_prod      # the environment key where experiments run
+  auth: oidc
+identity_patterns:
+  - fp_vid                    # the localStorage key behind the visitor id
+rules:
+  EG006: warn

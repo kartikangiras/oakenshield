@@ -1,0 +1,10 @@
+{
+  "name": "firstpr-demo",
+  "private": true,
+  "description": "A trimmed copy of FirstPR, used by Experiment Guard's scenarios and tests.",
+  "dependencies": {
+    "@flagsmith/flagsmith": "^12.4.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  }
+}
