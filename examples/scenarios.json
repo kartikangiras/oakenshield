@@ -1,0 +1,448 @@
+{
+  "app": "demo-app",
+  "scenarios": [
+    {
+      "id": "rename-event",
+      "title": "Rename the conversion event in one arm",
+      "prTitle": "refactor: tidy analytics event names",
+      "description": "A tidy-up renames issue_opened to issueOpened in MatchedIssues, which only the github_first arm renders.",
+      "author": "coding-agent",
+      "expect": {
+        "verdict": "block",
+        "rules": [
+          "EG001"
+        ]
+      },
+      "edits": [
+        {
+          "path": "app/components/MatchedIssues.tsx",
+          "find": "flagsmith.trackEvent('issue_opened');",
+          "replace": "flagsmith.trackEvent('issueOpened');"
+        }
+      ]
+    },
+    {
+      "id": "remove-exposure",
+      "title": "Swap the experiment call for a plain flag read",
+      "prTitle": "chore: read the onboarding flag with useFlags",
+      "description": "useExperiment is replaced with useFlags, so no exposure is recorded any more.",
+      "author": "priya",
+      "expect": {
+        "verdict": "block",
+        "rules": [
+          "EG002"
+        ]
+      },
+      "edits": [
+        {
+          "path": "app/Landing.tsx",
+          "find": "import { useExperiment } from '@flagsmith/flagsmith/react';",
+          "replace": "import { useFlags } from '@flagsmith/flagsmith/react';"
+        },
+        {
+          "path": "app/Landing.tsx",
+          "find": "  const flag = useExperiment('onboarding_flow'); // records the exposure",
+          "replace": "  const flag = useFlags(['onboarding_flow']).onboarding_flow;"
+        }
+      ]
+    },
+    {
+      "id": "disable-events",
+      "title": "Drop enableEvents from the provider",
+      "prTitle": "refactor(providers): simplify Flagsmith options",
+      "description": "A provider refactor drops enableEvents: true, so the SDK stops sending events.",
+      "author": "sam",
+      "expect": {
+        "verdict": "block",
+        "rules": [
+          "EG003"
+        ]
+      },
+      "edits": [
+        {
+          "path": "app/providers.tsx",
+          "find": "        enableEvents: true,\n",
+          "replace": ""
+        }
+      ]
+    },
+    {
+      "id": "downgrade-sdk",
+      "title": "Pin the JS SDK to an old major",
+      "prTitle": "build: pin @flagsmith/flagsmith to v11",
+      "description": "A dependency pin moves @flagsmith/flagsmith below 12.4.0, which cannot send experiment events.",
+      "author": "dependabot-ish",
+      "expect": {
+        "verdict": "block",
+        "rules": [
+          "EG004"
+        ]
+      },
+      "edits": [
+        {
+          "path": "package.json",
+          "find": "\"@flagsmith/flagsmith\": \"^12.4.1\"",
+          "replace": "\"@flagsmith/flagsmith\": \"^11.0.0\""
+        }
+      ]
+    },
+    {
+      "id": "variant-key-rename",
+      "title": "Camel-case the variation key",
+      "prTitle": "style: camelCase variation keys",
+      "description": "The comparison now checks 'githubFirst', but Flagsmith serves 'github_first'.",
+      "author": "coding-agent",
+      "expect": {
+        "verdict": "block",
+        "rules": [
+          "EG005"
+        ]
+      },
+      "edits": [
+        {
+          "path": "app/Landing.tsx",
+          "find": "flag.variant === 'github_first'",
+          "replace": "flag.variant === 'githubFirst'"
+        }
+      ]
+    },
+    {
+      "id": "edit-connect-wall",
+      "title": "Rewrite the connect wall copy",
+      "prTitle": "copy: sharper connect-wall text",
+      "description": "New copy on the screen only the github_first arm sees, mid-experiment.",
+      "author": "maya",
+      "expect": {
+        "verdict": "warn",
+        "rules": [
+          "EG006"
+        ]
+      },
+      "edits": [
+        {
+          "path": "app/components/ConnectWall.tsx",
+          "find": "      <p>Connect GitHub and we will match issues to the languages you already use.</p>",
+          "replace": "      <p>Sign in with GitHub to unlock issues picked for your stack.</p>"
+        }
+      ]
+    },
+    {
+      "id": "change-visitor-key",
+      "title": "Rename the visitor id key",
+      "prTitle": "chore: rename the visitor storage key",
+      "description": "Every returning visitor gets a fresh identity, so their exposure and conversions stop matching.",
+      "author": "sam",
+      "expect": {
+        "verdict": "warn",
+        "rules": [
+          "EG007"
+        ]
+      },
+      "edits": [
+        {
+          "path": "lib/visitor.ts",
+          "find": "const KEY = 'fp_vid';",
+          "replace": "const KEY = 'firstpr_visitor';"
+        }
+      ]
+    },
+    {
+      "id": "move-exposure",
+      "title": "Hoist the experiment call into the root layout",
+      "prTitle": "perf: hoist the onboarding flag into the layout",
+      "description": "The exposure now fires for every page, including people who never see the landing page.",
+      "author": "coding-agent",
+      "expect": {
+        "verdict": "warn",
+        "rules": [
+          "EG008"
+        ]
+      },
+      "edits": [
+        {
+          "path": "app/Landing.tsx",
+          "find": "  const flag = useExperiment('onboarding_flow'); // records the exposure",
+          "replace": "  const flag = useOnboardingFlag();"
+        },
+        {
+          "path": "app/Landing.tsx",
+          "find": "import { useExperiment } from '@flagsmith/flagsmith/react';",
+          "replace": "import { useOnboardingFlag } from './layout';"
+        },
+        {
+          "path": "app/layout.tsx",
+          "find": "import { Providers } from './providers';",
+          "replace": "import { useExperiment } from '@flagsmith/flagsmith/react';\nimport { Providers } from './providers';\n\nexport function useOnboardingFlag() {\n  return useExperiment('onboarding_flow');\n}"
+        }
+      ]
+    },
+    {
+      "id": "near-miss-event",
+      "title": "Add a random-issue button",
+      "prTitle": "feat: surprise-me issue button",
+      "description": "The new button tracks 'Issue_Opened', which is not the metric's 'issue_opened'.",
+      "author": "lee",
+      "expect": {
+        "verdict": "pass",
+        "rules": [
+          "EG009"
+        ]
+      },
+      "edits": [
+        {
+          "path": "app/components/IssueList.tsx",
+          "find": "        <button className=\"ghost\" onClick={onPersonalize}>Personalize with GitHub</button>",
+          "replace": "        <button className=\"ghost\" onClick={onPersonalize}>Personalize with GitHub</button>\n        <button className=\"ghost\" onClick={() => flagsmith.trackEvent('Issue_Opened')}>Surprise me</button>"
+        }
+      ]
+    },
+    {
+      "id": "script-no-flush",
+      "title": "Add a backfill script that never flushes",
+      "prTitle": "ops: backfill github_connected events",
+      "description": "A one-off Python script sends events but exits before the buffer is flushed.",
+      "author": "lee",
+      "expect": {
+        "verdict": "pass",
+        "rules": [
+          "EG010"
+        ]
+      },
+      "edits": [
+        {
+          "path": "scripts/backfill_events.py",
+          "content": "from flagsmith import Flagsmith\n\nflagsmith = Flagsmith(environment_key=\"ser.demo\", enable_events=True)\n\nfor visitor in load_visitors():\n    flagsmith.track_event(\"github_connected\", identifier=visitor)\n"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-event",
+      "title": "Build the event name from a variable",
+      "prTitle": "feat: track label-specific issue opens",
+      "description": "trackEvent(`issue_${action}`) cannot be checked against any metric.",
+      "author": "priya",
+      "expect": {
+        "verdict": "pass",
+        "rules": [
+          "EG011"
+        ]
+      },
+      "edits": [
+        {
+          "path": "app/components/IssueCard.tsx",
+          "find": "    flagsmith.trackEvent('issue_opened');",
+          "replace": "    flagsmith.trackEvent('issue_opened');\n    flagsmith.trackEvent(`issue_${issue.labels[0] ?? 'unlabelled'}`);"
+        }
+      ]
+    },
+    {
+      "id": "drop-audience-trait",
+      "title": "Stop sending the visitor_type trait",
+      "prTitle": "perf: send fewer traits on init",
+      "description": "A clean-up drops visitor_type from the traits sent on init. The segment that picks who enters the onboarding experiment matches on it.",
+      "author": "nina",
+      "expect": {
+        "verdict": "block",
+        "rules": [
+          "EG012"
+        ]
+      },
+      "edits": [
+        {
+          "path": "app/providers.tsx",
+          "find": "        traits: { visitor_type: isReturningVisitor() ? 'returning' : 'new', locale: navigator.language },",
+          "replace": "        traits: { locale: navigator.language },"
+        }
+      ]
+    },
+    {
+      "id": "rename-audience-trait",
+      "title": "Rename the visitor_type trait",
+      "prTitle": "style: camelCase trait keys",
+      "description": "visitor_type becomes visitorType. Segment rules match trait keys exactly, so nobody matches the experiment's audience any more.",
+      "author": "coding-agent",
+      "expect": {
+        "verdict": "block",
+        "rules": [
+          "EG012"
+        ]
+      },
+      "edits": [
+        {
+          "path": "app/providers.tsx",
+          "find": "traits: { visitor_type:",
+          "replace": "traits: { visitorType:"
+        }
+      ]
+    },
+    {
+      "id": "change-audience-trait-value",
+      "title": "Change how visitor_type is worked out",
+      "prTitle": "fix: treat referred visitors as returning",
+      "description": "visitor_type now comes from document.referrer. The segment still exists, but it matches a different group of people mid-run.",
+      "author": "maya",
+      "expect": {
+        "verdict": "warn",
+        "rules": [
+          "EG013"
+        ]
+      },
+      "edits": [
+        {
+          "path": "app/providers.tsx",
+          "find": "visitor_type: isReturningVisitor() ? 'returning' : 'new'",
+          "replace": "visitor_type: document.referrer ? 'returning' : 'new'"
+        }
+      ]
+    },
+    {
+      "id": "add-unrelated-trait",
+      "title": "Send one more trait",
+      "prTitle": "feat: send the colour scheme as a trait",
+      "description": "Adds a theme trait on the same line as visitor_type. visitor_type itself is unchanged, so the audience is too.",
+      "author": "lee",
+      "negative": true,
+      "expect": {
+        "verdict": "pass",
+        "rules": []
+      },
+      "edits": [
+        {
+          "path": "app/providers.tsx",
+          "find": "locale: navigator.language },",
+          "replace": "locale: navigator.language, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light' },"
+        }
+      ]
+    },
+    {
+      "id": "css-only",
+      "title": "Polish the landing page styles",
+      "prTitle": "style: roomier landing page",
+      "description": "A CSS-only change.",
+      "author": "maya",
+      "negative": true,
+      "expect": {
+        "verdict": "pass",
+        "rules": []
+      },
+      "edits": [
+        {
+          "path": "app/styles.css",
+          "find": ".landing { max-width: 720px; margin: 0 auto; padding: 48px 16px; }",
+          "replace": ".landing { max-width: 760px; margin: 0 auto; padding: 56px 20px; }"
+        }
+      ]
+    },
+    {
+      "id": "readme",
+      "title": "Update the README",
+      "prTitle": "docs: describe the onboarding experiment",
+      "description": "Docs only.",
+      "author": "lee",
+      "negative": true,
+      "expect": {
+        "verdict": "pass",
+        "rules": []
+      },
+      "edits": [
+        {
+          "path": "README.md",
+          "find": "A trimmed copy of FirstPR.",
+          "replace": "A trimmed copy of FirstPR, the onboarding experiment app."
+        }
+      ]
+    },
+    {
+      "id": "new-page",
+      "title": "Add an About page",
+      "prTitle": "feat: about page",
+      "description": "A new page with no Flagsmith calls.",
+      "author": "maya",
+      "negative": true,
+      "expect": {
+        "verdict": "pass",
+        "rules": []
+      },
+      "edits": [
+        {
+          "path": "app/about/page.tsx",
+          "content": "export default function About() {\n  return <main className=\"landing\"><h1>About FirstPR</h1></main>;\n}\n"
+        }
+      ]
+    },
+    {
+      "id": "unrelated-dependency",
+      "title": "Bump React",
+      "prTitle": "deps: bump react to 19.2.1",
+      "description": "An unrelated dependency bump.",
+      "author": "dependabot-ish",
+      "negative": true,
+      "expect": {
+        "verdict": "pass",
+        "rules": []
+      },
+      "edits": [
+        {
+          "path": "package.json",
+          "find": "\"react\": \"^19.2.0\"",
+          "replace": "\"react\": \"^19.2.1\""
+        }
+      ]
+    },
+    {
+      "id": "unrelated-event",
+      "title": "Rename a non-metric event",
+      "prTitle": "chore: rename the filter event",
+      "description": "filter_changed is not attached to any running metric.",
+      "author": "priya",
+      "negative": true,
+      "expect": {
+        "verdict": "pass",
+        "rules": []
+      },
+      "edits": [
+        {
+          "path": "app/components/IssueList.tsx",
+          "find": "flagsmith.trackEvent('filter_changed');",
+          "replace": "flagsmith.trackEvent('language_filter_changed');"
+        }
+      ]
+    },
+    {
+      "id": "ended-experiment-cleanup",
+      "title": "Remove the ended digest experiment",
+      "prTitle": "cleanup: remove the ended weekly digest experiment",
+      "description": "Deletes code for an experiment that has already ended.",
+      "author": "sam",
+      "negative": true,
+      "expect": {
+        "verdict": "pass",
+        "rules": []
+      },
+      "edits": [
+        {
+          "path": "app/components/DigestPrompt.tsx",
+          "delete": true
+        }
+      ]
+    },
+    {
+      "id": "move-helper",
+      "title": "Move a helper file",
+      "prTitle": "refactor: move time helpers",
+      "description": "Moves lib/format.ts to lib/time.ts without changing it.",
+      "author": "lee",
+      "negative": true,
+      "expect": {
+        "verdict": "pass",
+        "rules": []
+      },
+      "edits": [
+        {
+          "path": "lib/format.ts",
+          "moveTo": "lib/time.ts"
+        }
+      ]
+    }
+  ]
+}
