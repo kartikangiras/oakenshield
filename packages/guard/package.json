@@ -1,0 +1,25 @@
+{
+  "name": "@oakenshield/guard",
+  "version": "0.1.0",
+  "description": "Experiment Guard: blocks pull requests that would silently corrupt a running Flagsmith experiment.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./catalog": "./src/rules/catalog.ts",
+    "./types": "./src/types.ts"
+  },
+  "bin": {
+    "experiment-guard": "./bin/experiment-guard.js"
+  },
+  "files": ["bin", "src", "dist"],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "keywords": ["flagsmith", "experimentation", "a/b testing", "feature flags", "github-action", "mcp"]
+}
