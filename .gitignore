@@ -1,0 +1,30 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Secrets and local data
+.env
+.env.*
+!.env.example
+apps/server/.data/
+
+# Markdown: only READMEs are published
+*.md
+!README.md
+
+# Design references and unused working files
+graphics/
+docs/brand/oakenshield-mark-source.png
+docs/images/experiment.png
+
+# Deploy tooling
+.vercel/
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.log

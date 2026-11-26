@@ -1,0 +1,30 @@
+{
+  "name": "oakenshield",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Experiment Guard: stops pull requests from silently corrupting running Flagsmith experiments. CLI, GitHub Action, MCP server, API and dashboard.",
+  "type": "module",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.ts",
+    "build": "npm run build -w @oakenshield/dashboard",
+    "start": "node apps/server/src/main.ts",
+    "demo": "npm run build && node apps/server/src/main.ts",
+    "test": "node --test \"packages/guard/test/**/*.test.ts\" \"apps/server/test/**/*.test.ts\"",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "guard": "node packages/guard/bin/experiment-guard.js",
+    "check": "npm run typecheck && npm test",
+    "e2e": "node scripts/e2e/run.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "typescript": "^6.0.3"
+  }
+}
