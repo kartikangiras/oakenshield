@@ -30,6 +30,15 @@ export interface AudienceSegment {
   traits: string[];
 }
 
+export type ExpectedDirection = 'increase' | 'decrease' | 'not_increase' | 'not_decrease';
+
+export interface ExperimentMetric {
+  event: string;
+  name?: string;
+  /** How the experiment expects the metric to move. `not_increase` and `not_decrease` make it a guardrail. */
+  expectedDirection?: ExpectedDirection;
+}
+
 export interface LiveExperiment {
   id: number | string;
   name: string;
@@ -39,6 +48,8 @@ export interface LiveExperiment {
   controlValue?: string;
   variationKeys: string[];   // keyed variations, never including 'control'
   metricEvents: string[];    // definition.event of each attached metric
+  /** The same metrics with their name and expected direction, when Flagsmith gives them. */
+  metrics?: ExperimentMetric[];
   status: ExperimentStatus;
   startedAt?: string;
   endsAt?: string;
@@ -181,4 +192,6 @@ export interface Report {
   verdict: Verdict;
   override?: OverrideInfo;
   affectedExperiments: Array<{ id: number | string; name: string; flagKey: string }>;
+  /** Things the reader should know that are not findings: code Guard could not read, a check that is not required. */
+  notes?: string[];
 }

@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import type { GuardConfig } from './config.ts';
 import { demoSnapshot } from './demo.ts';
-import type { ExperimentStatus, LiveExperiment, Snapshot } from './types.ts';
+import type { ExpectedDirection, ExperimentMetric, ExperimentStatus, LiveExperiment, Snapshot } from './types.ts';
 
 /*
  * Reads live experiments from Flagsmith.
@@ -82,6 +82,8 @@ async function listAll(get: Getter, path: string): Promise<Json[]> {
   return items;
 }
 
+const DIRECTIONS: unknown[] = ['increase', 'decrease', 'not_increase', 'not_decrease'];
+
 export function normalizeStatus(raw: Json): ExperimentStatus {
   const s = String(raw?.status ?? raw?.state ?? '').toLowerCase();
   if (['running', 'started', 'active', 'live', 'in_progress'].includes(s)) return 'running';
@@ -135,20 +137,23 @@ export async function readFromFlagsmith(get: Getter, opts: { project?: string; e
         opts.log(`Could not read feature ${featureId}: ${(err as Error).message}`);
       }
     }
-    const metricEvents: string[] = [];
+    const metrics: ExperimentMetric[] = [];
     for (const m of raw.metrics ?? []) {
       const metric = typeof m.metric === 'object' ? m.metric : m;
+      const name: string | undefined = m.metric_name ?? metric?.name ?? undefined;
+      const expectedDirection = DIRECTIONS.includes(m.expected_direction) ? (m.expected_direction as ExpectedDirection) : undefined;
       const event = metric?.definition?.event;
-      if (event) { metricEvents.push(event); continue; }
+      if (event) { metrics.push({ event, name, expectedDirection }); continue; }
       const id = typeof m.metric === 'number' ? m.metric : metric?.id;
       if (!id) continue;
       try {
         const full = await get(`environments/${opts.environment}/experiment-metrics/${id}/`);
-        if (full?.definition?.event) metricEvents.push(full.definition.event);
+        if (full?.definition?.event) metrics.push({ event: full.definition.event, name: name ?? full.name ?? undefined, expectedDirection });
       } catch (err) {
         opts.log(`Could not read metric ${id}: ${(err as Error).message}`);
       }
     }
+    const metricEvents = metrics.map(m => m.event);
     if (!flagKey) { opts.log(`Skipping experiment ${raw.id}: no flag key`); continue; }
     const exp: LiveExperiment = {
       id: raw.id,
@@ -159,6 +164,7 @@ export async function readFromFlagsmith(get: Getter, opts: { project?: string; e
       controlValue,
       variationKeys,
       metricEvents,
+      metrics,
       status,
       startedAt: raw.started_at ?? raw.start_date ?? undefined,
       endsAt: raw.ended_at ?? raw.end_date ?? undefined,

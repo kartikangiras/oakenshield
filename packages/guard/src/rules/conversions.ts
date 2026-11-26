@@ -1,5 +1,16 @@
 import { hitValues, norm, renameKind, replaceLiteral } from '../scanner.ts';
+import type { ExpectedDirection } from '../types.ts';
 import { closest, hasLiteral, trimEvidence, type RawFinding, type Rule } from './context.ts';
+
+const isGuardrail = (d?: ExpectedDirection) => d === 'not_increase' || d === 'not_decrease';
+
+/** How an arm that stops sending an event looks, given the way its metric is expected to move. */
+function undercounted(d?: ExpectedDirection): string {
+  if (d === 'decrease') return 'that arm will look like it is winning';
+  if (d === 'not_increase') return 'that arm will look safe when it may not be';
+  if (d === 'not_decrease') return 'that arm will look like it is doing harm';
+  return 'that arm will look like it is losing';
+}
 
 /** EG001: a running metric's event name disappears from a call site. */
 export const eg001: Rule = ctx => {
@@ -11,6 +22,7 @@ export const eg001: Rule = ctx => {
       // Restored or moved anywhere in the PR: not a loss.
       if (ctx.added.some(l => hasLiteral(l, event))) continue;
       const stillSent = ctx.headLines(event).some(l => l.literals.has(event));
+      const direction = exp.metrics?.find(m => m.event === event)?.expectedDirection;
       const seen = new Set<string>();
       for (const r of removed) {
         const key = `${r.file}:${r.line}`;
@@ -24,8 +36,10 @@ export const eg001: Rule = ctx => {
           .map(c => ({ ...c, line: c.a.line }));
         const cand = closest(candidates, r.line);
         const consequence = stillSent
-          ? `This call site stops sending '${event}'. Other code still sends it, so only users who reach this path stop counting. If this path belongs to one arm, that arm will look like it is losing.`
-          : `Nothing in the codebase sends '${event}' any more. Every conversion for "${exp.name}" stops counting and its results freeze.`;
+          ? `This call site stops sending '${event}'. Other code still sends it, so only users who reach this path stop counting. If this path belongs to one arm, ${undercounted(direction)}.`
+          : isGuardrail(direction)
+            ? `Nothing in the codebase sends '${event}' any more. It is a guardrail for "${exp.name}", so the experiment can no longer show whether the change does harm.`
+            : `Nothing in the codebase sends '${event}' any more. Every conversion for "${exp.name}" stops counting and its results freeze.`;
         const finding: RawFinding = {
           rule: 'EG001',
           experiment: exp,
