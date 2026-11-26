@@ -1,0 +1,16 @@
+export * from './types.ts';
+export { VERSION } from './version.ts';
+export { defaultConfig, loadConfig, normalizeConfig, parseConfigText, RULE_IDS, ConfigError, type GuardConfig } from './config.ts';
+export { parseYaml } from './yaml.ts';
+export { parseUnifiedDiff, computeFileDiff, diffTrees, formatUnifiedDiff, addedLines, removedLines } from './diff.ts';
+export { GitRepoView, MemoryRepoView, DiffOnlyRepoView, type RepoView } from './repo.ts';
+export { runCheck, exitCodeFor, effectiveSeverity, inScope, type CheckInput } from './engine.ts';
+export { renderMarkdown, renderText, headline, COMMENT_MARKER } from './report.ts';
+export { RULES, RULES_BY_ID, type RuleMeta } from './rules/catalog.ts';
+export { readFromFlagsmith, readSnapshot, segmentTraits, loadSnapshotFile, SnapshotError } from './flagsmith.ts';
+export { demoSnapshot } from './demo.ts';
+export { loadScenarioSet, applyEdits, scenarioRepo, EXAMPLES_DIR, type Scenario, type ScenarioSet, type Edit } from './scenarios.ts';
+export { scanLine, scanText } from './scanner.ts';
+export { explainWarnings } from './ai.ts';
+export { handleMcpRequest, serveMcp } from './mcp.ts';
+export { extractTraits, type TraitAssignment } from './traits.ts';
