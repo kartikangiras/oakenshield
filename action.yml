@@ -1,0 +1,77 @@
+name: Experiment Guard
+description: Blocks pull requests that would silently corrupt a running Flagsmith experiment, and suggests the fix.
+author: Oakenshield
+branding:
+  icon: shield
+  color: purple
+
+inputs:
+  flagsmith-environment:
+    description: Key of the Flagsmith environment where experiments run. Overrides flagsmith.environment in .experiment-guard.yml.
+    required: false
+  flagsmith-project:
+    description: Flagsmith project id. Optional; narrows the experiment lookup.
+    required: false
+  flagsmith-api-url:
+    description: Flagsmith API base URL, for self-hosted Flagsmith.
+    default: https://api.flagsmith.com
+  auth:
+    description: "oidc (default): exchange the GitHub OIDC token through Flagsmith/setup-cli, no stored secret. api-key: use flagsmith-api-key."
+    default: oidc
+  flagsmith-api-key:
+    description: Flagsmith organisation API key, only when auth is api-key.
+    required: false
+  config:
+    description: Path to the config file, relative to working-directory.
+    required: false
+  working-directory:
+    description: Directory of the repository to check.
+    default: .
+  fail-on:
+    description: "block (default), warn, or never: when the job should fail."
+    default: block
+  report-url:
+    description: Base URL of an Oakenshield dashboard to send the result to.
+    required: false
+  report-token:
+    description: Token the dashboard was started with (OAKENSHIELD_TOKEN).
+    required: false
+  demo:
+    description: Use the bundled demo snapshot instead of Flagsmith. For trying the action out.
+    default: "false"
+  github-token:
+    description: Token used to comment on the pull request and read collaborator permissions.
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v5
+      with:
+        node-version: 24
+
+    - if: inputs.auth == 'oidc' && inputs.demo != 'true'
+      uses: Flagsmith/setup-cli@v1
+      with:
+        api-url: ${{ inputs.flagsmith-api-url }}
+
+    - name: Experiment Guard
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        FLAGSMITH_API_URL: ${{ inputs.flagsmith-api-url }}
+        FLAGSMITH_API_KEY: ${{ inputs.auth == 'api-key' && inputs.flagsmith-api-key || '' }}
+        GUARD_FLAGSMITH_ENVIRONMENT: ${{ inputs.flagsmith-environment }}
+        GUARD_FLAGSMITH_PROJECT: ${{ inputs.flagsmith-project }}
+        OAKENSHIELD_TOKEN: ${{ inputs.report-token }}
+        IN_CONFIG: ${{ inputs.config }}
+        IN_FAIL_ON: ${{ inputs.fail-on }}
+        IN_REPORT_URL: ${{ inputs.report-url }}
+        IN_DEMO: ${{ inputs.demo }}
+      run: |
+        args=(check --format github --fail-on "$IN_FAIL_ON")
+        if [ -n "$IN_CONFIG" ]; then args+=(--config "$IN_CONFIG"); fi
+        if [ -n "$IN_REPORT_URL" ]; then args+=(--report-url "$IN_REPORT_URL"); fi
+        if [ "$IN_DEMO" = "true" ]; then args+=(--demo); fi
+        node "$GITHUB_ACTION_PATH/packages/guard/bin/experiment-guard.js" "${args[@]}"

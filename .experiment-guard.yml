@@ -1,0 +1,12 @@
+# Experiment Guard config for this repository. It guards the dashboard's own A/B test
+# (docs/experiment.md): demo_start, its variation try_it, and the check_run and
+# setup_snippet_copied events, read live from Flagsmith by the Experiment Guard workflow.
+version: 1
+flagsmith:
+  auth: api_key               # the workflow passes the environment key and an organisation API key
+identity_patterns:
+  - oak-visitor               # the localStorage key behind the anonymous visitor id
+scan:
+  include:
+    - apps/dashboard/src/**
+    - apps/dashboard/package.json

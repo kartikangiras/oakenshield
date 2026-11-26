@@ -1,0 +1,41 @@
+# Dogfood: this repository runs its own action on its pull requests.
+#
+# Once the dashboard's own A/B test is set up (docs/experiment.md) and the repository has the
+# variable DASHBOARD_FLAGSMITH_ENVIRONMENT and the secret FLAGSMITH_API_KEY, the action reads
+# that live experiment from Flagsmith and guards the code it depends on. Until then it runs
+# against the bundled demo snapshot, so changes to examples/demo-app still get a PR comment.
+name: Experiment Guard
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Guard this repo's own experiment (live Flagsmith)
+        if: vars.DASHBOARD_FLAGSMITH_ENVIRONMENT != ''
+        uses: ./
+        with:
+          config: .experiment-guard.yml
+          flagsmith-environment: ${{ vars.DASHBOARD_FLAGSMITH_ENVIRONMENT }}
+          flagsmith-api-url: ${{ vars.FLAGSMITH_API_URL }}
+          auth: api-key
+          flagsmith-api-key: ${{ secrets.FLAGSMITH_API_KEY }}
+          # Optional: send each result to a live Oakenshield dashboard (NEXT_STEPS.md, step 2.4).
+          report-url: ${{ vars.OAKENSHIELD_URL }}
+          report-token: ${{ secrets.OAKENSHIELD_TOKEN }}
+      - name: Guard the demo app (bundled demo snapshot)
+        if: vars.DASHBOARD_FLAGSMITH_ENVIRONMENT == ''
+        uses: ./
+        with:
+          demo: "true"
+          config: examples/demo-app/.experiment-guard.yml
