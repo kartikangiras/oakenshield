@@ -5,7 +5,7 @@ import { explainWarnings } from './ai.ts';
 import { loadConfig, type GuardConfig } from './config.ts';
 import { exitCodeFor, runCheck } from './engine.ts';
 import { readSnapshot, SnapshotError } from './flagsmith.ts';
-import { applyOverride, loadGitHubContext, publish, resolveOverride, writeStepSummary } from './github.ts';
+import { applyOverride, loadGitHubContext, publish, resolveOverride, unenforcedNote, withNote, writeStepSummary } from './github.ts';
 import { formatUnifiedDiff } from './diff.ts';
 import { serveMcp } from './mcp.ts';
 import { DiffOnlyRepoView, GitRepoView, type RepoView } from './repo.ts';
@@ -143,6 +143,7 @@ async function cmdCheck(argv: string[]) {
 
   if (gh) {
     report = applyOverride(report, await resolveOverride(report, gh, config));
+    if (report.verdict === 'block') report = withNote(report, await unenforcedNote(gh));
     const { commentUrl, suggestions } = await publish(report, gh, config);
     writeStepSummary(renderMarkdown(report, config));
     process.stdout.write(`${renderText(report)}\nComment: ${commentUrl}${suggestions ? ` (${suggestions} new suggestion(s))` : ''}\n`);

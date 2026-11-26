@@ -11,6 +11,7 @@ export interface GitHubContext {
   repo: string;           // owner/name
   pr: PullRequestInfo;
   labels: string[];
+  baseRef?: string;       // the branch the pull request merges into
   baseSha?: string;
   headSha?: string;
 }
@@ -30,6 +31,7 @@ export function loadGitHubContext(env: NodeJS.ProcessEnv = process.env): GitHubC
     repo,
     pr: { number: pr.number, title: pr.title, author: pr.user?.login, branch: pr.head?.ref, url: pr.html_url },
     labels: (pr.labels ?? []).map((l: Json) => l.name),
+    baseRef: pr.base?.ref,
     baseSha: pr.base?.sha,
     headSha: pr.head?.sha,
   };
@@ -70,6 +72,31 @@ export async function resolveOverride(report: Report, ctx: GitHubContext, config
     accepted,
     reason: accepted ? undefined : `their role is ${role}, and ${config.override.minPermission} or higher is required`,
   };
+}
+
+/**
+ * A blocking verdict only stops a merge when the base branch requires a status check. Returns a note
+ * for the comment when the branch requires none, and null when it requires some or GitHub will not say.
+ */
+export async function unenforcedNote(ctx: GitHubContext, job: string | undefined = process.env.GITHUB_JOB): Promise<string | null> {
+  if (!ctx.baseRef) return null;
+  const branch = ctx.baseRef.split('/').map(encodeURIComponent).join('/');
+  try {
+    const rules: Json[] = await gh(ctx, 'GET', `/repos/${ctx.repo}/rules/branches/${branch}?per_page=100`);
+    const fromRulesets = rules.filter(r => r.type === 'required_status_checks').flatMap(r => r.parameters?.required_status_checks ?? []);
+    if (fromRulesets.length > 0) return null;
+    const info = await gh(ctx, 'GET', `/repos/${ctx.repo}/branches/${branch}`);
+    const classic = info?.protection?.required_status_checks;
+    if (classic && classic.enforcement_level !== 'off' && (classic.contexts?.length ?? 0) + (classic.checks?.length ?? 0) > 0) return null;
+  } catch {
+    return null;
+  }
+  return `GitHub will still allow this merge: \`${ctx.baseRef}\` does not require any status check. ` +
+    `To make a block binding, add a ruleset under Settings → Rules that requires the status check${job ? ` \`${job}\`` : ' this job reports'} on \`${ctx.baseRef}\`.`;
+}
+
+export function withNote(report: Report, note: string | null): Report {
+  return note ? { ...report, notes: [note, ...(report.notes ?? [])] } : report;
 }
 
 export function applyOverride(report: Report, override: OverrideInfo | undefined): Report {
