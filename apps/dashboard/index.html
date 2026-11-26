@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <title>Oakenshield · Experiment Guard for Flagsmith</title>
+    <meta name="description" content="Oakenshield reads the experiments running in Flagsmith and blocks the pull request that would quietly corrupt one, with the fix already written." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Oakenshield · Ship code without breaking experiments" />
+    <meta property="og:description" content="Reads your running Flagsmith experiments and blocks the pull request that would quietly corrupt one, with the fix already written." />
+    <meta property="og:image" content="/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400;500&display=swap" />
+    <script>
+      // Dashboard links from before the landing page existed (/#/checks/…) now live under /app/.
+      if (location.hash.startsWith('#/')) location.replace('/app/' + location.hash);
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="nav-wrap">
+      <nav class="island" aria-label="Main">
+        <a class="brand" href="#top" aria-label="Oakenshield, back to top">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span>Oakenshield</span>
+        </a>
+        <ul class="nav-links">
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#where">Where it runs</a></li>
+          <li><a href="#ab">Our A/B test</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+        <a class="btn btn-dark btn-sm nav-cta" href="/app/">
+          Open the demo
+          <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/></svg>
+        </a>
+        <button class="burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="menu">
+          <span></span><span></span>
+        </button>
+      </nav>
+      <div class="menu" id="menu" hidden>
+        <ul>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#where">Where it runs</a></li>
+          <li><a href="#ab">Our A/B test</a></li>
+          <li><a href="#faq">FAQ</a></li>
+          <li><a href="/app/">Open the live demo</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <h1 id="hero-title" class="enter">Ship code without<br /> breaking experiments</h1>
+          <p class="lede enter">Oakenshield reads the experiments running in Flagsmith and blocks the pull request that would quietly corrupt one, with the fix already written.</p>
+          <div class="cta-row enter">
+            <a class="btn btn-dark btn-lg" href="/app/">Open the live demo</a>
+            <a class="btn btn-light btn-lg" href="#how">See how it works</a>
+          </div>
+          <p class="proof enter">Open source · Flagsmith Cloud or self hosted · No sign up for the demo</p>
+        </div>
+
+        <div class="land" aria-hidden="true">
+          <svg viewBox="0 0 1600 600" preserveAspectRatio="xMidYMax slice">
+            <defs>
+              <filter id="rough" x="-2%" y="-2%" width="104%" height="104%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.012 0.035" numOctaves="3" seed="11" />
+                <feDisplacementMap in="SourceGraphic" scale="5" />
+              </filter>
+              <filter id="strata" x="0" y="0" width="100%" height="100%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.09 0.007" numOctaves="2" seed="4" result="n" />
+                <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.13  0 0 0 0 0.06  0 0 0 0 0.21  2.6 0 0 0 -1.25" result="streak" />
+                <feComposite in="streak" in2="SourceGraphic" operator="in" result="clip" />
+                <feMerge><feMergeNode in="SourceGraphic" /><feMergeNode in="clip" /></feMerge>
+              </filter>
+              <linearGradient id="far" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2c6dc" /><stop offset="1" stop-color="#c9abd3" /></linearGradient>
+              <linearGradient id="mid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b393c9" /><stop offset="1" stop-color="#9474b8" /></linearGradient>
+              <linearGradient id="near" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8462a8" /><stop offset="1" stop-color="#5e3f82" /></linearGradient>
+              <linearGradient id="front" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5e3a7c" /><stop offset="0.55" stop-color="#4a2b66" /><stop offset="1" stop-color="#3a2052" /></linearGradient>
+              <linearGradient id="lit" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb46e" /><stop offset="1" stop-color="#e8743a" stop-opacity="0.2" /></linearGradient>
+              <linearGradient id="faceR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f59446" /><stop offset="1" stop-color="#b9461c" stop-opacity="0.85" /></linearGradient>
+              <linearGradient id="faceL" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f59446" /><stop offset="1" stop-color="#b9461c" stop-opacity="0.85" /></linearGradient>
+              <linearGradient id="haze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe6d4" stop-opacity="0" /><stop offset="0.6" stop-color="#f4d9e2" stop-opacity="0.6" /><stop offset="1" stop-color="#f4d9e2" stop-opacity="0" /></linearGradient>
+            </defs>
+
+            <g filter="url(#rough)">
+              <!-- distant plateaus -->
+              <path fill="url(#far)" d="M-40 262 L44 259 L56 236 L152 231 L163 252 L232 249 L241 222 L332 217 L344 245 L424 247 L472 251 L522 238 L561 236 L577 213 L690 209 L701 237 L762 241 L842 245 L901 240 L916 215 L1012 211 L1022 233 L1092 237 L1150 229 L1163 205 L1272 201 L1282 226 L1342 232 L1420 236 L1433 213 L1531 209 L1542 240 L1640 244 L1640 600 L-40 600 Z" />
+              <rect x="-40" y="200" width="1680" height="150" fill="url(#haze)" />
+
+              <!-- middle mesas -->
+              <path fill="url(#mid)" d="M-40 332 L70 327 L82 289 L211 283 L222 312 L300 318 L312 297 L330 296 L339 268 L353 266 L359 297 L421 301 L521 307 L600 300 L613 275 L760 268 L772 300 L861 306 L961 311 L1041 305 L1053 281 L1181 274 L1191 300 L1260 305 L1272 262 L1290 260 L1297 300 L1381 306 L1461 300 L1473 276 L1640 272 L1640 600 L-40 600 Z" />
+              <path fill="url(#lit)" opacity="0.7" d="M82 289 L211 283 L213 295 L84 301 Z M339 268 L353 266 L355 282 L341 284 Z M613 275 L760 268 L762 281 L615 288 Z M1053 281 L1181 274 L1183 287 L1055 294 Z M1272 262 L1290 260 L1292 278 L1274 280 Z" />
+              <rect x="-40" y="268" width="1680" height="140" fill="url(#haze)" opacity="0.75" />
+
+              <!-- valley mesas -->
+              <g filter="url(#strata)">
+              <path fill="url(#near)" d="M380 600 L380 400 L470 396 L480 372 L600 366 L610 392 L700 398 L760 390 L772 362 L880 356 L890 384 L990 392 L1050 386 L1062 364 L1160 360 L1170 400 L1240 404 L1240 600 Z" />
+              </g>
+              <path fill="url(#lit)" d="M480 372 L600 366 L602 379 L482 385 Z M772 362 L880 356 L882 369 L774 375 Z M1062 364 L1160 360 L1162 373 L1064 377 Z" />
+              <path fill="url(#faceR)" opacity="0.9" d="M600 366 L610 392 L634 395 L624 368 Z M880 356 L890 384 L912 387 L902 358 Z" />
+              <path fill="url(#faceL)" opacity="0.9" d="M772 362 L760 390 L738 393 L750 365 Z M1062 364 L1050 386 L1028 389 L1040 367 Z" />
+
+              <!-- left cliffs -->
+              <g filter="url(#strata)">
+              <path fill="url(#front)" d="M-40 600 L-40 300 L40 296 L52 312 L176 306 L188 288 L232 286 L240 330 L300 336 L312 356 L420 352 L432 400 L470 430 L500 470 L540 520 L560 600 Z" />
+              <path fill="url(#front)" d="M60 302 L70 236 L150 232 L158 302 Z" />
+              </g>
+              <path fill="#2a1640" opacity="0.45" d="M60 302 L70 236 L84 236 L78 302 Z M-40 300 L-40 600 L10 600 L4 300 Z" />
+              <path fill="url(#lit)" d="M70 236 L150 232 L151 246 L71 250 Z M-40 300 L40 296 L41 309 L-40 313 Z M188 288 L232 286 L233 299 L189 301 Z M312 356 L420 352 L421 365 L313 369 Z M52 312 L176 306 L177 318 L53 324 Z" />
+              <path fill="url(#faceR)" d="M150 232 L158 302 L186 306 L176 238 Z M232 286 L240 330 L270 334 L260 290 Z M420 352 L432 400 L470 430 L482 412 L450 358 Z" />
+
+              <!-- right cliffs -->
+              <g filter="url(#strata)">
+              <path fill="url(#front)" d="M1640 600 L1640 290 L1560 286 L1548 300 L1430 296 L1420 316 L1370 318 L1360 352 L1300 358 L1290 380 L1190 384 L1178 420 L1140 446 L1100 480 L1070 530 L1052 600 Z" />
+              <path fill="url(#front)" d="M1450 300 L1458 214 L1500 210 L1506 300 Z M1520 292 L1526 236 L1572 232 L1578 292 Z" />
+              </g>
+              <path fill="#2a1640" opacity="0.45" d="M1500 210 L1506 300 L1492 300 L1488 212 Z M1572 232 L1578 292 L1564 292 L1560 234 Z" />
+              <path fill="url(#lit)" d="M1458 214 L1500 210 L1501 224 L1459 228 Z M1526 236 L1572 232 L1573 246 L1527 250 Z M1560 286 L1640 290 L1640 303 L1561 299 Z M1370 318 L1420 316 L1421 329 L1371 331 Z M1300 358 L1360 352 L1361 365 L1301 371 Z M1190 384 L1290 380 L1291 393 L1191 397 Z" />
+              <path fill="url(#faceL)" d="M1458 214 L1450 300 L1424 304 L1434 220 Z M1526 236 L1520 292 L1508 294 L1512 240 Z M1370 318 L1360 352 L1334 356 L1346 322 Z M1300 358 L1290 380 L1264 384 L1276 362 Z M1190 384 L1178 420 L1140 446 L1150 424 L1166 390 Z" />
+            </g>
+
+            <!-- valley floor and the road through it -->
+            <path fill="#3a2052" d="M-40 600 L-40 560 C300 520 520 540 800 548 C1080 556 1320 520 1640 536 L1640 600 Z" />
+            <path fill="none" stroke="#c9b0e0" stroke-opacity="0.35" stroke-width="5" stroke-linecap="round" d="M700 600 C750 574 880 568 930 552 C972 538 940 522 880 516" />
+          </svg>
+        </div>
+
+        <aside class="check-card enter" aria-label="An example Experiment Guard check">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Experiment Guard</div>
+              <div class="card-meta">PR #482 · refactor: tidy analytics names</div>
+            </div>
+            <span class="chip">Blocked</span>
+          </div>
+          <ol class="steps">
+            <li><span>Read 3 running experiments from Flagsmith</span><span class="st">Done</span></li>
+            <li><span>Scanned 6 changed files</span><span class="st">Done</span></li>
+            <li><span><code>check_run</code> renamed to <code>checkRun</code>, metric stops counting</span><span class="st st-block">Blocked</span></li>
+            <li><span>Posted the suggested fix to the pull request</span><span class="st st-now">Now</span></li>
+          </ol>
+        </aside>
+      </section>
+
+      <section class="tagline" aria-label="Why it exists">
+        <p class="tagline-text" data-words>A renamed event can end an experiment and nobody notices for weeks. Oakenshield notices at the pull request.</p>
+      </section>
+
+      <section class="section" id="how" aria-labelledby="how-title">
+        <div class="wrap">
+          <header class="section-head" data-reveal>
+            <p class="eyebrow">How it works</p>
+            <h2 id="how-title">One check between a pull request and your results</h2>
+            <p class="section-lede">Flagsmith matches event names and variation keys exactly. A tidy up that passes tests and review can still stop an experiment from counting. Oakenshield reads what Flagsmith expects and compares it with what the code now does.</p>
+          </header>
+          <ol class="steps-grid">
+            <li class="step" data-reveal>
+              <span class="step-n">1</span>
+              <h3>Reads Flagsmith</h3>
+              <p>For every running experiment: the flag, its variations, the metric events and the segments that decide the audience. Through the Admin API, or the Flagsmith CLI logged in with GitHub OIDC.</p>
+            </li>
+            <li class="step" data-reveal>
+              <span class="step-n">2</span>
+              <h3>Reads the diff</h3>
+              <p>Finds exposure calls, branches on variation keys, <code>trackEvent</code> calls, SDK versions, <code>enableEvents</code> and identity code in what the pull request changes.</p>
+            </li>
+            <li class="step" data-reveal>
+              <span class="step-n">3</span>
+              <h3>Blocks only what it can prove</h3>
+              <p>One comment in plain words, a suggested fix you accept with one click, and an override label for maintainers that gets recorded.</p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section section-alt" id="where" aria-labelledby="where-title">
+        <div class="wrap">
+          <header class="section-head" data-reveal>
+            <p class="eyebrow">Where it runs</p>
+            <h2 id="where-title">Wherever code changes, not in another tab</h2>
+          </header>
+          <ul class="cards">
+            <li class="card" data-reveal>
+              <svg class="ico" viewBox="0 0 256 256" aria-hidden="true"><path d="M104,64A32,32,0,1,0,64,95v66a32,32,0,1,0,16,0V95A32.06,32.06,0,0,0,104,64ZM56,64A16,16,0,1,1,72,80,16,16,0,0,1,56,64ZM88,192a16,16,0,1,1-16-16A16,16,0,0,1,88,192Zm120-31V110.63a23.85,23.85,0,0,0-7-17L163.31,56H192a8,8,0,0,0,0-16H144a8,8,0,0,0-8,8V96a8,8,0,0,0,16,0V67.31L189.66,105a8,8,0,0,1,2.34,5.66V161a32,32,0,1,0,16,0Zm-8,47a16,16,0,1,1,16-16A16,16,0,0,1,200,208Z"/></svg>
+              <h3>Pull requests</h3>
+              <p><b>A red check you can trust.</b> The GitHub Action comments once per pull request, posts the fix as a suggestion and fails the check on a blocking finding.</p>
+            </li>
+            <li class="card" data-reveal>
+              <svg class="ico" viewBox="0 0 256 256" aria-hidden="true"><path d="M200,48H136V16a8,8,0,0,0-16,0V48H56A32,32,0,0,0,24,80V192a32,32,0,0,0,32,32H200a32,32,0,0,0,32-32V80A32,32,0,0,0,200,48Zm16,144a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V80A16,16,0,0,1,56,64H200a16,16,0,0,1,16,16Zm-52-56H92a28,28,0,0,0,0,56h72a28,28,0,0,0,0-56Zm-24,16v24H116V152ZM80,164a12,12,0,0,1,12-12h8v24H92A12,12,0,0,1,80,164Zm84,12h-8V152h8a12,12,0,0,1,0,24ZM72,108a12,12,0,1,1,12,12A12,12,0,0,1,72,108Zm88,0a12,12,0,1,1,12,12A12,12,0,0,1,160,108Z"/></svg>
+              <h3>Coding agents</h3>
+              <p><b>Agents check their own edits.</b> Claude Code, Cursor and other MCP clients call <code>check_experiment_impact</code> before they finish, and stop before breaking a test.</p>
+            </li>
+            <li class="card" data-reveal>
+              <svg class="ico" viewBox="0 0 256 256" aria-hidden="true"><path d="M128,128a8,8,0,0,1-3,6.25l-40,32a8,8,0,1,1-10-12.5L107.19,128,75,102.25a8,8,0,1,1,10-12.5l40,32A8,8,0,0,1,128,128Zm48,24H136a8,8,0,0,0,0,16h40a8,8,0,0,0,0-16Zm56-96V200a16,16,0,0,1-16,16H40a16,16,0,0,1-16-16V56A16,16,0,0,1,40,40H216A16,16,0,0,1,232,56ZM216,200V56H40V200H216Z"/></svg>
+              <h3>Terminal and other CI</h3>
+              <p><b>Catch it before you push.</b> <code>experiment-guard check</code> reads uncommitted work or any two refs and exits with code 1 on a block.</p>
+            </li>
+            <li class="card" data-reveal>
+              <svg class="ico" viewBox="0 0 256 256" aria-hidden="true"><path d="M178.16,176H111.32A48,48,0,1,1,25.6,139.19a8,8,0,0,1,12.8,9.61A31.69,31.69,0,0,0,32,168a32,32,0,0,0,64,0,8,8,0,0,1,8-8h74.16a16,16,0,1,1,0,16ZM64,184a16,16,0,0,0,14.08-23.61l35.77-58.14a8,8,0,0,0-2.62-11,32,32,0,1,1,46.1-40.06A8,8,0,1,0,172,44.79a48,48,0,1,0-75.62,55.33L64.44,152c-.15,0-.29,0-.44,0a16,16,0,0,0,0,32Zm128-64a48.18,48.18,0,0,0-18,3.49L142.08,71.6A16,16,0,1,0,128,80l.44,0,35.78,58.15a8,8,0,0,0,11,2.61A32,32,0,1,1,192,200a8,8,0,0,0,0,16,48,48,0,0,0,0-96Z"/></svg>
+              <h3>Flagsmith webhooks</h3>
+              <p><b>Watches the other side too.</b> When someone starts, pauses or retargets an experiment, every open pull request is checked again against the new setup.</p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section" id="catches" aria-labelledby="catches-title">
+        <div class="wrap two-col">
+          <header class="section-head" data-reveal>
+            <p class="eyebrow">What it catches</p>
+            <h2 id="catches-title">Thirteen rules, and only the provable ones block</h2>
+            <p class="section-lede">Across 22 seeded pull requests, 14 ways to break an experiment are caught and the 8 harmless changes stay quiet.</p>
+            <a class="text-link" href="/app/#/rules">See every rule in the demo
+              <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M200,64V168a8,8,0,0,1-16,0V83.31L69.66,197.66a8,8,0,0,1-11.32-11.32L172.69,72H88a8,8,0,0,1,0-16H192A8,8,0,0,1,200,64Z"/></svg>
+            </a>
+          </header>
+          <ul class="rules" data-reveal>
+            <li><span class="rule-id">EG001</span><span>A metric event renamed or removed</span><span class="sev sev-block">block</span></li>
+            <li><span class="rule-id">EG002</span><span>The exposure call removed</span><span class="sev sev-block">block</span></li>
+            <li><span class="rule-id">EG003</span><span>Experiment events switched off</span><span class="sev sev-block">block</span></li>
+            <li><span class="rule-id">EG004</span><span>SDK pinned below the version that sends experiment events</span><span class="sev sev-block">block</span></li>
+            <li><span class="rule-id">EG005</span><span>Code checks a variation Flagsmith does not serve</span><span class="sev sev-block">block</span></li>
+            <li><span class="rule-id">EG012</span><span>A trait the audience segment matches on is no longer sent</span><span class="sev sev-block">block</span></li>
+            <li><span class="rule-id">EG007</span><span>Identity logic changed, so users land in new buckets</span><span class="sev sev-warn">warn</span></li>
+            <li><span class="rule-id">EG006</span><span>Code only one variation renders changed mid run</span><span class="sev sev-warn">warn</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section section-alt" id="ab" aria-labelledby="ab-title">
+        <div class="wrap">
+          <header class="section-head" data-reveal>
+            <p class="eyebrow">Our A/B test</p>
+            <h2 id="ab-title">A real experiment runs on this demo</h2>
+            <p class="section-lede">When you open the demo, Flagsmith picks your first screen. Half of first time visitors start on the overview, the other half on one broken pull request and a single button. We count who runs a check.</p>
+          </header>
+          <div class="ab-grid">
+            <figure class="shot" data-reveal>
+              <img src="/landing/overview.jpg" width="1400" height="875" loading="lazy" alt="The Oakenshield overview dashboard with blocked merges, guarded experiments and recent alerts" />
+              <figcaption><b>Control</b> · the overview</figcaption>
+            </figure>
+            <figure class="shot" data-reveal>
+              <img src="/landing/guided.jpg" width="1400" height="875" loading="lazy" alt="The guided screen: one broken pull request and a single Run Experiment Guard button" />
+              <figcaption><b>try_it</b> · one broken pull request</figcaption>
+            </figure>
+          </div>
+          <dl class="ab-facts" data-reveal>
+            <div><dt>Hypothesis</dt><dd>Opening on a broken pull request gets more first time visitors to run a check.</dd></div>
+            <div><dt>Goal metric</dt><dd>Ran a check, event <code>check_run</code></dd></div>
+            <div><dt>Guardrail</dt><dd>Copied a set up snippet, event <code>setup_snippet_copied</code></dd></div>
+            <div><dt>Decision rule</dt><dd>Roll out try_it only above a 95% chance to beat control with the guardrail holding. Results on November 29.</dd></div>
+          </dl>
+          <p class="ab-note" data-reveal>Experiment Guard protects the code this test depends on. Rename <code>check_run</code> in a pull request to this repository and the merge is blocked.</p>
+        </div>
+      </section>
+
+      <section class="section" id="faq" aria-labelledby="faq-title">
+        <div class="wrap narrow">
+          <header class="section-head" data-reveal>
+            <p class="eyebrow">FAQ</p>
+            <h2 id="faq-title">Questions before you add it</h2>
+          </header>
+          <div class="faq" data-reveal>
+            <details>
+              <summary>What does it need from Flagsmith?</summary>
+              <p>Read access to the environment where your experiments run: an organisation API key, or the Flagsmith CLI logged in with GitHub OIDC so no key is stored in your repository.</p>
+            </details>
+            <details>
+              <summary>Does it change anything in Flagsmith or my code?</summary>
+              <p>No. It only reads. Every fix is a suggestion that a person accepts, and every override is a label a maintainer adds.</p>
+            </details>
+            <details>
+              <summary>Will it block harmless pull requests?</summary>
+              <p>Only rules that can prove the code disagrees with Flagsmith block by default. Everything else is a warning or a note, and you can change any rule's level in one config file.</p>
+            </details>
+            <details>
+              <summary>What if Flagsmith is unreachable?</summary>
+              <p>The check fails open. It says so in the comment and lets the pull request through.</p>
+            </details>
+            <details>
+              <summary>Which languages does it read?</summary>
+              <p>JavaScript, TypeScript and Python call sites. The SDK version rule also covers Go, Java and Flutter projects.</p>
+            </details>
+            <details>
+              <summary>Is the dashboard data real?</summary>
+              <p>The overview, checks and alerts come from FirstPR, a sample app with 22 seeded pull requests. The A/B test that picks your first screen is real and runs on Flagsmith.</p>
+            </details>
+            <details id="privacy">
+              <summary>What does the demo record about me?</summary>
+              <p>A random ID kept in your browser, the version you saw, and two events: running a check and copying a set up snippet. They go to Flagsmith for our A/B test. Oakenshield collects nothing else.</p>
+            </details>
+            <details>
+              <summary>Is it free?</summary>
+              <p>Yes. Oakenshield is open source under the MIT license, and the demo needs no account.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="final" aria-labelledby="final-title">
+        <div class="wrap narrow center" data-reveal>
+          <h2 id="final-title">Try it on a real check</h2>
+          <p class="section-lede">The demo runs Experiment Guard against a sample app with running experiments. No sign up.</p>
+          <a class="btn btn-dark btn-lg" href="/app/">Open the live demo</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap footer-row">
+        <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"></span><span>Oakenshield</span></a>
+        <ul class="footer-links">
+          <li><a href="/app/">Live demo</a></li>
+          <li><a href="#privacy">Privacy</a></li>
+          <li><a href="https://opensource.org/license/mit" rel="noopener">MIT license</a></li>
+        </ul>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/landing/landing.ts"></script>
+  </body>
+</html>
