@@ -20,5 +20,7 @@ export function readDuel(dir: string | undefined): DuelView | null {
     approvals: read(join(dir, 'duel.approvals.json')),
     // The simulated visitors' own summary: personas.mjs --out <dir>/traffic
     traffic: read(join(dir, 'traffic', 'summary.json')),
+    // and the same run one visitor at a time, for the animation (scripts/traffic/replay.mjs)
+    replay: read(join(dir, 'traffic', 'replay.json')),
   };
 }

@@ -154,6 +154,8 @@ export interface DuelView {
   approvals: unknown;
   /** The simulated visitors' run summary, when one has been written. */
   traffic: unknown;
+  /** The same run as one character per counted visitor, in the order the visits finished. */
+  replay: unknown;
 }
 
 export interface Health {
