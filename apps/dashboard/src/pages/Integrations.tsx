@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
-import type { Theme } from '../App.tsx';
+import { useState } from 'react';
 import { Icon } from '../components/Icons.tsx';
 import type { IconName } from '../components/Icons.tsx';
 import { AlertRow } from '../components/alerts.tsx';
@@ -8,8 +6,6 @@ import { Card, CodeBlock, CopyButton, PageHead, Section, Seg, TimeAgo, cx, useTo
 import { trackEvent } from '../lib/experiments.ts';
 import { api } from '../lib/api.ts';
 import type { SimulateKind } from '../lib/api.ts';
-import { dateTime } from '../lib/format.ts';
-import { useAsync } from '../lib/hooks.ts';
 import { useLive } from '../lib/live.tsx';
 
 type Snippet = 'action' | 'config' | 'mcp' | 'cli' | 'ingest';
@@ -119,16 +115,12 @@ experiment-guard check --demo --base HEAD~1
 experiment-guard snapshot
 experiment-guard explain EG006`;
 
-export function IntegrationsPage({ theme, setTheme }: { theme: Theme; setTheme: (t: Theme) => void }) {
+export function IntegrationsPage() {
   const { health, healthError, refreshHealth } = useLive();
   const [where, setWhere] = useState<Surface>('pr');
   const [snippet, setSnippet] = useState<Snippet>('action');
   const [refreshing, setRefreshing] = useState(false);
-  const settings = useAsync(() => api.settings(), []);
-  const [hours, setHours] = useState('');
   const toast = useToast();
-
-  useEffect(() => { if (settings.data) setHours(String(settings.data.hoursPerBlock)); }, [settings.data]);
 
   const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8787';
   const INGEST = `# Send any Experiment Guard run to this dashboard
@@ -155,20 +147,6 @@ curl -X POST ${origin}/api/reports \\
     }
   };
 
-  const saveHours = async () => {
-    const n = Number(hours);
-    if (!Number.isFinite(n) || n < 0 || n > 200) {
-      toast({ kind: 'warn', title: 'Enter a number between 0 and 200' });
-      return;
-    }
-    try {
-      await api.saveSettings({ hoursPerBlock: n });
-      toast({ kind: 'pass', title: 'Saved', body: `Each blocked merge now counts as ${n} analyst hours saved.` });
-    } catch (e) {
-      toast({ kind: 'block', title: 'Could not save', body: (e as Error).message });
-    }
-  };
-
   const surface = SURFACES.find(x => x.key === where)!;
   const code = { action: WORKFLOW, config: CONFIG, mcp: MCP, cli: CLI, ingest: INGEST }[snippet];
   const lang = snippet === 'action' || snippet === 'config' ? 'yaml' : snippet === 'mcp' ? 'json' : 'shell';
@@ -180,12 +158,9 @@ curl -X POST ${origin}/api/reports \\
 
       <Section title="Where Experiment Guard runs" sub="Pick a place to see exactly how to set it up.">
         <div className="grid cols-4">
-        {SURFACES.map((x, n) => (
+        {SURFACES.map(x => (
           <button key={x.key} type="button" className={cx('card', 'pick', where === x.key && 'on')} aria-pressed={where === x.key} onClick={() => pick(x.key)}>
-            <div className="row" style={{ justifyContent: 'space-between', width: '100%' }}>
-              <span className={cx('feed-badge', where === x.key && 'v-brand')}><Icon name={x.icon} size={16} /></span>
-              <span className="small faint tnum">{n + 1}</span>
-            </div>
+            <span className={cx('feed-badge', where === x.key && 'v-brand')}><Icon name={x.icon} size={16} /></span>
             <div>
               <div className="card-title">{x.title}</div>
               <div className="small faint">{x.where}</div>
@@ -208,17 +183,15 @@ curl -X POST ${origin}/api/reports \\
         <div className="grid cols-2" style={{ alignItems: 'start' }}>
           <Card
             title={<><Icon name="flask" size={15} />Flagsmith</>}
-            sub="Experiment Guard reads running experiments from the Flagsmith Admin API on every check"
+            sub="Read from the Flagsmith Admin API on every check"
             actions={<button className="btn sm" onClick={refresh} disabled={refreshing}><Icon name="refresh" size={13} style={refreshing ? { animation: 'spin 1s linear infinite' } : undefined} />Refresh now</button>}
           >
             {healthError ? <div className="small" style={{ color: 'var(--block)' }}>{healthError}</div> : !fs ? <div className="faint small">Loading…</div> : (
-              <div className="grid cols-3" style={{ gap: 12 }}>
-                <Stat label="Status" value={fs.source === 'error' ? <span className="chip v-block">Error</span> : <span className="chip v-pass"><span className="dot" />{fs.source === 'demo' ? 'Demo data' : 'Connected'}</span>} />
-                <Stat label="Source" value={<span className="mono">{fs.source}</span>} />
-                <Stat label="Environment" value={<span className="mono">{fs.environment ?? '—'}</span>} />
-                <Stat label="Running experiments" value={<b className="tnum" style={{ fontSize: 18 }}>{fs.running}</b>} />
-                <Stat label="Last snapshot" value={fs.fetchedAt ? <TimeAgo iso={fs.fetchedAt} /> : '—'} />
-                <Stat label="Server mode" value={<span className="chip v-brand">{health?.mode}</span>} />
+              <div className="kv">
+                <div className="kv-row"><span className="muted">Status</span>{fs.source === 'error' ? <span className="chip v-block">Error</span> : <span className="chip v-pass"><span className="dot" />{fs.source === 'demo' ? 'Demo data' : 'Connected'}</span>}</div>
+                <div className="kv-row"><span className="muted">Environment</span><span className="mono">{fs.environment ?? 'Not set'}</span></div>
+                <div className="kv-row"><span className="muted">Running experiments</span><b className="tnum">{fs.running}</b></div>
+                <div className="kv-row"><span className="muted">Last read</span><span>{fs.fetchedAt ? <TimeAgo iso={fs.fetchedAt} /> : 'Not yet'}</span></div>
               </div>
             )}
             {fs?.error && <div className="small" style={{ color: 'var(--block)', marginTop: 12 }}>{fs.error}</div>}
@@ -235,55 +208,6 @@ curl -X POST ${origin}/api/reports \\
         {health?.mode === 'demo' && <SimulateCard />}
       </Section>
 
-      <Section title="Settings" sub="How the dashboard counts value, and how it looks.">
-        <div className="grid cols-2" style={{ alignItems: 'start' }}>
-          <Card title={<><Icon name="gear" size={15} />Settings</>}>
-            <div className="stack" style={{ gap: 16 }}>
-              <div>
-                <div style={{ fontWeight: 500, marginBottom: 4 }}>Analyst hours per blocked merge</div>
-                <div className="small faint" style={{ marginBottom: 8 }}>Used for “hours saved”. A corrupted experiment usually costs a re-run plus the time to find out why the numbers look wrong.</div>
-                <div className="row">
-                  <input className="input" type="number" min={0} max={200} step={0.5} value={hours} onChange={e => setHours(e.target.value)} style={{ width: 110 }} />
-                  <span className="faint small">hours</span>
-                  <span className="spacer" />
-                  <button className="btn primary sm" onClick={saveHours} disabled={!settings.data || Number(hours) === settings.data.hoursPerBlock}>Save</button>
-                </div>
-              </div>
-              <div className="divider" />
-              <div>
-                <div style={{ fontWeight: 500, marginBottom: 8 }}>Theme</div>
-                <Seg<Theme> value={theme} onChange={setTheme} options={[{ value: 'dark', label: <><Icon name="moon" size={13} />Dark</> }, { value: 'light', label: <><Icon name="sun" size={13} />Light</> }]} />
-              </div>
-              <div className="divider" />
-              <div className="small">
-                <div style={{ fontWeight: 500, marginBottom: 8 }}>Server</div>
-                <dl style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 14px', margin: 0 }}>
-                  <dt className="faint">Version</dt><dd style={{ margin: 0 }} className="mono">{health?.version ?? '—'}</dd>
-                  <dt className="faint">Started</dt><dd style={{ margin: 0 }}>{health ? dateTime(health.startedAt) : '—'}</dd>
-                  <dt className="faint">Report ingest</dt><dd style={{ margin: 0 }}>{health?.ingestProtected ? <span className="row" style={{ gap: 4 }}><Icon name="lock" size={12} />token required</span> : <span style={{ color: 'var(--warn)' }}>open (set OAKENSHIELD_TOKEN)</span>}</dd>
-                </dl>
-              </div>
-            </div>
-          </Card>
-          <Card title={<><Icon name="shieldCheck" size={15} />How a check works</>}>
-            <ol className="small muted" style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 8 }}>
-              <li>Read the experiments running in Flagsmith: flag, variation keys, metric events.</li>
-              <li>Diff the pull request against its base and scan the changed lines for exposure calls, variant branches, conversion events, SDK and identity changes.</li>
-              <li>Run 13 rules. Only deterministic ones block by default.</li>
-              <li>Post one comment, suggested fixes, and a pass, warn or fail status. A maintainer can override with a label, and it is recorded.</li>
-            </ol>
-          </Card>
-        </div>
-      </Section>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div className="stat" style={{ padding: '8px 12px' }}>
-      <span style={{ display: 'block', marginBottom: 4 }}>{label}</span>
-      <div>{value}</div>
     </div>
   );
 }

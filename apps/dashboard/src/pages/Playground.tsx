@@ -85,7 +85,7 @@ export function PlaygroundPage() {
     toast({ kind: ok === rows.length ? 'pass' : 'warn', title: `${ok} of ${rows.length} scenarios match`, body: ok === rows.length ? 'Every seeded scenario got the expected verdict and rules.' : 'Open the matrix to see which ones differ.' });
   };
 
-  // Deep link from the overview: #/playground?runall=1 runs the whole matrix once.
+  // Deep link: #/playground?runall=1 runs the whole matrix once.
   const autoRan = useRef(false);
   useEffect(() => {
     if (query.get('runall') === '1' && list.length && !autoRan.current) {

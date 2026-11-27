@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { ExperimentStatus, Severity, SeveritySetting, Verdict } from '../lib/api.ts';
@@ -279,26 +279,6 @@ export function useNow(ms = 30_000) {
   const [now, setNow] = useState(() => Date.now());
   useInterval(() => setNow(Date.now()), ms);
   return now;
-}
-
-export function useCountUp(target: number, ms = 700) {
-  const [v, setV] = useState(target);
-  const from = useRef(target);
-  useEffect(() => {
-    const start = performance.now();
-    const a = from.current;
-    let raf = 0;
-    const step = (t: number) => {
-      const k = Math.min(1, (t - start) / ms);
-      const e = 1 - Math.pow(1 - k, 3);
-      setV(a + (target - a) * e);
-      if (k < 1) raf = requestAnimationFrame(step);
-      else from.current = target;
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [target, ms]);
-  return v;
 }
 
 export function useStable<T>(value: T): T {

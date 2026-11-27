@@ -1,41 +1,40 @@
 import { useEffect, useState } from 'react';
 import { Icon } from '../components/Icons.tsx';
 import type { IconName } from '../components/Icons.tsx';
-import { Empty, ErrorState, PageHead, Seg, Skeleton, TimeAgo, VerdictChip, cx } from '../components/ui.tsx';
+import { Empty, ErrorState, PageHead, Seg, Skeleton, TimeAgo, VerdictChip } from '../components/ui.tsx';
 import { api } from '../lib/api.ts';
-import type { CheckSource, CheckSummary, RuleId, Verdict } from '../lib/api.ts';
-import { SOURCE_LABEL, duration, num } from '../lib/format.ts';
+import type { CheckSource, CheckSummary, Verdict } from '../lib/api.ts';
+import { SOURCE_LABEL, num } from '../lib/format.ts';
 import { navigate, setQuery, useAsync, useDebounced, useRoute } from '../lib/hooks.ts';
 import { useLive } from '../lib/live.tsx';
 
 const PAGE = 50;
-const RULE_IDS: RuleId[] = ['EG001', 'EG002', 'EG003', 'EG004', 'EG005', 'EG006', 'EG007', 'EG008', 'EG009', 'EG010', 'EG011', 'EG012', 'EG013'];
 export const SOURCE_ICON: Record<CheckSource, IconName> = { ci: 'github', cli: 'terminal', mcp: 'bot', playground: 'play', api: 'plug', webhook: 'refresh' };
 
 export function ChecksPage() {
   const { query } = useRoute();
   const { tick } = useLive();
   const verdict = (query.get('verdict') ?? 'all') as Verdict | 'all';
-  const repo = query.get('repo') ?? 'all';
+  // Set by the Rules page: the checks one rule fired on.
   const rule = query.get('rule') ?? '';
   const [text, setText] = useState(query.get('q') ?? '');
   const q = useDebounced(text, 250);
   const [limit, setLimit] = useState(PAGE);
 
   useEffect(() => { setQuery({ q: q || undefined }); }, [q]);
-  useEffect(() => setLimit(PAGE), [verdict, repo, rule, q]);
+  useEffect(() => setLimit(PAGE), [verdict, rule, q]);
 
-  const page = useAsync(() => api.checks({ verdict, repo, rule: rule || undefined, q, limit }), [verdict, repo, rule, q, limit, tick]);
+  const page = useAsync(() => api.checks({ verdict, rule: rule || undefined, q, limit }), [verdict, rule, q, limit, tick]);
   const items = page.data?.items;
 
   return (
     <div className="fade-in">
-      <PageHead title="Checks" sub="Every Experiment Guard run: pull requests from CI, local CLI runs, coding agents over MCP and the playground." />
+      <PageHead title="Checks" sub="Every Experiment Guard run, newest first: pull requests, the command line, coding agents and the playground." />
       <div className="card" style={{ marginBottom: 16, padding: 12 }}>
         <div className="row wrap" style={{ gap: 12 }}>
           <div className="input-icon" style={{ flex: 1, minWidth: 240 }}>
             <Icon name="search" size={15} />
-            <input className="input" placeholder="Search title, author, experiment, rule or file…" value={text} onChange={e => setText(e.target.value)} />
+            <input className="input" placeholder="Search by title, author, repository, experiment or rule" aria-label="Search checks" value={text} onChange={e => setText(e.target.value)} />
           </div>
           <Seg<Verdict | 'all'> value={verdict} onChange={v => setQuery({ verdict: v })} options={[
             { value: 'all', label: 'All' },
@@ -44,16 +43,9 @@ export function ChecksPage() {
             { value: 'overridden', label: <><Icon name="unlock" size={12} />Overridden</> },
             { value: 'pass', label: <><Icon name="check" size={12} />Passed</> },
           ]} />
-          <select className="input" value={repo} onChange={e => setQuery({ repo: e.target.value })} aria-label="Repository">
-            <option value="all">All repositories</option>
-            {(page.data?.repos ?? []).map(r => <option key={r} value={r}>{r}</option>)}
-          </select>
-          <select className="input" value={rule} onChange={e => setQuery({ rule: e.target.value || undefined })} aria-label="Rule">
-            <option value="">Any rule</option>
-            {RULE_IDS.map(r => <option key={r} value={r}>{r}</option>)}
-          </select>
-          {(verdict !== 'all' || repo !== 'all' || rule || text) && (
-            <button className="btn ghost sm" onClick={() => { setText(''); setQuery({ verdict: undefined, repo: undefined, rule: undefined, q: undefined }); }}>
+          {rule && <span className="chip mono" title={`Only checks where ${rule} fired`}>{rule}</span>}
+          {(verdict !== 'all' || rule || text) && (
+            <button className="btn ghost sm" onClick={() => { setText(''); setQuery({ verdict: undefined, rule: undefined, q: undefined }); }}>
               <Icon name="x" size={13} />Clear
             </button>
           )}
@@ -77,7 +69,7 @@ export function ChecksPage() {
                       <th>Findings</th>
                       <th>Experiments</th>
                       <th>Source</th>
-                      <th style={{ textAlign: 'right' }}>Time</th>
+                      <th style={{ textAlign: 'right' }}>When</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -114,19 +106,18 @@ function CheckRow({ c }: { c: CheckSummary }) {
       </td>
       <td>
         <div className="row wrap" style={{ gap: 4 }}>
-          {c.rules.length === 0 ? <span className="faint small">none</span> : [...new Set(c.rules)].slice(0, 3).map(r => <span key={r} className="chip mono">{r}</span>)}
+          {[...new Set(c.rules)].slice(0, 3).map(r => <span key={r} className="chip mono">{r}</span>)}
           {new Set(c.rules).size > 3 && <span className="faint small">+{new Set(c.rules).size - 3}</span>}
         </div>
       </td>
       <td className="small muted" style={{ maxWidth: 220 }}>
-        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.affected.map(a => a.name).join(', ') || <span className="faint">none</span>}</div>
+        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.affected.map(a => a.name).join(', ')}</div>
       </td>
       <td className="small muted">
         <span className="row" style={{ gap: 8 }}><Icon name={SOURCE_ICON[c.source]} size={14} />{SOURCE_LABEL[c.source]}</span>
       </td>
       <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
         <TimeAgo iso={c.createdAt} className="small" />
-        <div className={cx('cell-sub', 'tnum')}>{duration(c.durationMs)}</div>
       </td>
     </tr>
   );

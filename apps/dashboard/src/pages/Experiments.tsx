@@ -3,14 +3,12 @@ import { AlertRow } from '../components/alerts.tsx';
 import { ArmSplit } from '../components/charts.tsx';
 import { Icon } from '../components/Icons.tsx';
 import type { IconName } from '../components/Icons.tsx';
-import { Card, Drawer, Empty, ErrorState, PageHead, Seg, Skeleton, StatusChip, Tabs, TimeAgo, VerdictChip, cx, useToast } from '../components/ui.tsx';
+import { Card, Drawer, Empty, ErrorState, PageHead, Skeleton, StatusChip, Tabs, TimeAgo, VerdictChip, cx, useToast } from '../components/ui.tsx';
 import { api } from '../lib/api.ts';
 import type { CodeReference, ExperimentStatus, ExperimentView } from '../lib/api.ts';
-import { dateShort, num, pct } from '../lib/format.ts';
+import { dateShort, num, pct, plural } from '../lib/format.ts';
 import { navigate, useAsync } from '../lib/hooks.ts';
 import { useLive } from '../lib/live.tsx';
-
-type Filter = 'all' | ExperimentStatus;
 
 const REF_META: Record<CodeReference['kind'], { label: string; icon: IconName; tone: string }> = {
   exposure: { label: 'Exposure', icon: 'eye', tone: 'v-brand' },
@@ -22,16 +20,14 @@ const REF_META: Record<CodeReference['kind'], { label: string; icon: IconName; t
 export function ExperimentsPage({ selected }: { selected?: string }) {
   const { tick, refreshHealth } = useLive();
   const list = useAsync(() => api.experiments(), [tick]);
-  const [filter, setFilter] = useState<Filter>('all');
   const [refreshing, setRefreshing] = useState(false);
   const toast = useToast();
 
   const order: Record<ExperimentStatus, number> = { running: 0, paused: 1, draft: 2, ended: 3 };
   const items = useMemo(
-    () => (list.data ?? []).filter(e => filter === 'all' || e.status === filter).sort((a, b) => order[a.status] - order[b.status] || b.checks - a.checks),
-    [list.data, filter], // eslint-disable-line react-hooks/exhaustive-deps
+    () => [...(list.data ?? [])].sort((a, b) => order[a.status] - order[b.status] || b.checks - a.checks),
+    [list.data], // eslint-disable-line react-hooks/exhaustive-deps
   );
-  const count = (s: ExperimentStatus) => (list.data ?? []).filter(e => e.status === s).length;
 
   const refresh = async () => {
     setRefreshing(true);
@@ -51,25 +47,17 @@ export function ExperimentsPage({ selected }: { selected?: string }) {
     <div className="fade-in">
       <PageHead
         title="Experiments"
-        sub="Every Flagsmith experiment Experiment Guard knows about, and the code each one depends on."
+        sub="The Flagsmith experiments Experiment Guard protects, running ones first. Open one to see the code it depends on."
         actions={(
-          <>
-            <Seg<Filter> value={filter} onChange={setFilter} options={[
-              { value: 'all', label: <>All <span className="faint">{list.data?.length ?? ''}</span></> },
-              { value: 'running', label: <>Running <span className="faint">{count('running')}</span></> },
-              { value: 'draft', label: 'Draft' },
-              { value: 'ended', label: 'Ended' },
-            ]} />
-            <button className="btn" onClick={refresh} disabled={refreshing}>
-              <Icon name="refresh" size={14} style={refreshing ? { animation: 'spin 1s linear infinite' } : undefined} />Refresh from Flagsmith
-            </button>
-          </>
+          <button className="btn" onClick={refresh} disabled={refreshing}>
+            <Icon name="refresh" size={14} style={refreshing ? { animation: 'spin 1s linear infinite' } : undefined} />Refresh from Flagsmith
+          </button>
         )}
       />
       {list.error && !list.data ? <ErrorState error={list.error} onRetry={list.reload} /> : !list.data ? (
         <div className="grid cols-3">{[0, 1, 2].map(i => <Skeleton key={i} h={260} style={{ borderRadius: 16 }} />)}</div>
       ) : items.length === 0 ? (
-        <div className="card"><Empty icon="flask" title="No experiments here">Create one in Flagsmith, or switch the filter.</Empty></div>
+        <div className="card"><Empty icon="flask" title="No experiments yet">Create one in Flagsmith, then refresh.</Empty></div>
       ) : (
         <div className="grid cols-3">
           {items.map(e => <ExperimentCard key={e.id} e={e} />)}
@@ -100,18 +88,15 @@ function ExperimentCard({ e }: { e: ExperimentView }) {
           {['control', ...e.variationKeys].map(k => <span key={k} className="chip mono">{k}</span>)}
         </div>
       )}
-      <div className="stat-row">
-        <div className="stat"><b>{num(e.checks)}</b><span>checks</span></div>
-        <div className="stat"><b style={{ color: e.blocks ? 'var(--block)' : undefined }}>{num(e.blocks)}</b><span>blocked</span></div>
-        <div className="stat"><b>{e.references.length}</b><span>code refs</span></div>
-      </div>
       <div className="row wrap" style={{ gap: 8 }}>
         {e.metricEvents.map(m => <span key={m} className="chip mono v-pass"><Icon name="target" size={11} />{m}</span>)}
         {e.health?.srmWarning && <span className="chip v-warn"><Icon name="alert" size={11} />Sample ratio mismatch</span>}
       </div>
       <div className="row small faint" style={{ justifyContent: 'space-between', marginTop: 'auto' }}>
-        <span>{e.repo ?? 'any repository'}</span>
-        {e.lastCheck ? <span className="row" style={{ gap: 8 }}><VerdictChip verdict={e.lastCheck.verdict} compact /><TimeAgo iso={e.lastCheck.at} /></span> : <span>no checks yet</span>}
+        <span>
+          {e.checks === 0 ? 'No checks yet' : <>{plural(e.checks, 'check')}{e.blocks > 0 && <>, <span style={{ color: 'var(--block)' }}>{num(e.blocks)} blocked</span></>}</>}
+        </span>
+        {e.lastCheck && <span className="row" style={{ gap: 8 }}><VerdictChip verdict={e.lastCheck.verdict} compact /><TimeAgo iso={e.lastCheck.at} /></span>}
       </div>
       </div>
     </div>

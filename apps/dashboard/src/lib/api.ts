@@ -1,6 +1,6 @@
 import type {
   ActivityItem, CheckRecord, CheckSummary, ClientConfig, DuelView, ExperimentView, FlagsmithAlert, Health, Overview, RuleId, RuleView,
-  ScenarioView, Settings, SeveritySetting, Verdict,
+  ScenarioView, SeveritySetting, Verdict,
 } from '../../../server/src/api-types.ts';
 
 export type * from '../../../server/src/api-types.ts';
@@ -74,8 +74,6 @@ export const api = {
   runDiff: (diff: string, title?: string) => request<CheckRecord>('POST', '/api/checks', { diff, title }),
   rules: () => request<RuleView[]>('GET', '/api/rules'),
   setRule: (id: RuleId, severity: SeveritySetting) => request<RuleView>('PUT', `/api/rules/${id}`, { severity }),
-  settings: () => request<Settings>('GET', '/api/settings'),
-  saveSettings: (patch: Partial<Settings>) => request<Settings>('PUT', '/api/settings', patch),
   scenarios: () => request<ScenarioView[]>('GET', '/api/scenarios'),
   activity: () => request<ActivityItem[]>('GET', '/api/activity'),
   alerts: (experiment?: string | number) => request<FlagsmithAlert[]>('GET', `/api/alerts${qs({ experiment: experiment === undefined ? undefined : String(experiment), limit: 50 })}`),

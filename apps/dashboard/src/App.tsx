@@ -79,7 +79,7 @@ export function App() {
     case 'playground': page = <PlaygroundPage />; break;
     case 'duel': page = <DuelPage />; break;
     case 'rules': page = <RulesPage focus={route.query.get('focus') ?? undefined} />; break;
-    case 'integrations': page = <IntegrationsPage theme={theme} setTheme={setTheme} />; break;
+    case 'integrations': page = <IntegrationsPage />; break;
     default: page = <div className="card"><div className="empty"><b>Page not found</b><a className="link" href="#/">Back to overview</a></div></div>;
   }
 
@@ -125,16 +125,15 @@ function NavLinks({ active }: { active: string }) {
   );
 }
 
+/** Says nothing while everything works. It appears when the server or Flagsmith cannot be reached. */
 function Status() {
-  const { connected, health, healthError } = useLive();
-  const fs = health?.flagsmith;
-  // The details (data source, environment, running experiments) stay in the tooltip.
-  const detail = fs ? `${fs.source === 'demo' ? 'Demo data' : fs.source === 'error' ? 'Flagsmith error' : 'Flagsmith'}${fs.environment ? ` · ${fs.environment}` : ''} · ${fs.running} running experiments` : '';
-  const online = connected && !healthError && fs?.source !== 'error';
+  const { health, healthError } = useLive();
+  const down = healthError ? 'Offline' : health?.flagsmith.source === 'error' ? 'Flagsmith unreachable' : null;
+  if (!down) return null;
   return (
-    <span className="status" title={[connected ? 'Receiving live events' : 'Reconnecting to the event stream', detail].filter(Boolean).join('\n')}>
-      <span className={cx('pulse', !online && 'off')} />
-      <b>{healthError ? 'Offline' : !health ? 'Connecting…' : online ? 'Online' : fs?.source === 'error' ? 'Flagsmith unreachable' : 'Reconnecting…'}</b>
+    <span className="status" role="status" title={healthError ?? health?.flagsmith.error ?? undefined}>
+      <span className="pulse off" />
+      <b>{down}</b>
     </span>
   );
 }

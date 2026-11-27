@@ -38,12 +38,6 @@ export const dateTime = (iso: string) =>
 export const dayLabel = (ymd: string) =>
   new Date(`${ymd}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 
-export function delta(cur: number, prev: number): { pct: number; dir: 'up' | 'down' | 'flat' } {
-  if (prev === 0) return { pct: cur > 0 ? 1 : 0, dir: cur > 0 ? 'up' : 'flat' };
-  const d = (cur - prev) / prev;
-  return { pct: d, dir: Math.abs(d) < 0.005 ? 'flat' : d > 0 ? 'up' : 'down' };
-}
-
 export const VERDICT_LABEL: Record<Verdict, string> = {
   pass: 'Passed',
   warn: 'Warning',

@@ -157,24 +157,3 @@ export function ArmSplit({ arms }: { arms: Array<{ key: string; identities: numb
     </div>
   );
 }
-
-export function HBars({ rows, onSelect }: { rows: Array<{ key: string; label: string; value: number; color: string; hint?: string }>; onSelect?: (key: string) => void }) {
-  const max = Math.max(1, ...rows.map(r => r.value));
-  return (
-    <div>
-      {rows.map(r => (
-        <div
-          key={r.key}
-          className="hbar"
-          title={r.hint}
-          style={{ cursor: onSelect ? 'pointer' : undefined }}
-          onClick={() => onSelect?.(r.key)}
-        >
-          <span className="mono small" style={{ color: 'var(--text-2)' }}>{r.label}</span>
-          <div className="hbar-track"><div className="hbar-fill" style={{ width: `${(r.value / max) * 100}%`, background: r.color }} /></div>
-          <span className="tnum small" style={{ textAlign: 'right', fontWeight: 600 }}>{num(r.value)}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
