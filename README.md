@@ -184,7 +184,7 @@ Each agent forecast a narrow win for its own screen, and both were far too low a
 
 A reason is what a model says about its own choice. It is a lead, not a measurement, and the readers are the same model family as the writers.
 
-**The run.** 1,020 personas went through the dashboard in 35 minutes (seed `mwzeikie`): 1,646 calls to Claude Haiku, none failed, 2.49 million tokens in and 0.43 million out. Flagsmith counted 1,015 of them. The log shows the dashboard gave the other five today's screen and sent no exposure, which is what it does when Flagsmith's answer takes longer than the 2.5 seconds it waits. None of the five ran a check, and Flagsmith rightly left them out. For every version the script's own count of visitors who ran a check is the same as Flagsmith's. The run's summary is `duels/first-screen/traffic/summary.json`.
+**The run.** 1,020 personas went through the dashboard in 35 minutes (seed `mwzeikie`): 1,646 calls to Claude Haiku, none failed, 2.49 million tokens in and 0.43 million out. Flagsmith counted 1,015 of them. The log shows the dashboard gave the other five today's screen and sent no exposure, which is what it does when Flagsmith's answer takes longer than the 2.5 seconds it waits. None of the five ran a check, and Flagsmith rightly left them out. For every version the script's own count of visitors who ran a check is the same as Flagsmith's. The run's summary is `duels/first-screen/traffic/summary.json`. The order the visits finished in, one character per counted visitor, is `duels/first-screen/traffic/replay.json`. The landing page and the dashboard's overview replay the experiment from that file, one dot per visitor.
 
 **The screens as the visitors got them.** The dashboard was restyled on 28 November 2026, after the verdict was read. The agents' screens kept every word and every control. The overview did not: it was simplified as well as restyled, so the control of this duel is the overview as it was on the day, shown here. The pictures of the agents' screens above are from the day too.
 
@@ -571,7 +571,7 @@ Before the duel, Oakenshield ran a simpler test on the same screen, with two ver
 |---|---|
 | ![The overview, which the control version opens on](docs/images/overview.png) | ![The guided screen, which the try_it version opens on](docs/images/guided.png) |
 
-The overview is this test's control, and it was simplified in the restyle of 28 November 2026, while the test was running. The pictures show both screens after it. Whatever Production counts from that redeploy on is about the new overview.
+The overview is this test's control, and it changed twice on 28 November 2026, while the test was running. A restyle simplified it. A second pass put the duel's replay at the top and cut the rest down to one section about pull requests. The pictures show both screens after the second change. Whatever Production counts after each redeploy is about the overview as it was then.
 
 | | |
 |---|---|
