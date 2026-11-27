@@ -271,6 +271,8 @@ No metric shows a winner, which is right when both versions behave the same. The
 
 **Scripted run (simulated).** Not finished. The numbers go here once it stops.
 
+One thing changed while it ran, on 27 November at 16:15 UTC, with 3 batches sent and no result read. GitHub had started the half-hourly schedule only twice in 17 hours, and one run sent nothing because Chrome hung as it started on the runner. Since then each run starts the next one itself, about half an hour later, and a Chrome start that hangs is tried again. The batch size, the number of batches, the visitor model, the stop time and the decision rule are as planned.
+
 **Production (real visitors).** Running.
 
 ## MCP for coding agents

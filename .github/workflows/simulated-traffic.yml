@@ -7,6 +7,10 @@
 #
 # It is off until the repository variable SIMULATION_FLAGSMITH_ENVIRONMENT holds that environment's
 # client-side key, and it stops for good after BATCHES completed runs or at STOP_AT.
+#
+# GitHub started the half-hourly schedule only twice in the run's first 17 hours, so each run now
+# starts the next one itself, about half an hour later. The schedule stays as a way back in if
+# that chain breaks. One run at a time: a run that is waiting holds back any other.
 name: Simulated traffic
 on:
   schedule:
@@ -31,6 +35,8 @@ jobs:
     if: vars.SIMULATION_FLAGSMITH_ENVIRONMENT != ''
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      send: ${{ steps.plan.outputs.send }}
     steps:
       - name: Decide whether another batch is due
         id: plan
@@ -66,3 +72,31 @@ jobs:
       - name: Send the scripted visitors
         if: steps.plan.outputs.send == 'true'
         run: node scripts/traffic/visitors.mjs --environment "${{ vars.SIMULATION_FLAGSMITH_ENVIRONMENT }}" --visitors "$BATCH"
+
+  next:
+    needs: visitors
+    if: always() && (needs.visitors.result == 'failure' || needs.visitors.outputs.send == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    continue-on-error: true
+    permissions:
+      actions: write
+    steps:
+      - name: Wait, then start the next run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ needs.visitors.result }}
+        run: |
+          runs="repos/$GITHUB_REPOSITORY/actions/workflows/simulated-traffic.yml/runs?per_page=20"
+          if [ "$RESULT" = success ]; then
+            sleep 25m
+          else
+            # A failed run sent nothing, so it is tried again soon, unless the three before it failed too.
+            failed=$(gh api "$runs" --jq '[.workflow_runs[] | select(.conclusion == "success" or .conclusion == "failure")][:3] | map(select(.conclusion == "failure")) | length')
+            if [ "$failed" -ge 3 ]; then
+              echo "Four runs in a row have failed. Not trying again." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 2m
+          fi
+          gh workflow run simulated-traffic.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
