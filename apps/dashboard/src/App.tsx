@@ -1,30 +1,33 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { KeyboardEvent } from 'react';
+import type { KeyboardEvent, MouseEvent } from 'react';
 import { Icon, Logo } from './components/Icons.tsx';
 import type { IconName } from './components/Icons.tsx';
 import { AlertRow } from './components/alerts.tsx';
-import { HeroArt } from './components/art.tsx';
 import { HeroSlotProvider, Kbd, VerdictChip, cx, useToast } from './components/ui.tsx';
 import { api } from './lib/api.ts';
 import type { CheckSummary, ExperimentView, RuleView, ScenarioView, Verdict } from './lib/api.ts';
+import { parseScreen } from '../../../packages/duel/src/screen.ts';
 import { useExperiment } from './lib/experiments.ts';
 import { navigate, useKey, useLocalStorage, useRoute } from './lib/hooks.ts';
 import { useLive } from './lib/live.tsx';
 import { CheckDetailPage } from './pages/CheckDetail.tsx';
 import { ChecksPage } from './pages/Checks.tsx';
 import { ExperimentsPage } from './pages/Experiments.tsx';
+import { DuelPage } from './pages/Duel.tsx';
+import { FirstScreen } from './pages/FirstScreen.tsx';
 import { IntegrationsPage } from './pages/Integrations.tsx';
 import { OverviewPage } from './pages/Overview.tsx';
 import { PlaygroundPage } from './pages/Playground.tsx';
 import { RulesPage } from './pages/Rules.tsx';
 
-const NAV: Array<{ path: string; label: string; icon: IconName; group: 'Monitor' | 'Configure' }> = [
-  { path: '/', label: 'Overview', icon: 'grid', group: 'Monitor' },
-  { path: '/experiments', label: 'Experiments', icon: 'flask', group: 'Monitor' },
-  { path: '/checks', label: 'Checks', icon: 'pr', group: 'Monitor' },
-  { path: '/playground', label: 'Playground', icon: 'play', group: 'Monitor' },
-  { path: '/rules', label: 'Rules', icon: 'sliders', group: 'Configure' },
-  { path: '/integrations', label: 'Set up', icon: 'plug', group: 'Configure' },
+const NAV: Array<{ path: string; label: string; icon: IconName }> = [
+  { path: '/', label: 'Overview', icon: 'grid' },
+  { path: '/duel', label: 'Duel', icon: 'swap' },
+  { path: '/experiments', label: 'Experiments', icon: 'flask' },
+  { path: '/checks', label: 'Checks', icon: 'pr' },
+  { path: '/playground', label: 'Playground', icon: 'play' },
+  { path: '/rules', label: 'Rules', icon: 'sliders' },
+  { path: '/integrations', label: 'Set up', icon: 'plug' },
 ];
 
 export type Theme = 'dark' | 'light';
@@ -34,7 +37,7 @@ const readTop = () => window.location.hash.replace(/^#\/?/, '').split(/[/?]/)[0]
 
 export function App() {
   const route = useRoute();
-  const [theme, setTheme] = useLocalStorage<Theme>('oak-theme', (document.documentElement.dataset.theme as Theme) ?? 'dark');
+  const [theme, setTheme] = useLocalStorage<Theme>('oak-theme', (document.documentElement.dataset.theme as Theme) ?? 'light');
   const [palette, setPalette] = useState(false);
   const [slot, setSlot] = useState<HTMLDivElement | null>(null);
 
@@ -49,11 +52,16 @@ export function App() {
   const top = route.parts[0] ?? '';
   const active = `/${top}`;
 
-  // A/B test (docs/experiment.md): what the demo opens on. Control shows the overview; the try_it
+  // A/B test (README): what the demo opens on. Control shows the overview; the try_it
   // arm opens the guided Playground with one broken pull request. Only visitors who arrive on the
   // home page are entered; a link to any other page is honoured and not part of the test.
   const [landedHome] = useState(() => top === '');
-  const start = useExperiment('demo_start', { enroll: landedHome });
+  // The duel (README, "The duel"): the first screen is whatever the first_screen flag serves.
+  // While a duel runs, each agent's version is the value of its variation; afterwards the flag
+  // serves the winner to everyone. Its control value is not a screen, and then demo_start decides.
+  const duel = useExperiment('first_screen', { enroll: landedHome });
+  const screen = useMemo(() => parseScreen(duel.value), [duel.value]);
+  const start = useExperiment('demo_start', { enroll: landedHome && duel.ready && !screen });
   const redirected = useRef(false);
   useEffect(() => {
     if (start.variant === 'try_it' && !redirected.current && (readTop() === '')) {
@@ -65,65 +73,66 @@ export function App() {
   let page;
   switch (top) {
     // Wait for the assignment (at most a moment) so try_it visitors never see the overview first.
-    case '': page = start.ready ? <OverviewPage /> : null; break;
+    case '': page = !duel.ready ? null : screen ? <FirstScreen screen={screen} /> : start.ready ? <OverviewPage /> : null; break;
     case 'experiments': page = <ExperimentsPage selected={route.parts[1]} />; break;
     case 'checks': page = route.parts[1] ? <CheckDetailPage id={route.parts[1]} /> : <ChecksPage />; break;
     case 'playground': page = <PlaygroundPage />; break;
+    case 'duel': page = <DuelPage />; break;
     case 'rules': page = <RulesPage focus={route.query.get('focus') ?? undefined} />; break;
     case 'integrations': page = <IntegrationsPage theme={theme} setTheme={setTheme} />; break;
     default: page = <div className="card"><div className="empty"><b>Page not found</b><a className="link" href="#/">Back to overview</a></div></div>;
   }
 
+  const skip = (e: MouseEvent<HTMLAnchorElement>) => { e.preventDefault(); document.getElementById('main')?.focus(); };
+
   return (
     <div className="app">
-      <header className="hero">
-        <div className="hero-bg"><HeroArt /></div>
-        <div className="hero-nav">
-          <a className="brand" href="#/">
-            <Logo size={38} light />
-            <div>Oakenshield<small>Experiment Guard</small></div>
-          </a>
-          <NavPills active={active} />
-          <div className="hero-right">
-            <StatusPill />
-            <button className="round" title="Search (⌘K)" aria-label="Search" onClick={() => setPalette(true)}><Icon name="search" size={17} /></button>
-            <button className="round" title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} aria-label="Toggle theme" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-              <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={17} />
-            </button>
-            <Bell />
-            <span className="avatar-me" title="You"><Icon name="user" size={18} strokeWidth={2} /></span>
-          </div>
+      {/* Routes live in the hash, so the skip link moves focus itself. */}
+      <a className="skip" href="#main" onClick={skip}>Skip to content</a>
+      <header className="topbar">
+        <a className="brand" href="#/" aria-label="Oakenshield, overview">
+          <Logo size={24} />
+          <span>Oakenshield</span>
+        </a>
+        <NavLinks active={active} />
+        <div className="topbar-right">
+          <Status />
+          <button className="round" title="Search (⌘K)" aria-label="Search" onClick={() => setPalette(true)}><Icon name="search" size={18} /></button>
+          <button className="round" title={`Switch to the ${theme === 'dark' ? 'light' : 'dark'} theme`} aria-label="Switch theme" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+            <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />
+          </button>
+          <Bell />
         </div>
-        <div ref={setSlot} />
       </header>
+      <div className="page-slot" ref={setSlot} />
       <HeroSlotProvider value={slot}>
-        <main className="content" key={top}>{page}</main>
+        <main id="main" tabIndex={-1} className="content" key={top}>{page}</main>
       </HeroSlotProvider>
       {palette && <CommandPalette onClose={() => setPalette(false)} toggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')} />}
     </div>
   );
 }
 
-function NavPills({ active }: { active: string }) {
+function NavLinks({ active }: { active: string }) {
   return (
     <nav className="nav" aria-label="Main">
       {NAV.map(n => (
-        <a key={n.path} href={`#${n.path}`} className={cx('nav-pill', active === n.path && 'on')} data-label={n.label} aria-label={n.label} aria-current={active === n.path ? 'page' : undefined}>
-          <Icon name={n.icon} size={18} />
+        <a key={n.path} href={`#${n.path}`} className={cx('nav-link', active === n.path && 'on')} aria-current={active === n.path ? 'page' : undefined}>
+          {n.label}
         </a>
       ))}
     </nav>
   );
 }
 
-function StatusPill() {
+function Status() {
   const { connected, health, healthError } = useLive();
   const fs = health?.flagsmith;
   // The details (data source, environment, running experiments) stay in the tooltip.
   const detail = fs ? `${fs.source === 'demo' ? 'Demo data' : fs.source === 'error' ? 'Flagsmith error' : 'Flagsmith'}${fs.environment ? ` · ${fs.environment}` : ''} · ${fs.running} running experiments` : '';
   const online = connected && !healthError && fs?.source !== 'error';
   return (
-    <span className="status-pill" title={[connected ? 'Receiving live events' : 'Reconnecting to the event stream', detail].filter(Boolean).join('\n')}>
+    <span className="status" title={[connected ? 'Receiving live events' : 'Reconnecting to the event stream', detail].filter(Boolean).join('\n')}>
       <span className={cx('pulse', !online && 'off')} />
       <b>{healthError ? 'Offline' : !health ? 'Connecting…' : online ? 'Online' : fs?.source === 'error' ? 'Flagsmith unreachable' : 'Reconnecting…'}</b>
     </span>
@@ -136,7 +145,7 @@ function Bell() {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
-    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const close = (e: globalThis.MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
     document.addEventListener('mousedown', close);
     return () => document.removeEventListener('mousedown', close);
   }, [open]);
@@ -145,12 +154,12 @@ function Bell() {
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button className="round" title={unread ? `${unread} new Flagsmith alert${unread === 1 ? '' : 's'}` : 'Flagsmith alerts'} aria-label="Flagsmith alerts" aria-expanded={open} onClick={toggle}>
-        <Icon name="bell" size={17} />
+        <Icon name="bell" size={18} />
         {unread > 0 && <span className="bell-badge">{unread > 9 ? '9+' : unread}</span>}
       </button>
       {open && (
         <div className="popover" role="dialog" aria-label="Flagsmith alerts">
-          <div className="row" style={{ justifyContent: 'space-between', padding: '14px 16px 10px' }}>
+          <div className="row" style={{ justifyContent: 'space-between', padding: '16px 16px 12px' }}>
             <div>
               <div style={{ fontWeight: 600 }}>Flagsmith alerts</div>
               <div className="small faint">Changes to running experiments, and the pull requests they affect</div>
@@ -158,13 +167,13 @@ function Bell() {
           </div>
           <div style={{ maxHeight: 420, overflow: 'auto', borderTop: '1px solid var(--border)' }}>
             {alerts.length === 0 ? (
-              <div className="empty small" style={{ padding: 28 }}>
+              <div className="empty small" style={{ padding: 24 }}>
                 No alerts yet. Add the webhook in Flagsmith and changes to running experiments show up here.
               </div>
             ) : alerts.slice(0, 20).map(a => <AlertRow key={a.id} a={a} compact onOpen={() => setOpen(false)} />)}
           </div>
-          <a className="row small" href="#/integrations" onClick={() => setOpen(false)} style={{ padding: '10px 16px', borderTop: '1px solid var(--border)', color: 'var(--brand-2)' }}>
-            <Icon name="plug" size={13} />Set up Flagsmith webhooks
+          <a className="row small" href="#/integrations" onClick={() => setOpen(false)} style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', color: 'var(--brand-2)' }}>
+            <Icon name="plug" size={14} />Set up Flagsmith webhooks
           </a>
         </div>
       )}
@@ -244,8 +253,8 @@ function CommandPalette({ onClose, toggleTheme }: { onClose: () => void; toggleT
       <div className="overlay" style={{ zIndex: 60 }} onClick={onClose} />
       <div className="palette" role="dialog" aria-label="Command palette" onKeyDown={onKey}>
         <div style={{ position: 'relative' }}>
-          <span style={{ position: 'absolute', left: 17, top: 17, color: 'var(--text-3)' }}><Icon name="search" size={17} /></span>
-          <input autoFocus className="palette-input" placeholder="Type a command, experiment, rule or PR…" value={q} onChange={e => setQ(e.target.value)} />
+          <span style={{ position: 'absolute', left: 16, top: 0, bottom: 0, display: 'grid', placeItems: 'center', color: 'var(--text-3)' }}><Icon name="search" size={18} /></span>
+          <input autoFocus className="palette-input" placeholder="Search pages, experiments, rules and checks" aria-label="Search" value={q} onChange={e => setQ(e.target.value)} />
         </div>
         <div className="palette-list" ref={listRef}>
           {items.length === 0 && <div className="empty small">No matches for “{q}”.</div>}
@@ -265,7 +274,7 @@ function CommandPalette({ onClose, toggleTheme }: { onClose: () => void; toggleT
             );
           })}
         </div>
-        <div className="row small faint" style={{ padding: '8px 14px', borderTop: '1px solid var(--border)', gap: 14 }}>
+        <div className="row small faint" style={{ padding: '8px 16px', borderTop: '1px solid var(--border)', gap: 16 }}>
           <span className="row"><Kbd>↑</Kbd><Kbd>↓</Kbd>navigate</span>
           <span className="row"><Kbd>↵</Kbd>open</span>
           <span className="row"><Kbd>esc</Kbd>close</span>

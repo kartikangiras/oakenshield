@@ -84,11 +84,11 @@ export function Icon({ name, size = 16, strokeWidth = 1.75, ...rest }: { name: I
   );
 }
 
-export function Logo({ size = 30, light = false }: { size?: number; light?: boolean }) {
-  // The Oakenshield mark. White on the blue hero; brand blue everywhere else.
+export function Logo({ size = 24 }: { size?: number }) {
+  // The Oakenshield mark, in the accent colour.
   return (
-    <svg width={size} height={size} viewBox={MARK_VIEWBOX} role="img" aria-label="Oakenshield">
-      <path d={MARK_PATH} fillRule="evenodd" fill={light ? '#fff' : 'var(--brand-1)'} />
+    <svg width={size} height={size} viewBox={MARK_VIEWBOX} aria-hidden="true">
+      <path d={MARK_PATH} fillRule="evenodd" fill="var(--accent)" />
     </svg>
   );
 }

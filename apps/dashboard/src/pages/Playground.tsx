@@ -131,7 +131,7 @@ export function PlaygroundPage() {
                 )}
               </div>
             ) : (
-              <div className="stack" style={{ padding: 14, gap: 10 }}>
+              <div className="stack" style={{ padding: 16, gap: 12 }}>
                 <label className="small muted">Title
                   <input className="input" style={{ width: '100%', marginTop: 4 }} value={title} onChange={e => setTitle(e.target.value)} />
                 </label>
@@ -188,7 +188,7 @@ function Guided({ s, total, running, result, error, onRun, onBrowse }: {
         <div className={cx(running && 'scan')} style={{ borderRadius: 12 }}>
           <DiffView diff={s.diff} findings={result?.findings} />
         </div>
-        <div className="row wrap small muted" style={{ gap: 6, marginTop: 14 }}>
+        <div className="row wrap small muted" style={{ gap: 8, marginTop: 16 }}>
           <span>Want more?</span>
           <button type="button" className="btn ghost sm" onClick={onBrowse}><Icon name="layers" size={13} />Browse all {total} scenarios or paste your own diff</button>
         </div>
@@ -209,7 +209,7 @@ function ScenarioItem({ s, on }: { s: ScenarioView; on: boolean }) {
     <div className={cx('scenario', on && 'on')} onClick={() => setQuery({ scenario: s.id })}>
       <span className="scenario-title">{s.title}</span>
       <span className="row" style={{ gap: 4 }}>
-        {s.expect.rules[0] && <span className="chip mono" style={{ height: 20, fontSize: 11 }}>{s.expect.rules[0]}</span>}
+        {s.expect.rules[0] && <span className="chip mono" style={{ height: 20, fontSize: 12 }}>{s.expect.rules[0]}</span>}
         <VerdictChip verdict={s.expect.verdict} compact />
       </span>
       <span className="scenario-desc">{s.description}</span>
@@ -217,16 +217,16 @@ function ScenarioItem({ s, on }: { s: ScenarioView; on: boolean }) {
   );
 }
 
-function RunButton({ running, onClick, disabled }: { running: boolean; onClick: () => void; disabled?: boolean }) {
+export function RunButton({ running, onClick, disabled, label = 'Run Experiment Guard' }: { running: boolean; onClick: () => void; disabled?: boolean; label?: string }) {
   return (
     <button className="btn primary" onClick={onClick} disabled={running || disabled}>
       <Icon name={running ? 'refresh' : 'shieldCheck'} size={15} style={running ? { animation: 'spin 0.9s linear infinite' } : undefined} />
-      {running ? 'Scanning…' : 'Run Experiment Guard'}
+      {running ? 'Scanning…' : label}
     </button>
   );
 }
 
-function Result({ r, expected }: { r: CheckRecord; expected?: ScenarioView }) {
+export function Result({ r, expected }: { r: CheckRecord; expected?: ScenarioView }) {
   const [tab, setTab] = useState<ResultTab>('findings');
   const ok = expected ? matches(expected, r) : undefined;
   const v = r.verdict === 'overridden' ? 'warn' : r.verdict;
@@ -271,8 +271,8 @@ function Matrix({ rows, onClose }: { rows: MatrixRow[]; onClose: () => void }) {
       actions={<button className="btn ghost icon sm" onClick={onClose} aria-label="Close"><Icon name="x" /></button>}
       pad={false}
     >
-      <div style={{ height: 3, background: 'var(--surface-3)', margin: '12px 20px 0', borderRadius: 3, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${(done / rows.length) * 100}%`, background: 'linear-gradient(90deg, var(--brand-1), var(--brand-2))', transition: 'width .2s' }} />
+      <div style={{ height: 3, background: 'var(--surface-3)', margin: '12px 24px 0', borderRadius: 4, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${(done / rows.length) * 100}%`, background: 'var(--brand-1)', transition: 'width 400ms cubic-bezier(0.32, 0.72, 0, 1)' }} />
       </div>
       <div className="matrix" style={{ marginTop: 8 }}>
         <div className="faint small" style={{ fontWeight: 600 }}>Scenario</div><div className="faint small" style={{ fontWeight: 600 }}>Expected</div><div className="faint small" style={{ fontWeight: 600 }}>Actual</div><div />
@@ -281,8 +281,8 @@ function Matrix({ rows, onClose }: { rows: MatrixRow[]; onClose: () => void }) {
           return (
             <div key={r.s.id} className="mrow" onClick={() => r.got && navigate(`/checks/${r.got.id}`)}>
               <div style={{ minWidth: 0 }}><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.s.title}</span></div>
-              <div><VerdictChip verdict={r.s.expect.verdict} compact />{r.s.expect.rules[0] && <span className="mono small faint" style={{ marginLeft: 6 }}>{r.s.expect.rules[0]}</span>}</div>
-              <div>{r.got ? <><VerdictChip verdict={r.got.verdict} compact /><span className="mono small faint" style={{ marginLeft: 6 }}>{r.got.findings[0]?.rule ?? ''}</span></> : r.error ? <span className="chip v-block">error</span> : <span className="skeleton" style={{ width: 50, height: 18 }} />}</div>
+              <div><VerdictChip verdict={r.s.expect.verdict} compact />{r.s.expect.rules[0] && <span className="mono small faint" style={{ marginLeft: 8 }}>{r.s.expect.rules[0]}</span>}</div>
+              <div>{r.got ? <><VerdictChip verdict={r.got.verdict} compact /><span className="mono small faint" style={{ marginLeft: 8 }}>{r.got.findings[0]?.rule ?? ''}</span></> : r.error ? <span className="chip v-block">error</span> : <span className="skeleton" style={{ width: 50, height: 20 }} />}</div>
               <div>{good === undefined ? null : <Icon name={good ? 'check' : 'x'} size={16} strokeWidth={2.4} style={{ color: good ? 'var(--pass)' : 'var(--block)' }} />}</div>
             </div>
           );

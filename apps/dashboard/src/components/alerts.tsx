@@ -33,8 +33,8 @@ export function AlertRow({ a, compact = false, onOpen }: { a: FlagsmithAlert; co
       <div style={{ minWidth: 0 }}>
         <div className="feed-title" style={{ whiteSpace: 'normal' }}>{a.title}</div>
         <div className={cx("small muted", compact && "clamp-2")} style={{ marginTop: 2 }}>{a.detail}</div>
-        <div className="row small faint" style={{ marginTop: 4, gap: 6 }}>
-          <span className="chip" style={{ height: 18, fontSize: 11 }}>{a.origin === 'simulated' ? 'Simulated' : a.eventType ?? 'Flagsmith'}</span>
+        <div className="row small faint" style={{ marginTop: 4, gap: 8 }}>
+          <span className="chip" style={{ height: 20, fontSize: 12 }}>{a.origin === 'simulated' ? 'Simulated' : a.eventType ?? 'Flagsmith'}</span>
           {a.flagKey && <span className="mono">{a.flagKey}</span>}
         </div>
       </div>

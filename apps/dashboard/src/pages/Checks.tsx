@@ -32,7 +32,7 @@ export function ChecksPage() {
     <div className="fade-in">
       <PageHead title="Checks" sub="Every Experiment Guard run: pull requests from CI, local CLI runs, coding agents over MCP and the playground." />
       <div className="card" style={{ marginBottom: 16, padding: 12 }}>
-        <div className="row wrap" style={{ gap: 10 }}>
+        <div className="row wrap" style={{ gap: 12 }}>
           <div className="input-icon" style={{ flex: 1, minWidth: 240 }}>
             <Icon name="search" size={15} />
             <input className="input" placeholder="Search title, author, experiment, rule or file…" value={text} onChange={e => setText(e.target.value)} />
@@ -122,7 +122,7 @@ function CheckRow({ c }: { c: CheckSummary }) {
         <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.affected.map(a => a.name).join(', ') || <span className="faint">none</span>}</div>
       </td>
       <td className="small muted">
-        <span className="row" style={{ gap: 6 }}><Icon name={SOURCE_ICON[c.source]} size={14} />{SOURCE_LABEL[c.source]}</span>
+        <span className="row" style={{ gap: 8 }}><Icon name={SOURCE_ICON[c.source]} size={14} />{SOURCE_LABEL[c.source]}</span>
       </td>
       <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
         <TimeAgo iso={c.createdAt} className="small" />

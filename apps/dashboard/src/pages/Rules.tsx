@@ -60,7 +60,7 @@ export function RulesPage({ focus }: { focus?: string }) {
       />
       {rules.error && !rules.data ? <ErrorState error={rules.error} onRetry={rules.reload} /> : (
         <Card pad={false}>
-          <div className="rule-row faint small" style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: 11 }}>
+          <div className="rule-row faint small" style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: 12 }}>
             <span>Rule</span><span>What it catches</span><span className="hide-sm">Category</span><span className="hide-sm">Fired · 30 days</span><span>Severity</span>
           </div>
           {!rules.data ? <div className="card-pad stack">{Array.from({ length: 6 }, (_, i) => <Skeleton key={i} h={42} />)}</div> : rules.data.map(r => {
@@ -68,18 +68,18 @@ export function RulesPage({ focus }: { focus?: string }) {
             return (
               <div key={r.id} ref={focus === r.id ? focusRef : undefined} style={focus === r.id ? { background: 'var(--brand-soft)' } : undefined}>
                 <div className="rule-row" style={{ cursor: 'pointer' }} onClick={() => setOpen(isOpen ? null : r.id)}>
-                  <span className="row" style={{ gap: 6 }}>
+                  <span className="row" style={{ gap: 8 }}>
                     <Icon name={isOpen ? 'chevronDown' : 'chevronRight'} size={14} style={{ color: 'var(--text-3)' }} />
                     <span className="mono" style={{ fontWeight: 600 }}>{r.id}</span>
                   </span>
                   <span style={{ minWidth: 0 }}>
                     <div style={{ fontWeight: 500 }}>{r.title}</div>
-                    <div className="row small faint" style={{ gap: 6, marginTop: 2 }}>
+                    <div className="row small faint" style={{ gap: 8, marginTop: 2 }}>
                       {r.deterministic
                         ? <span className="row" style={{ gap: 4 }}><Icon name="lock" size={12} />deterministic</span>
                         : <span className="row" style={{ gap: 4 }}><Icon name="eye" size={12} />heuristic</span>}
                       <span>· default {r.defaultSeverity}</span>
-                      {r.severity !== r.defaultSeverity && <span className="chip v-brand" style={{ height: 18, fontSize: 11 }}>changed</span>}
+                      {r.severity !== r.defaultSeverity && <span className="chip v-brand" style={{ height: 20, fontSize: 12 }}>changed</span>}
                     </div>
                   </span>
                   <span className="small muted hide-sm">{CATEGORY_LABEL[r.category] ?? r.category}</span>
@@ -118,7 +118,7 @@ export function RulesPage({ focus }: { focus?: string }) {
           })}
         </Card>
       )}
-      <div className="small faint row" style={{ marginTop: 14, gap: 6 }}>
+      <div className="small faint row" style={{ marginTop: 16, gap: 8 }}>
         <Icon name="info" size={14} />
         Silence one line in code with <code className="mono">// experiment-guard-ignore EG006: reason</code>. A reason is required.
       </div>

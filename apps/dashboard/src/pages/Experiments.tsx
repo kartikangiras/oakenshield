@@ -96,7 +96,7 @@ function ExperimentCard({ e }: { e: ExperimentView }) {
         {e.hypothesis && <div className="small muted" style={{ marginTop: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{e.hypothesis}</div>}
       </div>
       {e.arms && e.arms.length > 0 ? <ArmSplit arms={e.arms} /> : (
-        <div className="row wrap" style={{ gap: 6 }}>
+        <div className="row wrap" style={{ gap: 8 }}>
           {['control', ...e.variationKeys].map(k => <span key={k} className="chip mono">{k}</span>)}
         </div>
       )}
@@ -105,13 +105,13 @@ function ExperimentCard({ e }: { e: ExperimentView }) {
         <div className="stat"><b style={{ color: e.blocks ? 'var(--block)' : undefined }}>{num(e.blocks)}</b><span>blocked</span></div>
         <div className="stat"><b>{e.references.length}</b><span>code refs</span></div>
       </div>
-      <div className="row wrap" style={{ gap: 6 }}>
+      <div className="row wrap" style={{ gap: 8 }}>
         {e.metricEvents.map(m => <span key={m} className="chip mono v-pass"><Icon name="target" size={11} />{m}</span>)}
         {e.health?.srmWarning && <span className="chip v-warn"><Icon name="alert" size={11} />Sample ratio mismatch</span>}
       </div>
       <div className="row small faint" style={{ justifyContent: 'space-between', marginTop: 'auto' }}>
         <span>{e.repo ?? 'any repository'}</span>
-        {e.lastCheck ? <span className="row" style={{ gap: 6 }}><VerdictChip verdict={e.lastCheck.verdict} compact /><TimeAgo iso={e.lastCheck.at} /></span> : <span>no checks yet</span>}
+        {e.lastCheck ? <span className="row" style={{ gap: 8 }}><VerdictChip verdict={e.lastCheck.verdict} compact /><TimeAgo iso={e.lastCheck.at} /></span> : <span>no checks yet</span>}
       </div>
       </div>
     </div>
@@ -156,10 +156,10 @@ function ExperimentDetail({ id }: { id: string }) {
         <span className="feed-badge v-brand" style={{ width: 40, height: 40, borderRadius: 12 }}><Icon name="flask" size={19} /></span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="row wrap" style={{ gap: 8 }}>
-            <h2 style={{ margin: 0, fontSize: 19, letterSpacing: '-0.02em' }}>{e.name}</h2>
+            <h2 style={{ margin: 0, fontSize: 18, lineHeight: '28px', letterSpacing: '-0.02em' }}>{e.name}</h2>
             <StatusChip status={e.status} />
           </div>
-          <div className="row wrap small faint" style={{ marginTop: 6, gap: 8 }}>
+          <div className="row wrap small faint" style={{ marginTop: 8, gap: 8 }}>
             <span className="chip mono">{e.flagKey}</span>
             <span>{e.environmentKey}</span>
             {e.startedAt && <span>· started {dateShort(e.startedAt)}</span>}
@@ -169,7 +169,7 @@ function ExperimentDetail({ id }: { id: string }) {
         {e.dashboardUrl && <a className="btn sm" href={e.dashboardUrl} target="_blank" rel="noreferrer"><Icon name="external" size={13} />Flagsmith</a>}
         <button className="btn ghost icon sm" onClick={() => navigate('/experiments')} aria-label="Close"><Icon name="x" /></button>
       </div>
-      <div style={{ padding: '14px 24px 0' }}>
+      <div style={{ padding: '16px 24px 0' }}>
         <Tabs<DrawerTab> value={tab} onChange={setTab} tabs={[
           { value: 'overview', label: 'Overview', icon: 'flask' },
           { value: 'code', label: 'Protected code', icon: 'code', count: e.references.length },
@@ -191,7 +191,7 @@ function ExperimentDetail({ id }: { id: string }) {
             <div className="stack" style={{ gap: 8 }}>
               {e.audience.map(a => (
                 <div key={a.id} className="row wrap" style={{ gap: 8 }}>
-                  <span className="row" style={{ gap: 6, fontWeight: 500 }}><Icon name="users" size={14} />{a.name}</span>
+                  <span className="row" style={{ gap: 8, fontWeight: 500 }}><Icon name="users" size={14} />{a.name}</span>
                   <span className="faint small">matches on</span>
                   {a.traits.map(t => <span key={t} className="chip mono">{t}</span>)}
                 </div>
@@ -231,7 +231,7 @@ function ExperimentDetail({ id }: { id: string }) {
               )}
             </div>
           ) : (
-            <div className="row wrap" style={{ gap: 6 }}>{['control', ...e.variationKeys].map(k => <span key={k} className="chip mono">{k}</span>)}</div>
+            <div className="row wrap" style={{ gap: 8 }}>{['control', ...e.variationKeys].map(k => <span key={k} className="chip mono">{k}</span>)}</div>
           )}
         </div>
 
@@ -241,7 +241,7 @@ function ExperimentDetail({ id }: { id: string }) {
         <div>
           <div className="section-title">What Experiment Guard protects</div>
           {groups.length === 0 ? <div className="faint small">No references found in the scanned repository yet.</div> : (
-            <div className="stack" style={{ gap: 14 }}>
+            <div className="stack" style={{ gap: 16 }}>
               {groups.map(g => (
                 <div key={g.kind}>
                   <div className="row small" style={{ marginBottom: 4, fontWeight: 600 }}>
@@ -250,7 +250,7 @@ function ExperimentDetail({ id }: { id: string }) {
                   </div>
                   {g.refs.map(r => (
                     <div key={`${r.path}:${r.line}`} className="ref">
-                      <Icon name="file" size={14} style={{ color: 'var(--text-3)', marginTop: 3 }} />
+                      <Icon name="file" size={14} style={{ color: 'var(--text-3)', marginTop: 4 }} />
                       <div style={{ minWidth: 0 }}>
                         <div className="ref-path">{r.path}:{r.line}</div>
                         <div className="ref-code">{r.text.trim()}</div>

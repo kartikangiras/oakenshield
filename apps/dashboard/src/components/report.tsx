@@ -64,7 +64,7 @@ function blocks(lines: string[]): ReactNode[] {
       i++;
       while (i < lines.length && lines[i].trim() !== '</details>') body.push(lines[i++]);
       i++;
-      out.push(<details key={key++}><summary>{inline(det[1])}</summary><div style={{ marginTop: 10 }}>{blocks(body)}</div></details>);
+      out.push(<details key={key++}><summary>{inline(det[1])}</summary><div style={{ marginTop: 12 }}>{blocks(body)}</div></details>);
       continue;
     }
     const h = /^(#{1,4})\s+(.*)$/.exec(t);

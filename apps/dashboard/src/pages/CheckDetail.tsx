@@ -18,7 +18,7 @@ export function CheckDetailPage({ id }: { id: string }) {
   const c = d.data;
   return (
     <div className="fade-in">
-      <button className="btn ghost sm" style={{ marginBottom: 14 }} onClick={() => (history.length > 1 ? history.back() : navigate('/checks'))}>
+      <button className="btn ghost sm" style={{ marginBottom: 16 }} onClick={() => (history.length > 1 ? history.back() : navigate('/checks'))}>
         <Icon name="arrowLeft" size={14} />Back to checks
       </button>
       {!c ? <div className="stack"><Skeleton h={110} /><Skeleton h={320} /></div> : (
@@ -77,7 +77,7 @@ function VerdictHero({ c }: { c: CheckRecord }) {
           <span className={cx('chip', `v-${c.verdict}`)}>{VERDICT_LABEL[c.verdict]}</span>
           <span className="faint small">{headline}</span>
         </div>
-        <h2 style={{ margin: '6px 0 4px', fontSize: 20, letterSpacing: '-0.02em' }}>{c.pr?.title ?? (c.source === 'mcp' ? 'Coding agent pre-commit check' : 'Local change')}</h2>
+        <h2 style={{ margin: '8px 0 4px', fontSize: 20, letterSpacing: '-0.02em' }}>{c.pr?.title ?? (c.source === 'mcp' ? 'Coding agent pre-commit check' : 'Local change')}</h2>
         <div className="row wrap small muted" style={{ gap: 8 }}>
           <span className="mono">{c.repo}{c.pr?.number ? ` #${c.pr.number}` : ''}</span>
           {c.pr?.author && <span>· @{c.pr.author}</span>}
@@ -95,7 +95,7 @@ function Sidebar({ c }: { c: CheckRecord }) {
     <div className="stack" style={{ position: 'sticky', top: 84 }}>
       {c.override && (
         <Card title={<><Icon name="unlock" size={15} />Override</>}>
-          <div className="small stack" style={{ gap: 6 }}>
+          <div className="small stack" style={{ gap: 8 }}>
             <div><b>@{c.override.by}</b> added <span className="chip mono">{c.override.label}</span></div>
             <div className="muted">{dateTime(c.override.at)}</div>
             <div style={{ color: c.override.accepted ? 'var(--override)' : 'var(--block)' }}>
@@ -124,7 +124,7 @@ function Sidebar({ c }: { c: CheckRecord }) {
         {c.affected.length === 0 ? <div className="small faint">None. This change does not touch any running experiment.</div> : (
           <div className="stack" style={{ gap: 8 }}>
             {c.affected.map(a => (
-              <a key={a.id} className="row" href={`#/experiments/${a.id}`} style={{ padding: '8px 10px', borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+              <a key={a.id} className="row" href={`#/experiments/${a.id}`} style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
                 <Icon name="flask" size={14} />
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 500 }}>{a.name}</div>

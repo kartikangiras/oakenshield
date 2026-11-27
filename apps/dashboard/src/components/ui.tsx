@@ -73,7 +73,7 @@ export function Section({ title, sub, actions, children }: { title: ReactNode; s
           <h2 className="section-h">{title}</h2>
           {sub && <div className="section-sub">{sub}</div>}
         </div>
-        {actions && <div className="row wrap" style={{ gap: 10 }}>{actions}</div>}
+        {actions && <div className="row wrap" style={{ gap: 12 }}>{actions}</div>}
       </div>
       <div className="section-body">{children}</div>
     </section>
@@ -92,7 +92,7 @@ export function HeroPortal({ children }: { children: ReactNode }) {
 export function PageHead({ title, sub, actions }: { title: ReactNode; sub?: ReactNode; actions?: ReactNode }) {
   return (
     <HeroPortal>
-      <div className="hero-body fade-in">
+      <div className="page-hd fade-in">
         <div>
           <h1 className="page-title">{title}</h1>
           {sub && <div className="page-sub">{sub}</div>}
@@ -120,7 +120,7 @@ export function Seg<T extends string>({ value, options, onChange, className, siz
           aria-checked={o.value === value}
           title={o.title}
           className={cx(o.value === value && 'on', o.className)}
-          style={size === 'sm' ? { height: 24, padding: '0 9px', fontSize: 12 } : undefined}
+          style={size === 'sm' ? { height: 24, padding: '0 8px', fontSize: 12, lineHeight: '16px' } : undefined}
           onClick={() => onChange(o.value)}
         >
           {o.label}
@@ -139,7 +139,7 @@ export function Tabs<T extends string>({ value, tabs, onChange }: {
         <button key={t.value} type="button" role="tab" aria-selected={t.value === value} className={cx(t.value === value && 'on')} onClick={() => onChange(t.value)}>
           {t.icon && <Icon name={t.icon} size={15} />}
           {t.label}
-          {t.count !== undefined && <span className="chip" style={{ height: 18, padding: '0 6px', fontSize: 11 }}>{t.count}</span>}
+          {t.count !== undefined && <span className="chip" style={{ height: 20, padding: '0 8px', fontSize: 12 }}>{t.count}</span>}
         </button>
       ))}
     </div>

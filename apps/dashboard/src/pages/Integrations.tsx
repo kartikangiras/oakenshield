@@ -181,20 +181,20 @@ curl -X POST ${origin}/api/reports \\
       <Section title="Where Experiment Guard runs" sub="Pick a place to see exactly how to set it up.">
         <div className="grid cols-4">
         {SURFACES.map((x, n) => (
-          <button key={x.key} type="button" className={cx('card', 'surface', where === x.key && 'on')} onClick={() => pick(x.key)}>
+          <button key={x.key} type="button" className={cx('card', 'pick', where === x.key && 'on')} aria-pressed={where === x.key} onClick={() => pick(x.key)}>
             <div className="row" style={{ justifyContent: 'space-between', width: '100%' }}>
-              <span className={cx('feed-badge', where === x.key ? 'v-brand' : '')} style={{ width: 36, height: 36, borderRadius: 11, background: where === x.key ? undefined : 'var(--surface-3)' }}><Icon name={x.icon} size={17} /></span>
+              <span className={cx('feed-badge', where === x.key && 'v-brand')}><Icon name={x.icon} size={16} /></span>
               <span className="small faint tnum">{n + 1}</span>
             </div>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 15 }}>{x.title}</div>
-              <div className="small faint" style={{ marginTop: 1 }}>{x.where}</div>
+              <div className="card-title">{x.title}</div>
+              <div className="small faint">{x.where}</div>
             </div>
             <div className="small muted">{x.body}</div>
           </button>
         ))}
         </div>
-        <div className="card card-pad stack" style={{ gap: 14 }}>
+        <div className="card card-pad stack" style={{ gap: 16 }}>
             {surface.snippets.length > 1 && (
               <div><Seg<Snippet> value={snippet} onChange={setSnippet} options={surface.snippets.map(x => ({ value: x.key, label: x.label }))} /></div>
             )}
@@ -223,7 +223,7 @@ curl -X POST ${origin}/api/reports \\
             )}
             {fs?.error && <div className="small" style={{ color: 'var(--block)', marginTop: 12 }}>{fs.error}</div>}
             {health?.mode === 'demo' && (
-              <div className="small muted" style={{ marginTop: 14, padding: 12, borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+              <div className="small muted" style={{ marginTop: 16, padding: 12, borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
                 To use your own Flagsmith project, restart the server with <code className="mono">OAKENSHIELD_MODE=live</code>,{' '}
                 <code className="mono">FLAGSMITH_API_KEY</code> and <code className="mono">GUARD_FLAGSMITH_ENVIRONMENT</code>.
                 Set <code className="mono">OAKENSHIELD_REPO_PATH</code> to a checkout to see live code references.
@@ -238,7 +238,7 @@ curl -X POST ${origin}/api/reports \\
       <Section title="Settings" sub="How the dashboard counts value, and how it looks.">
         <div className="grid cols-2" style={{ alignItems: 'start' }}>
           <Card title={<><Icon name="gear" size={15} />Settings</>}>
-            <div className="stack" style={{ gap: 18 }}>
+            <div className="stack" style={{ gap: 16 }}>
               <div>
                 <div style={{ fontWeight: 500, marginBottom: 4 }}>Analyst hours per blocked merge</div>
                 <div className="small faint" style={{ marginBottom: 8 }}>Used for “hours saved”. A corrupted experiment usually costs a re-run plus the time to find out why the numbers look wrong.</div>
@@ -281,7 +281,7 @@ curl -X POST ${origin}/api/reports \\
 
 function Stat({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="stat" style={{ padding: '10px 12px' }}>
+    <div className="stat" style={{ padding: '8px 12px' }}>
       <span style={{ display: 'block', marginBottom: 4 }}>{label}</span>
       <div>{value}</div>
     </div>
@@ -298,9 +298,9 @@ function WebhookCard({ origin }: { origin: string }) {
       sub="Flagsmith tells Experiment Guard when flags, segments or experiments change"
       actions={wh && <span className={cx('chip', wh.received ? 'v-pass' : '')}>{wh.received ? `${wh.received} received` : 'None yet'}</span>}
     >
-      <div className="stack" style={{ gap: 18 }}>
+      <div className="stack" style={{ gap: 16 }}>
         <div>
-          <div className="small faint" style={{ marginBottom: 6 }}>Webhook URL</div>
+          <div className="small faint" style={{ marginBottom: 8 }}>Webhook URL</div>
           <div className="row" style={{ gap: 8 }}>
             <code className="mono input" style={{ flex: 1, display: 'flex', alignItems: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{url}</code>
             <CopyButton text={url} />
@@ -357,11 +357,11 @@ function SimulateCard() {
       sub="Each button sends the same payload Flagsmith would, through the same code path"
       actions={<button type="button" className="btn ghost sm" disabled={busy !== null} onClick={() => run('reset')}><Icon name="refresh" size={13} />Reset demo</button>}
     >
-      <div className="stack" style={{ gap: 20 }}>
+      <div className="stack" style={{ gap: 24 }}>
         <div className="grid cols-3">
           {SIMULATIONS.map(sim => (
             <button key={sim.kind} type="button" className="sim" disabled={busy !== null} onClick={() => run(sim.kind)}>
-              <span className="feed-badge v-brand" style={{ width: 34, height: 34, borderRadius: 11 }}>
+              <span className="feed-badge v-brand" style={{ width: 34, height: 34, borderRadius: 12 }}>
                 <Icon name={busy === sim.kind ? 'refresh' : sim.icon} size={16} style={busy === sim.kind ? { animation: 'spin 1s linear infinite' } : undefined} />
               </span>
               <span style={{ fontWeight: 600 }}>{sim.label}</span>

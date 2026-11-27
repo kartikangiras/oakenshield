@@ -1,20 +1,19 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="dark light" />
-    <meta name="description" content="Oakenshield: Experiment Guard dashboard. Keeps pull requests from silently corrupting running Flagsmith experiments." />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="description" content="Oakenshield dashboard. Two AI agents propose a change, a Flagsmith experiment picks the winner, and Experiment Guard keeps pull requests from breaking the test." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&family=JetBrains+Mono:wght@400;500&display=swap" />
-    <title>Oakenshield · Experiment Guard</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&display=swap" />
+    <title>Oakenshield dashboard</title>
     <script>
       try {
         const t = localStorage.getItem('oak-theme');
         if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
-        else if (matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.dataset.theme = 'light';
       } catch {}
     </script>
   </head>
