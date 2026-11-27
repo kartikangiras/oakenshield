@@ -1,0 +1,35 @@
+{
+  "code": "3b6493d35c",
+  "experiment": 1485,
+  "feature": 307726,
+  "flag": "first_screen_demo",
+  "environment": {
+    "id": 121640,
+    "key": "6zrhcXgzN8qQKi4mTmDj8C",
+    "name": "Skill demo"
+  },
+  "control": "control",
+  "split": {
+    "control": 34,
+    "short": 33,
+    "steps": 33
+  },
+  "versions": {
+    "steps": {
+      "id": 38366,
+      "sha": "35ad9ae183f9786d81f7c1a9680a12104e757e1243824271b37f953de25589d9"
+    },
+    "short": {
+      "id": 38365,
+      "sha": "9549c3a5327367322a951aa0c8ab2313e58dc3af5bbc4d7fbb18e1cc64205b0c"
+    }
+  },
+  "metrics": {
+    "check_run": 1550,
+    "setup_snippet_copied": 1551
+  },
+  "started_at": "2026-11-27T18:52:21.310538Z",
+  "updated_at": "2026-11-27T18:52:21.314614Z",
+  "completed_at": "2026-11-27T18:54:12.883051Z",
+  "decision": "short"
+}

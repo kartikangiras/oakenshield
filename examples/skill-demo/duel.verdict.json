@@ -1,0 +1,81 @@
+{
+  "state": "decided",
+  "winner": "short",
+  "why": "Control 17.3%. short 55.0% (99.4% chance to beat control): qualifies. steps 46.0% (98.2% chance to beat control): qualifies. Both qualify; short has the higher rate, though the two are not separable from each other (p = 0.32). No guardrail fell (setup_snippet_copied: our exact test, Flagsmith gave no estimate).",
+  "approve": "7a39f88fd2",
+  "experiment": 1485,
+  "environment": "Skill demo",
+  "flag": "first_screen_demo",
+  "read_at": "2026-11-27T18:53:56.732Z",
+  "results_as_of": "2026-11-27T18:53:47.061515Z",
+  "sample_ratio_p": 0.026482923158631252,
+  "sample_ratio_by": "our chi-square test on Flagsmith's visitor counts",
+  "excluded_visitors": 0,
+  "rule": {
+    "min_per_arm": 50,
+    "win_above": 0.95,
+    "harm_below": 0.05
+  },
+  "table": {
+    "check_run": {
+      "control": {
+        "visitors": 75,
+        "converted": 13,
+        "rate": 0.17333333333333334
+      },
+      "short": {
+        "visitors": 80,
+        "converted": 44,
+        "rate": 0.55,
+        "lift": 2.1730769230769234,
+        "ci": [
+          0.47210824376271354,
+          3.874045602391133
+        ],
+        "chance_to_win": 0.9938593527888521
+      },
+      "steps": {
+        "visitors": 50,
+        "converted": 23,
+        "rate": 0.46,
+        "lift": 1.653846153846154,
+        "ci": [
+          0.10728938066714644,
+          3.2004029270251615
+        ],
+        "chance_to_win": 0.9819559188221199
+      }
+    },
+    "setup_snippet_copied": {
+      "control": {
+        "visitors": 75,
+        "converted": 3,
+        "rate": 0.04
+      },
+      "short": {
+        "visitors": 80,
+        "converted": 4,
+        "rate": 0.05,
+        "fewer_p": 0.7513552011405464
+      },
+      "steps": {
+        "visitors": 50,
+        "converted": 4,
+        "rate": 0.08,
+        "fewer_p": 0.9100678589417136
+      }
+    }
+  },
+  "head_to_head": {
+    "between": [
+      "short",
+      "steps"
+    ],
+    "p_value": 0.31782700650744977,
+    "note": "Our own two-proportion z-test on Flagsmith's counts; Flagsmith compares each version with control only."
+  },
+  "predictions": {},
+  "guardrails_by": {
+    "setup_snippet_copied": "our one-sided Fisher exact test on Flagsmith's counts (Flagsmith gave no estimate)"
+  }
+}

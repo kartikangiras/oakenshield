@@ -1,0 +1,154 @@
+{
+  "what": "One run of the flagsmith-duel skill, from the plan to the rollout, kept as it happened. Paths are shortened to be relative to the repository.",
+  "date": "2026-11-27",
+  "agent": "Claude Code 2.1.296, model claude-sonnet-5-5",
+  "started_with": "claude -p --model sonnet --plugin-dir <this repository> --setting-sources \"\" --strict-mcp-config --tools Bash Read Skill --allowedTools \"Bash(node *)\" \"Bash(echo *)\" Read Skill --output-format stream-json --verbose \"<what the person says>\"   (later turns add --resume <session>)",
+  "where": "A directory holding short.json, steps.json and visitors.mjs, with git initialised. Flagsmith Cloud, a new environment made by the run.",
+  "visitors": {
+    "run": "demo-mwzc9a3a",
+    "sent": 205,
+    "visitors": {
+      "steps": 50,
+      "short": 80,
+      "control": 75
+    },
+    "planted": {
+      "control": {
+        "check_run": 0.15,
+        "setup_snippet_copied": 0.05
+      },
+      "short": {
+        "check_run": 0.62,
+        "setup_snippet_copied": 0.05
+      },
+      "steps": {
+        "check_run": 0.45,
+        "setup_snippet_copied": 0.05
+      }
+    },
+    "events_sent": {
+      "steps": {
+        "check_run": 23,
+        "setup_snippet_copied": 4
+      },
+      "short": {
+        "check_run": 44,
+        "setup_snippet_copied": 4
+      },
+      "control": {
+        "check_run": 13,
+        "setup_snippet_copied": 3
+      }
+    }
+  },
+  "visitors_note": "Scripted, with planted rates (visitors.mjs). Sent between turn 2 and turn 3. This run measures the skill, not the screens.",
+  "totals": {
+    "requests": 9,
+    "input": 26,
+    "cache_write": 2361,
+    "cache_read": 95622,
+    "output": 1653,
+    "input_side": 98009
+  },
+  "harness": {
+    "one_request_without_the_skill": 8387,
+    "one_request_with_the_skill_installed": 8586,
+    "note": "Claude Code sends its own instructions and tool definitions with every request. One request with a one-word prompt, measured with the same flags, is the size of that alone.",
+    "harness_share_of_input_side": 75483,
+    "added_by_the_whole_job": 3981,
+    "context_at_the_end": 12368
+  },
+  "turns": [
+    {
+      "person": "Two of us disagree about the first screen of our dashboard. One proposal is in short.json, the other in steps.json. Settle it with a Flagsmith experiment against what we show today. Use the flag first_screen_demo in a new environment called Skill demo, in project 55894, and call the versions short and steps. The event that counts is check_run, and setup_snippet_copied must not get worse. 50 visitors per version is enough for this rehearsal.",
+      "steps": [
+        {
+          "tool": "Skill",
+          "input": {
+            "skill": "flagsmith-duel:flagsmith-duel"
+          },
+          "output": "Launching skill: flagsmith-duel:flagsmith-duel"
+        },
+        {
+          "tool": "Bash",
+          "command": "node skills/flagsmith-duel/scripts/duel.mjs init first_screen_demo --environment \"Skill demo\" --new-environment --project 55894 --version short=short.json --version steps=steps.json --goal check_run --guardrail setup_snippet_copied --min 50 --hypothesis \"Either the short or the steps first screen increases check_run versus today's screen without hurting setup_snippet_copied.\"",
+          "output": "{\"wrote\":\"duel.json\",\"ok\":true,\"flag\":\"first_screen_demo\",\"environment\":\"Skill demo\",\"protected\":false,\"arms\":{\"control\":34,\"short\":33,\"steps\":33},\"goal\":\"check_run\",\"guardrails\":[\"setup_snippet_copied\"],\"rule\":\"needs 50 visitors per arm; a version wins above a 95.0% chance to beat control on the goal, unless its chance to beat control on a guardrail is below 5.0%\",\"will\":[\"create environment Skill demo\",\"create flag first_screen_demo\",\"add version short\",\"add version steps\",\"create metric for check_run\",\"create metric for setup_snippet_copied\",\"create experiment\",\"start it\"],\"files_using\":{\"first_screen_demo\":1,\"check_run\":1,\"setup_snippet_copied\":1},\"approve\":\"3b6493d35c\",\"next\":\"Show this line to the person and ask to start. After a yes: start --approve 3b6493d35c\"}"
+        }
+      ],
+      "agent": "I've written the plan to `duel.json`. Nothing has changed in Flagsmith yet.\n\n**What starting will do** (project 55894):\n- Create the environment **Skill demo**, the flag `first_screen_demo`, and the versions `short` and `steps`.\n- Create metrics for `check_run` (the goal) and `setup_snippet_copied` (the guardrail).\n- Create the experiment and start it.\n\n**Traffic split:** control (today's screen) gets 34%, `short` gets 33% and `steps` gets 33%.\n\n**Decision rule, fixed before the start:**\n- Each arm needs 50 visitors.\n- A version wins if it has a chance above 95% of beating control on `check_run`.\n- A version is disqualified if its chance of beating control on `setup_snippet_copied` is below 5%.\n- Anything else counts as \"neither version beats today's\".\n\nAfter the start I won't edit the plan or look at results early. `verdict` reads them once the sample is in.\n\nShould I start it? If you say yes, I'll run `start --approve 3b6493d35c`.",
+      "requests": 3,
+      "tokens": {
+        "input": 8,
+        "cache_write": 509,
+        "cache_read": 28505,
+        "output": 618
+      },
+      "seconds": 16,
+      "cost_usd": 0.0111,
+      "denied": 0
+    },
+    {
+      "person": "Yes, start it.",
+      "steps": [
+        {
+          "tool": "Bash",
+          "command": "node skills/flagsmith-duel/scripts/duel.mjs start --approve 3b6493d35c",
+          "output": "{\"ok\":true,\"experiment\":1485,\"status\":\"running\",\"environment\":\"Skill demo\",\"served\":{\"steps\":8,\"control\":9,\"short\":13},\"seal\":\"duel.seal.json\",\"next\":\"Send visitors. Check with: audit. When each arm has 50: verdict\"}"
+        }
+      ],
+      "agent": "The experiment is running (experiment 1485, environment Skill demo). I checked what the SDK serves, and it returned all three arms: control 9, `short` 13 and `steps` 8 in that check. I wrote the seal to `duel.seal.json`.\n\n**Next steps:**\n- Send visitors through. Each arm needs 50.\n- Ask me to run `audit` any time you want to know whether anything has changed since the start.\n- Once every arm has 50 visitors, ask me for the `verdict`. I'll show you the result before I roll anything out.\n\nI won't edit the plan or the flag, and I won't look at results before then.",
+      "requests": 2,
+      "tokens": {
+        "input": 6,
+        "cache_write": 561,
+        "cache_read": 21197,
+        "output": 303
+      },
+      "seconds": 37,
+      "cost_usd": 0.0185,
+      "denied": 0
+    },
+    {
+      "person": "The visitors have been through. Is the run still clean, and which one won?",
+      "steps": [
+        {
+          "tool": "Bash",
+          "command": "node skills/flagsmith-duel/scripts/duel.mjs audit; echo \"exit $?\"; node skills/flagsmith-duel/scripts/duel.mjs verdict",
+          "output": "{\"ok\":true,\"sealed\":true,\"status\":\"running\",\"experiment\":1485,\"since\":\"2026-11-27T18:52:21.310538Z\",\"next\":\"verdict\"}\nexit 0\n{\"ok\":true,\"state\":\"decided\",\"winner\":\"short\",\"why\":\"Control 17.3%. short 55.0% (99.4% chance to beat control): qualifies. steps 46.0% (98.2% chance to beat control): qualifies. Both qualify; short has the higher rate, though the two are not separable from each other (p = 0.32). No guardrail fell (setup_snippet_copied: our exact test, Flagsmith gave no estimate).\",\"read_at\":\"2026-11-27T18:53:56.732Z\",\"arms\":{\"control\":\"13/75\",\"short\":\"44/80\",\"steps\":\"23/50\"},\"details\":\"duel.verdict.json\",\"approve\":\"7a39f88fd2\",\"next\":\"Show this line to the person and ask to roll out short. After a yes: finish --approve 7a39f88fd2\"}"
+        }
+      ],
+      "agent": "**The run is clean.** The audit found nothing changed since the seal, and it exited 0.\n\n**Winner: `short`.**\n- Control converted at 17.3% on `check_run` (13 of 75).\n- `short` converted at 55.0% (44 of 80), with a 99.4% chance of beating control.\n- `steps` converted at 46.0% (23 of 50), with a 98.2% chance of beating control.\n- Both versions qualify. The rule picks `short` because it has the higher rate, but the data can't separate the two from each other (p = 0.32). `short` is a clear win over today's screen, not over `steps`.\n- Neither version hurt the guardrail. For `setup_snippet_copied`, Flagsmith gave no estimate, so the script used its own exact test and found no drop.\n\nThe full table is in `duel.verdict.json`.\n\n**Do you want me to roll out `short`?** If so, I'll run `finish --approve 7a39f88fd2`. That makes the flag serve `short` to everyone in Skill demo. I won't remove the losing versions unless you ask.",
+      "requests": 2,
+      "tokens": {
+        "input": 6,
+        "cache_write": 703,
+        "cache_read": 22183,
+        "output": 498
+      },
+      "seconds": 26,
+      "cost_usd": 0.0285,
+      "denied": 0
+    },
+    {
+      "person": "Yes, roll it out, and remove the version that lost.",
+      "steps": [
+        {
+          "tool": "Bash",
+          "command": "node skills/flagsmith-duel/scripts/duel.mjs finish --approve 7a39f88fd2 --remove-losers",
+          "output": "{\"ok\":true,\"status\":\"completed\",\"serving\":\"short\",\"checked\":\"10 of 10 test identities get short\",\"removed\":[\"steps\"],\"next\":\"Done. Tell the person what now ships and where the verdict is.\"}"
+        }
+      ],
+      "agent": "The rollout is done. The experiment is completed, and `first_screen_demo` now serves `short` to everyone in Skill demo. I tested 10 identities and all 10 got `short`.\n\nI removed the `steps` version, as you asked. The full verdict table is in `duel.verdict.json`.",
+      "requests": 2,
+      "tokens": {
+        "input": 6,
+        "cache_write": 588,
+        "cache_read": 23737,
+        "output": 234
+      },
+      "seconds": 11,
+      "cost_usd": 0.0356,
+      "denied": 0
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "Know what a change breaks before you merge"
+    },
+    {
+      "type": "steps",
+      "items": [
+        "Open a pull request as usual",
+        "Experiment Guard compares it with your running experiments",
+        "It reports what the change would break"
+      ]
+    },
+    {
+      "type": "run",
+      "label": "Try it on a sample",
+      "scenario": "remove-exposure"
+    },
+    {
+      "type": "link",
+      "label": "See the rules",
+      "to": "rules"
+    },
+    {
+      "type": "link",
+      "label": "Open the playground",
+      "to": "playground"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "See a pull request break a running A/B test"
+    },
+    {
+      "type": "text",
+      "text": "This change renames an event that a live experiment counts. The tests pass, and the experiment quietly stops counting."
+    },
+    {
+      "type": "pull_request",
+      "scenario": "rename-event",
+      "caption": "A seeded pull request: one line changes the event name."
+    },
+    {
+      "type": "run",
+      "label": "Check this pull request",
+      "scenario": "rename-event"
+    },
+    {
+      "type": "link",
+      "label": "How to set it up",
+      "to": "setup"
+    }
+  ]
+}

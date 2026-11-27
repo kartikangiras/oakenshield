@@ -1,0 +1,29 @@
+{
+  "flag": "first_screen_demo",
+  "environment": "Skill demo",
+  "project": "55894",
+  "create_environment": true,
+  "hypothesis": "Either the short or the steps first screen increases check_run versus today's screen without hurting setup_snippet_copied.",
+  "control": "control",
+  "versions": {
+    "short": {
+      "file": "short.json"
+    },
+    "steps": {
+      "file": "steps.json"
+    }
+  },
+  "goal": {
+    "event": "check_run"
+  },
+  "guardrails": [
+    {
+      "event": "setup_snippet_copied"
+    }
+  ],
+  "rule": {
+    "min_per_arm": 50,
+    "win_above": 0.95,
+    "harm_below": 0.05
+  }
+}
