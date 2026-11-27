@@ -1,0 +1,23 @@
+{
+  "name": "@oakenshield/duel",
+  "version": "0.1.0",
+  "description": "Two AI agents propose competing changes; one Flagsmith experiment settles it. A person approves the start and the rollout.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./screen": "./src/screen.ts"
+  },
+  "bin": {
+    "oakenshield-duel": "./bin/duel.js"
+  },
+  "files": ["bin", "src"],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "keywords": ["flagsmith", "experimentation", "a/b testing", "feature flags", "ai agents"]
+}

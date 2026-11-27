@@ -17,9 +17,10 @@
     "build": "npm run build -w @oakenshield/dashboard",
     "start": "node apps/server/src/main.ts",
     "demo": "npm run build && node apps/server/src/main.ts",
-    "test": "node --test \"packages/guard/test/**/*.test.ts\" \"apps/server/test/**/*.test.ts\"",
+    "test": "node --test \"packages/guard/test/**/*.test.ts\" \"packages/duel/test/**/*.test.ts\" \"apps/server/test/**/*.test.ts\"",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "guard": "node packages/guard/bin/experiment-guard.js",
+    "duel": "node --env-file-if-exists=.env packages/duel/bin/duel.js",
     "check": "npm run typecheck && npm test",
     "e2e": "node scripts/e2e/run.mjs"
   },
