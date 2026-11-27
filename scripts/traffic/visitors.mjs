@@ -93,11 +93,17 @@ const freePort = () => new Promise((resolve, reject) => {
 
 const scratch = mkdtempSync(join(tmpdir(), 'oak-visitors-'));
 const children = [];
-function cleanUp() {
-  for (const c of children) c.kill();
+async function cleanUp() {
+  // The server writes its store as it stops, so the folder goes only once the children have.
+  await Promise.all(children.map(c => new Promise(done => {
+    if (c.exitCode !== null || c.signalCode !== null) return done();
+    c.once('exit', done);
+    c.kill();
+    setTimeout(done, 3000);
+  })));
   try { rmSync(scratch, { recursive: true, force: true }); } catch { /* Chrome may still hold a file */ }
 }
-process.on('SIGINT', () => { cleanUp(); process.exit(130); });
+process.on('SIGINT', async () => { await cleanUp(); process.exit(130); });
 
 /** The dashboard on a local server, in demo mode, wired to the given Flagsmith environment. */
 async function startServer() {
@@ -131,17 +137,25 @@ function findChrome() {
 async function startChrome() {
   const bin = findChrome();
   if (!bin) throw new Error('Chrome was not found: pass --chrome <path> or set CHROME_PATH');
-  const profile = join(scratch, 'chrome');
-  children.push(spawn(bin, [
-    '--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check',
-    '--disable-gpu', '--mute-audio', '--window-size=1280,900',
-    ...(process.env.CI ? ['--no-sandbox'] : []), // hosted runners do not allow Chrome's sandbox; the only page loaded is our own
-    'about:blank',
-  ], { stdio: 'ignore' }));
-  const portFile = join(profile, 'DevToolsActivePort');
-  if (!await until(() => existsSync(portFile) && readFileSync(portFile, 'utf8').includes('\n'), 20000)) throw new Error('Chrome did not start');
-  const [port, path] = readFileSync(portFile, 'utf8').trim().split('\n');
-  return connect(`ws://127.0.0.1:${port}${path}`);
+  // On a hosted runner Chrome now and then hangs as it starts, so a silent start is dropped and tried again.
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const profile = join(scratch, `chrome-${attempt}`);
+    const chrome = spawn(bin, [
+      '--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check',
+      '--disable-gpu', '--mute-audio', '--window-size=1280,900',
+      ...(process.env.CI ? ['--no-sandbox'] : []), // hosted runners do not allow Chrome's sandbox; the only page loaded is our own
+      'about:blank',
+    ], { stdio: 'ignore' });
+    children.push(chrome);
+    const portFile = join(profile, 'DevToolsActivePort');
+    if (await until(() => existsSync(portFile) && readFileSync(portFile, 'utf8').includes('\n'), 30000)) {
+      const [port, path] = readFileSync(portFile, 'utf8').trim().split('\n');
+      return connect(`ws://127.0.0.1:${port}${path}`);
+    }
+    chrome.kill('SIGKILL');
+    console.error(`visitors: Chrome did not start (attempt ${attempt} of 3)`);
+  }
+  throw new Error('Chrome did not start');
 }
 
 function connect(url) {
@@ -340,6 +354,6 @@ try {
   console.error(`visitors: ${err.message}`);
   code = 1;
 } finally {
-  cleanUp();
+  await cleanUp();
 }
 process.exit(code);
