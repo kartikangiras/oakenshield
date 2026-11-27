@@ -142,20 +142,23 @@
           </svg>
         </div>
 
-        <aside class="check-card enter" aria-label="Scoreboard of the first duel. The visitors were simulated.">
+        <aside class="check-card enter" aria-label="The first duel, replayed one visitor at a time. The visitors were simulated.">
           <div class="card-head">
             <div>
               <div class="card-title">First screen duel</div>
               <div class="card-meta">Experiment 1497 · Simulated visitors</div>
             </div>
-            <span class="chip">Agent B wins</span>
+            <span class="chip" data-duel-status>Agent B wins</span>
           </div>
+          <!-- landing.ts replaces this list with the replay (lib/duel-viz.ts); it is what shows without scripts. -->
+          <div data-duel-viz>
           <ol class="score">
             <li class="score-head" aria-hidden="true"><span>Version</span><span>Visitors</span><span>Ran a check</span></li>
             <li><span>Today's screen</span><span class="num">329<span class="sr-only"> visitors</span></span><span class="share" style="--v: 16.7%"><span class="bar" aria-hidden="true"></span><span class="num">16.7%<span class="sr-only"> ran a check</span></span></span></li>
             <li><span>Agent A</span><span class="num">333<span class="sr-only"> visitors</span></span><span class="share" style="--v: 60.4%"><span class="bar" aria-hidden="true"></span><span class="num">60.4%<span class="sr-only"> ran a check</span></span></span></li>
             <li class="won"><span>Agent B</span><span class="num">353<span class="sr-only"> visitors</span></span><span class="share" style="--v: 87.3%"><span class="bar" aria-hidden="true"></span><span class="num">87.3%<span class="sr-only"> ran a check</span></span></span></li>
           </ol>
+          </div>
         </aside>
       </section>
 

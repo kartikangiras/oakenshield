@@ -1,8 +1,12 @@
 /*
- * Landing page behaviour: the island menu, scroll reveals, the current section in the nav, the tagline
- * that lights up word by word, and the copy button. No Flagsmith here: an experiment only enrols a
- * visitor who opens /app/ with no page in the link, and every link on this page names a page.
+ * Landing page behaviour: the island menu, the duel replayed in the hero, scroll reveals, the current
+ * section in the nav, the tagline that lights up word by word, and the copy button. No Flagsmith here:
+ * an experiment only enrols a visitor who opens /app/ with no page in the link, and every link on this
+ * page names a page.
  */
+import verdict from '../../../../duels/first-screen/duel.verdict.json';
+import replay from '../../../../duels/first-screen/traffic/replay.json';
+import { mountDuelViz } from '../lib/duel-viz.ts';
 import './landing.css';
 
 document.documentElement.classList.add('js');
@@ -25,6 +29,36 @@ if (navWrap && burger && menu) {
   burger.addEventListener('click', () => setMenu(burger.getAttribute('aria-expanded') !== 'true'));
   menu.addEventListener('click', e => { if ((e.target as HTMLElement).closest('a')) setMenu(false); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
+}
+
+// The first duel in the hero card, played back from its own files: one dot per visitor Flagsmith
+// counted, in the order the visits finished (scripts/traffic/replay.mjs).
+const stage = document.querySelector<HTMLElement>('[data-duel-viz]');
+if (stage) {
+  const LANES: Record<string, { label: string; note: string }> = {
+    control: { label: "Today's screen", note: 'The overview as it was' },
+    agent_a: { label: 'Agent A', note: 'Told to cut' },
+    agent_b: { label: 'Agent B', note: 'Told to guide' },
+  };
+  const visits = [...replay.visits].map(c => parseInt(c, 36));
+  mountDuelViz(stage, {
+    lanes: replay.arms.map((key, i) => ({
+      key,
+      label: LANES[key]?.label ?? key,
+      note: LANES[key]?.note,
+      visitors: visits.filter(code => code >> 1 === i).length,
+      converted: visits.filter(code => code === i * 2 + 1).length,
+    })),
+    visits: replay.visits,
+    baseline: 'control',
+    did: 'ran a check',
+    winner: verdict.winner,
+    result: verdict.winner === 'control' ? "Today's screen stays" : `${LANES[verdict.winner]?.label ?? verdict.winner} wins`,
+    status: document.querySelector<HTMLElement>('[data-duel-status]'),
+    caption: 'One dot is one simulated visitor.',
+    autoplay: true,
+    delay: 1200,
+  });
 }
 
 // Fade up as sections enter the viewport, staggered among siblings.
