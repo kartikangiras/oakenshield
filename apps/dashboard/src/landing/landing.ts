@@ -1,6 +1,7 @@
 /*
- * Landing page behaviour: the island menu, scroll reveals, the current section in the nav, and the
- * tagline that lights up word by word. No Flagsmith here: the A/B test starts when /app/ opens.
+ * Landing page behaviour: the island menu, scroll reveals, the current section in the nav, the tagline
+ * that lights up word by word, and the copy button. No Flagsmith here: an experiment only enrols a
+ * visitor who opens /app/ with no page in the link, and every link on this page names a page.
  */
 import './landing.css';
 
@@ -57,18 +58,27 @@ for (const id of ['top', ...navLinks.map(a => a.hash.slice(1))]) {
 }
 
 // Tagline: words go from muted to full colour one at a time, in reading order, as it scrolls through.
+// The lines stay lines; a screen reader gets the sentence whole instead of word by word.
 const tagline = document.querySelector<HTMLElement>('[data-words]');
 if (tagline) {
-  const words = (tagline.textContent ?? '').trim().split(/\s+/);
-  tagline.setAttribute('aria-label', words.join(' '));
-  tagline.replaceChildren(...words.flatMap((w, i) => {
-    const span = document.createElement('span');
-    span.className = 'w';
-    span.setAttribute('aria-hidden', 'true');
-    span.textContent = w;
-    return i < words.length - 1 ? [span, document.createTextNode(' ')] : [span];
-  }));
-  const spans = [...tagline.querySelectorAll<HTMLSpanElement>('.w')];
+  const spans: HTMLSpanElement[] = [];
+  const sentences: string[] = [];
+  for (const line of tagline.querySelectorAll<HTMLElement>('.line')) {
+    const words = (line.textContent ?? '').trim().split(/\s+/);
+    sentences.push(words.join(' '));
+    line.setAttribute('aria-hidden', 'true');
+    line.replaceChildren(...words.flatMap((w, i) => {
+      const span = document.createElement('span');
+      span.className = 'w';
+      span.textContent = w;
+      spans.push(span);
+      return i < words.length - 1 ? [span, document.createTextNode(' ')] : [span];
+    }));
+  }
+  const whole = document.createElement('span');
+  whole.className = 'sr-only';
+  whole.textContent = sentences.join(' ');
+  tagline.prepend(whole);
   let lit = -1;
   const paint = () => {
     const box = tagline.getBoundingClientRect();
@@ -93,3 +103,31 @@ if (tagline) {
     paint();
   }
 }
+
+// Copy buttons: data-copy names the element whose text goes to the clipboard.
+for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy]')) {
+  const label = button.querySelector<HTMLElement>('.copy-label');
+  let timer = 0;
+  button.addEventListener('click', async () => {
+    const source = document.getElementById(button.dataset.copy ?? '');
+    const text = source?.textContent?.trim();
+    if (!source || !text) return;
+    // Where the clipboard is refused, select the line so it can be copied by hand.
+    try { await navigator.clipboard.writeText(text); } catch { getSelection()?.selectAllChildren(source); return; }
+    button.classList.add('copied');
+    if (label) label.textContent = 'Copied';
+    clearTimeout(timer);
+    timer = window.setTimeout(() => {
+      button.classList.remove('copied');
+      if (label) label.textContent = 'Copy';
+    }, 2000);
+  });
+}
+
+// A link to a question in the FAQ opens it.
+const openTarget = () => {
+  const target = location.hash.length > 1 ? document.getElementById(location.hash.slice(1)) : null;
+  if (target instanceof HTMLDetailsElement) target.open = true;
+};
+addEventListener('hashchange', openTarget);
+openTarget();
