@@ -124,13 +124,13 @@ describe('EG006 finds the arm, not the assignment', () => {
       '}',
       '',
       'export function Footer() {',
-      '  return <footer>Aldor</footer>;',
+      '  return <footer>FirstPR</footer>;',
       '}',
       '',
     ].join('\n');
     const base = { 'client/Usd.tsx': file('in USD') };
     assert.deepEqual(rulesOf(runCheck({ repo: new MemoryRepoView(base, { 'client/Usd.tsx': file('in US dollars') }), snapshot: payments })), ['EG006']);
-    const footer = { 'client/Usd.tsx': file('in USD').replace('<footer>Aldor</footer>', '<footer>Aldor Labs</footer>') };
+    const footer = { 'client/Usd.tsx': file('in USD').replace('<footer>FirstPR</footer>', '<footer>FirstPR Labs</footer>') };
     assert.deepEqual(runCheck({ repo: new MemoryRepoView(base, footer), snapshot: payments }).findings, []);
   });
 
@@ -173,8 +173,8 @@ describe('EG006 finds the arm, not the assignment', () => {
 });
 
 describe('EG007 leaves new identity code alone', () => {
-  const config = parseConfigText('identity_patterns:\n  - aldor-visitor\n').config;
-  const visitor = "const KEY = 'aldor-visitor';\nexport const visitorId = () => localStorage.getItem(KEY);\n";
+  const config = parseConfigText('identity_patterns:\n  - fp-visitor\n').config;
+  const visitor = "const KEY = 'fp-visitor';\nexport const visitorId = () => localStorage.getItem(KEY);\n";
 
   it('does not flag a pattern the base code never used', () => {
     const head = { ...wired, 'client/visitor.ts': visitor };
@@ -183,9 +183,9 @@ describe('EG007 leaves new identity code alone', () => {
 
   it('flags a change to identity code that already exists', () => {
     const base = { ...wired, 'client/visitor.ts': visitor };
-    const renamed = { ...wired, 'client/visitor.ts': visitor.replace('aldor-visitor', 'aldor-user') };
+    const renamed = { ...wired, 'client/visitor.ts': visitor.replace('fp-visitor', 'fp-user') };
     assert.deepEqual(rulesOf(runCheck({ repo: new MemoryRepoView(base, renamed), snapshot: payments, config })), ['EG007']);
-    const second = { ...base, 'client/session.ts': "sessionStorage.setItem('aldor-visitor', id);\n" };
+    const second = { ...base, 'client/session.ts': "sessionStorage.setItem('fp-visitor', id);\n" };
     assert.deepEqual(rulesOf(runCheck({ repo: new MemoryRepoView(base, second), snapshot: payments, config })), ['EG007']);
   });
 });
