@@ -1,0 +1,100 @@
+{
+  "state": "decided",
+  "winner": "agent_b",
+  "why": "Control 16.7%. agent_a 60.4% (100.0% chance to beat control): qualifies. agent_b 87.3% (100.0% chance to beat control): qualifies. Both qualify; agent_b has the higher rate. No guardrail fell (setup_snippet_copied: our exact test, Flagsmith gave no estimate).",
+  "approve": "969b3a7cf3",
+  "experiment": 1497,
+  "environment": "Duel",
+  "flag": "first_screen",
+  "read_at": "2026-11-27T20:38:48.355Z",
+  "results_as_of": "2026-11-27T20:38:38.327825Z",
+  "sample_ratio_p": 0.41996705698782466,
+  "sample_ratio_by": "our chi-square test on Flagsmith's visitor counts",
+  "excluded_visitors": 0,
+  "rule": {
+    "min_per_arm": 300,
+    "win_above": 0.95,
+    "harm_below": 0.05
+  },
+  "table": {
+    "check_run": {
+      "control": {
+        "visitors": 329,
+        "converted": 55,
+        "rate": 0.16717325227963525
+      },
+      "agent_a": {
+        "visitors": 333,
+        "converted": 201,
+        "rate": 0.6036036036036037,
+        "lift": 2.610647010647011,
+        "ci": [
+          1.6834449212572393,
+          3.537849100036783
+        ],
+        "chance_to_win": 0.9999999829057111
+      },
+      "agent_b": {
+        "visitors": 353,
+        "converted": 308,
+        "rate": 0.8725212464589235,
+        "lift": 4.219263456090651,
+        "ci": [
+          2.9414458977953917,
+          5.497081014385911
+        ],
+        "chance_to_win": 0.9999999999515349
+      }
+    },
+    "setup_snippet_copied": {
+      "control": {
+        "visitors": 329,
+        "converted": 2,
+        "rate": 0.0060790273556231
+      },
+      "agent_a": {
+        "visitors": 333,
+        "converted": 4,
+        "rate": 0.012012012012012012,
+        "fewer_p": 0.8888408017089902
+      },
+      "agent_b": {
+        "visitors": 353,
+        "converted": 0,
+        "rate": 0,
+        "fewer_p": 0.2323476343656546
+      }
+    }
+  },
+  "head_to_head": {
+    "between": [
+      "agent_a",
+      "agent_b"
+    ],
+    "p_value": 8.881784197001252e-16,
+    "note": "Our own two-proportion z-test on Flagsmith's counts; Flagsmith compares each version with control only."
+  },
+  "predictions": {
+    "agent_a": {
+      "by": "Agent A (cut)",
+      "predicted": {
+        "control": 0.05,
+        "agent_a": 0.3,
+        "agent_b": 0.27
+      },
+      "mean_abs_error": 0.34109936744738745
+    },
+    "agent_b": {
+      "by": "Agent B (guide)",
+      "predicted": {
+        "control": 0.05,
+        "agent_a": 0.2,
+        "agent_b": 0.21
+      },
+      "mean_abs_error": 0.39443270078072085
+    }
+  },
+  "guardrails_by": {
+    "setup_snippet_copied": "our one-sided Fisher exact test on Flagsmith's counts (Flagsmith gave no estimate)"
+  }
+}

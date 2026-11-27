@@ -1,0 +1,25 @@
+{
+  "name": "First screen duel",
+  "flag": "first_screen",
+  "environment": "Duel",
+  "goal": "More first-time visitors run a check on a sample pull request from the first screen they land on.",
+  "event": { "key": "check_run", "name": "Ran a check" },
+  "guardrails": [{ "key": "setup_snippet_copied", "name": "Copied the setup snippet" }],
+  "product": "Experiment Guard checks every pull request against the A/B tests currently running in Flagsmith, and blocks the ones that would silently corrupt a running test: a renamed event, a removed exposure call, a changed visitor ID and so on. This web app is its dashboard. It has a playground where anyone can run the guard on sample pull requests and see the verdict.",
+  "today": "A dashboard overview titled \"Pull requests\": four tiles of counts (checks, blocked, clean pass rate, median check time), charts of block rate and override rate, a list of guarded experiments and a list of the latest checks. Nothing on it says what the product is for. To run a check, a visitor has to notice a small \"Run all scenarios\" button in the page header, or open \"Playground\" in the navigation and press Run there.",
+  "visitors": "People who followed a link from the project's README or from a post about feature flags and A/B testing. Mostly software engineers; also product managers, data analysts and engineering managers. Most give a new tool under a minute. Many could not say what an exposure event or a sample ratio mismatch is. Some distrust anything that can block their pull requests. They arrive on a laptop, with no account and nothing installed.",
+  "facts": {
+    "statements": [
+      "Experiment Guard checks a pull request against the experiments that are running in Flagsmith right now.",
+      "It blocks changes that would corrupt a running experiment's data, such as renaming a tracked event, removing the exposure call or changing the visitor ID.",
+      "It has 13 rules.",
+      "The playground has 22 sample pull requests. The guard blocks 7 of them, warns about 4 and lets the other 11 through.",
+      "Running a check here takes a few seconds and needs no account, no install and no Flagsmith project.",
+      "A check only reads from Flagsmith. It changes nothing there.",
+      "It runs as a GitHub Action, a command-line tool and an MCP server for coding agents.",
+      "It is open source."
+    ]
+  },
+  "rule": { "min_per_arm": 300, "win_above": 0.95, "harm_below": 0.05 },
+  "split": { "agent_a": 33, "agent_b": 33 }
+}

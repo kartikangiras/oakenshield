@@ -1,0 +1,114 @@
+{
+  "name": "First screen duel",
+  "project": 55894,
+  "flag": "first_screen",
+  "environment": "Duel",
+  "create_environment": true,
+  "hypothesis": "More first-time visitors run a check on a sample pull request from the first screen they land on.",
+  "control": "control",
+  "versions": {
+    "agent_a": {
+      "by": "Agent A (cut)",
+      "hypothesis": "If the first screen gives one concrete harm, a single sample pull request and a button that promises a verdict, then more first-time visitors will run a check, because the action is visible, the stakes are clear and nothing has to be read or chosen first.",
+      "predicts": {
+        "control": 0.05,
+        "agent_a": 0.3,
+        "agent_b": 0.27
+      },
+      "value": {
+        "version": 1,
+        "blocks": [
+          {
+            "type": "heading",
+            "text": "Catch the pull request that breaks your A/B test"
+          },
+          {
+            "type": "text",
+            "text": "Renaming a tracked event can quietly ruin a running experiment's data. Experiment Guard checks pull requests against your live Flagsmith experiments and blocks those. No account or install."
+          },
+          {
+            "type": "pull_request",
+            "scenario": "rename-event",
+            "caption": "Sample: renames the conversion event in one arm."
+          },
+          {
+            "type": "run",
+            "label": "See if the guard blocks it",
+            "scenario": "rename-event"
+          },
+          {
+            "type": "link",
+            "label": "Set it up",
+            "to": "setup"
+          }
+        ]
+      }
+    },
+    "agent_b": {
+      "by": "Agent B (guide)",
+      "hypothesis": "If the first screen states the problem in plain words, shows one risky pull request and tells the visitor in two short steps what the button does, then more first-time visitors will press the check button, because they know what they will get and that it costs nothing.",
+      "predicts": {
+        "control": 0.05,
+        "agent_a": 0.2,
+        "agent_b": 0.21
+      },
+      "value": {
+        "version": 1,
+        "blocks": [
+          {
+            "type": "heading",
+            "text": "Catch the pull request that breaks your A/B test"
+          },
+          {
+            "type": "text",
+            "text": "Experiment Guard checks each pull request against your running Flagsmith experiments and blocks changes that would corrupt their results."
+          },
+          {
+            "type": "steps",
+            "items": [
+              "Look at the sample change: it renames a conversion event.",
+              "Press the button. A few seconds, no account, read-only."
+            ]
+          },
+          {
+            "type": "pull_request",
+            "scenario": "rename-event",
+            "caption": "Would the guard block this rename of the conversion event in one arm?"
+          },
+          {
+            "type": "run",
+            "label": "See if the guard blocks it",
+            "scenario": "rename-event"
+          },
+          {
+            "type": "link",
+            "label": "Set up the guard",
+            "to": "setup"
+          }
+        ]
+      }
+    }
+  },
+  "split": {
+    "agent_a": 33,
+    "agent_b": 33
+  },
+  "goal": {
+    "event": "check_run",
+    "name": "Ran a check"
+  },
+  "guardrails": [
+    {
+      "event": "setup_snippet_copied",
+      "name": "Copied the setup snippet"
+    }
+  ],
+  "rule": {
+    "min_per_arm": 300,
+    "win_above": 0.95,
+    "harm_below": 0.05
+  },
+  "protect": [
+    "Duel"
+  ]
+}

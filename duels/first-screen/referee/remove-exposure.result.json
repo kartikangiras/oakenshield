@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "tool": "experiment-guard",
+  "toolVersion": "0.1.0",
+  "createdAt": "2026-11-27T19:56:32.690Z",
+  "durationMs": 5,
+  "source": "cli",
+  "snapshot": {
+    "fetchedAt": "2026-11-27T19:56:32.683Z",
+    "source": "flagsmith-api",
+    "running": 1
+  },
+  "stats": {
+    "filesChanged": 1,
+    "linesAdded": 1,
+    "linesRemoved": 1,
+    "filesScanned": 1
+  },
+  "findings": [
+    {
+      "id": "ba2a429b39a9",
+      "rule": "EG002",
+      "severity": "block",
+      "title": "Experiment flag call removed",
+      "experimentId": 1497,
+      "experimentName": "First screen duel",
+      "flagKey": "first_screen",
+      "file": "apps/dashboard/src/App.tsx",
+      "line": 63,
+      "side": "removed",
+      "evidence": "- const duel = useExperiment('first_screen', { enroll: landedHome });",
+      "consequence": "Nothing evaluates 'first_screen' as an experiment any more. No new users enter \"First screen duel\", so its results stop growing."
+    }
+  ],
+  "counts": {
+    "block": 1,
+    "warn": 0,
+    "info": 0,
+    "ignored": 0
+  },
+  "verdict": "block",
+  "affectedExperiments": [
+    {
+      "id": 1497,
+      "name": "First screen duel",
+      "flagKey": "first_screen"
+    }
+  ]
+}

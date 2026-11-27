@@ -1,0 +1,33 @@
+{
+  "code": "cba4b15673",
+  "experiment": 1497,
+  "feature": 307711,
+  "flag": "first_screen",
+  "environment": {
+    "id": 121658,
+    "key": "47BdKAPxTYRtEN52hHoEMh",
+    "name": "Duel"
+  },
+  "control": "control",
+  "split": {
+    "control": 34,
+    "agent_a": 33,
+    "agent_b": 33
+  },
+  "versions": {
+    "agent_b": {
+      "id": 38381,
+      "sha": "937136d8b677395acb2a7c019655ee8259593f2e9da57370a234213307fb09bb"
+    },
+    "agent_a": {
+      "id": 38353,
+      "sha": "5ed6125eb09fbbd42b1ace8effb7e4b9e396016c598d4a3c8282564937ffe45c"
+    }
+  },
+  "metrics": {
+    "check_run": 1559,
+    "setup_snippet_copied": 1560
+  },
+  "started_at": "2026-11-27T19:52:53.578764Z",
+  "updated_at": "2026-11-27T19:52:53.583364Z"
+}

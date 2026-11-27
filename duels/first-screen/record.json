@@ -1,0 +1,607 @@
+{
+  "version": 1,
+  "name": "First screen duel",
+  "created_at": "2026-11-27T18:32:39.866Z",
+  "model": "sonnet",
+  "brief": {
+    "name": "First screen duel",
+    "flag": "first_screen",
+    "environment": "Duel",
+    "goal": "More first-time visitors run a check on a sample pull request from the first screen they land on.",
+    "event": {
+      "key": "check_run",
+      "name": "Ran a check"
+    },
+    "guardrails": [
+      {
+        "key": "setup_snippet_copied",
+        "name": "Copied the setup snippet"
+      }
+    ],
+    "product": "Experiment Guard checks every pull request against the A/B tests currently running in Flagsmith, and blocks the ones that would silently corrupt a running test: a renamed event, a removed exposure call, a changed visitor ID and so on. This web app is its dashboard. It has a playground where anyone can run the guard on sample pull requests and see the verdict.",
+    "today": "A dashboard overview titled \"Pull requests\": four tiles of counts (checks, blocked, clean pass rate, median check time), charts of block rate and override rate, a list of guarded experiments and a list of the latest checks. Nothing on it says what the product is for. To run a check, a visitor has to notice a small \"Run all scenarios\" button in the page header, or open \"Playground\" in the navigation and press Run there.",
+    "visitors": "People who followed a link from the project's README or from a post about feature flags and A/B testing. Mostly software engineers; also product managers, data analysts and engineering managers. Most give a new tool under a minute. Many could not say what an exposure event or a sample ratio mismatch is. Some distrust anything that can block their pull requests. They arrive on a laptop, with no account and nothing installed.",
+    "facts": {
+      "statements": [
+        "Experiment Guard checks a pull request against the experiments that are running in Flagsmith right now.",
+        "It blocks changes that would corrupt a running experiment's data, such as renaming a tracked event, removing the exposure call or changing the visitor ID.",
+        "It has 13 rules.",
+        "The playground has 22 sample pull requests. The guard blocks 7 of them, warns about 4 and lets the other 11 through.",
+        "Running a check here takes a few seconds and needs no account, no install and no Flagsmith project.",
+        "A check only reads from Flagsmith. It changes nothing there.",
+        "It runs as a GitHub Action, a command-line tool and an MCP server for coding agents.",
+        "It is open source."
+      ],
+      "numbers": [
+        13,
+        22,
+        7,
+        4,
+        11
+      ],
+      "scenarios": [
+        "rename-event",
+        "remove-exposure",
+        "disable-events",
+        "downgrade-sdk",
+        "variant-key-rename",
+        "edit-connect-wall",
+        "change-visitor-key",
+        "move-exposure",
+        "near-miss-event",
+        "script-no-flush",
+        "dynamic-event",
+        "drop-audience-trait",
+        "rename-audience-trait",
+        "change-audience-trait-value",
+        "add-unrelated-trait",
+        "css-only",
+        "readme",
+        "new-page",
+        "unrelated-dependency",
+        "unrelated-event",
+        "ended-experiment-cleanup",
+        "move-helper"
+      ],
+      "scenarioTitles": {
+        "rename-event": "Rename the conversion event in one arm (the guard's verdict: block)",
+        "remove-exposure": "Swap the experiment call for a plain flag read (the guard's verdict: block)",
+        "disable-events": "Drop enableEvents from the provider (the guard's verdict: block)",
+        "downgrade-sdk": "Pin the JS SDK to an old major (the guard's verdict: block)",
+        "variant-key-rename": "Camel-case the variation key (the guard's verdict: block)",
+        "edit-connect-wall": "Rewrite the connect wall copy (the guard's verdict: warn)",
+        "change-visitor-key": "Rename the visitor id key (the guard's verdict: warn)",
+        "move-exposure": "Hoist the experiment call into the root layout (the guard's verdict: warn)",
+        "near-miss-event": "Add a random-issue button (the guard's verdict: pass)",
+        "script-no-flush": "Add a backfill script that never flushes (the guard's verdict: pass)",
+        "dynamic-event": "Build the event name from a variable (the guard's verdict: pass)",
+        "drop-audience-trait": "Stop sending the visitor_type trait (the guard's verdict: block)",
+        "rename-audience-trait": "Rename the visitor_type trait (the guard's verdict: block)",
+        "change-audience-trait-value": "Change how visitor_type is worked out (the guard's verdict: warn)",
+        "add-unrelated-trait": "Send one more trait (the guard's verdict: pass)",
+        "css-only": "Polish the landing page styles (the guard's verdict: pass)",
+        "readme": "Update the README (the guard's verdict: pass)",
+        "new-page": "Add an About page (the guard's verdict: pass)",
+        "unrelated-dependency": "Bump React (the guard's verdict: pass)",
+        "unrelated-event": "Rename a non-metric event (the guard's verdict: pass)",
+        "ended-experiment-cleanup": "Remove the ended digest experiment (the guard's verdict: pass)",
+        "move-helper": "Move a helper file (the guard's verdict: pass)"
+      }
+    },
+    "rule": {
+      "min_per_arm": 300,
+      "win_above": 0.95,
+      "harm_below": 0.05
+    },
+    "split": {
+      "agent_a": 33,
+      "agent_b": 33
+    }
+  },
+  "agents": {
+    "agent_a": {
+      "name": "Agent A",
+      "stance": "Cut",
+      "conviction": "People decide in seconds. Every extra word, step and choice costs visitors. The best first screen is the shortest honest path to the action: say the one thing that matters and put the button under it."
+    },
+    "agent_b": {
+      "name": "Agent B",
+      "stance": "Guide",
+      "conviction": "People do not press what they do not understand. A visitor who can see the problem and knows what the button will do presses it; a visitor who is rushed leaves. The best first screen shows the problem and walks the visitor to the action."
+    }
+  },
+  "proposals": {
+    "agent_a": {
+      "screen": {
+        "version": 1,
+        "blocks": [
+          {
+            "type": "heading",
+            "text": "Catch the pull request that breaks your A/B test"
+          },
+          {
+            "type": "text",
+            "text": "Experiment Guard checks pull requests against your running Flagsmith experiments and blocks changes that would corrupt their data. No account or install; a check takes a few seconds."
+          },
+          {
+            "type": "pull_request",
+            "scenario": "rename-event",
+            "caption": "Sample: renames the conversion event in one arm. Would the guard block it?"
+          },
+          {
+            "type": "run",
+            "label": "Run the check",
+            "scenario": "rename-event"
+          },
+          {
+            "type": "link",
+            "label": "Set it up",
+            "to": "setup"
+          }
+        ]
+      },
+      "referee": [],
+      "hypothesis": "If the first screen says in one sentence what the guard does and puts a sample pull request with a single Run button right under it, then more first-time visitors will run a check, because the action is visible and needs no reading, account or choice.",
+      "why": "The control hides the button and never says what the product is for, so I cut it to one sentence, one concrete example and one button. I kept a single quiet Set it up link so the setup snippet stays easy to reach.",
+      "ms": 8111,
+      "tokens": {
+        "in": 3074,
+        "out": 733
+      },
+      "cost": 0.0088463
+    },
+    "agent_b": {
+      "screen": {
+        "version": 1,
+        "blocks": [
+          {
+            "type": "heading",
+            "text": "Catch the pull request that breaks your A/B test"
+          },
+          {
+            "type": "text",
+            "text": "Renaming a tracked event can quietly corrupt a running experiment. Experiment Guard checks each pull request against your live Flagsmith experiments and blocks the harmful ones."
+          },
+          {
+            "type": "steps",
+            "items": [
+              "Read the sample change below.",
+              "Press the button. It takes a few seconds, no account or install.",
+              "See the verdict. The check only reads from Flagsmith."
+            ]
+          },
+          {
+            "type": "pull_request",
+            "scenario": "rename-event",
+            "caption": "Sample change: rename the conversion event in one arm."
+          },
+          {
+            "type": "run",
+            "label": "Check this pull request",
+            "scenario": "rename-event"
+          },
+          {
+            "type": "link",
+            "label": "Set up the guard",
+            "to": "setup"
+          }
+        ]
+      },
+      "referee": [],
+      "hypothesis": "If the first screen explains the problem, shows one concrete risky pull request and tells the visitor what the button will do, then more first-time visitors will press the check button, because they understand what they will get and that it costs nothing.",
+      "why": "Visitors who can't say what an exposure event is still grasp 'a renamed event ruins your test', and a visible diff plus three plain steps removes the doubt about what pressing does. Keeping a setup link preserves the path to copying the setup snippet.",
+      "ms": 9532,
+      "tokens": {
+        "in": 3085,
+        "out": 1020
+      },
+      "cost": 0.011717400000000001
+    }
+  },
+  "attacks": {
+    "agent_a": {
+      "attacks": [
+        "The steps block makes a skimming engineer read three numbered lines before reaching the button. 'Read the sample change below' tells them to do something they'd do anyway, and it pushes the run button further down the laptop screen.",
+        "The text block opens with 'Renaming a tracked event can quietly corrupt a running experiment.' A product manager or analyst who can't say what a tracked event is gets jargon before they know what the tool is, so they bounce.",
+        "'Check this pull request' is vaguer than a verdict question. The caption states a fact ('rename the conversion event in one arm') and never invites a guess, so the engineer who distrusts a blocker has no reason to be curious. 'Set up the guard' also competes with the button."
+      ],
+      "concedes": "Its steps explicitly say the check only reads from Flagsmith and needs no account, which reassures the visitors who distrust a tool that can block their pull requests, and my screen leaves the read-only point unsaid.",
+      "ms": 6055,
+      "tokens": {
+        "in": 3708,
+        "out": 317
+      },
+      "cost": 0.0152797
+    },
+    "agent_b": {
+      "attacks": [
+        "The text block never says what harm looks like. A product manager or data analyst who can't say what 'corrupt their data' means has no concrete picture of the problem, so the check feels abstract and there's little reason to press it.",
+        "The button 'Run the check' and the caption's question 'Would the guard block it?' don't say what the visitor will get back or how long it takes beyond a buried clause. A skeptical engineer who distrusts tools that block PRs gets no reassurance that a check only reads from Flagsmith.",
+        "It gives no path from heading to button. A visitor skimming under a minute sees a diff they may not understand and no cue to read it first, so the many who don't know what an exposure event is will see code and leave."
+      ],
+      "concedes": "Its shorter copy puts the diff and the button higher on the screen with less to read, which may suit visitors who press on sight and don't want a walkthrough.",
+      "ms": 5740,
+      "tokens": {
+        "in": 3719,
+        "out": 292
+      },
+      "cost": 0.0150308
+    }
+  },
+  "revisions": {
+    "agent_a": {
+      "screen": {
+        "version": 1,
+        "blocks": [
+          {
+            "type": "heading",
+            "text": "Catch the pull request that breaks your A/B test"
+          },
+          {
+            "type": "text",
+            "text": "Renaming a tracked event can quietly ruin a running experiment's data. Experiment Guard checks pull requests against your live Flagsmith experiments and blocks those. No account or install."
+          },
+          {
+            "type": "pull_request",
+            "scenario": "rename-event",
+            "caption": "Sample: renames the conversion event in one arm."
+          },
+          {
+            "type": "run",
+            "label": "See if the guard blocks it",
+            "scenario": "rename-event"
+          },
+          {
+            "type": "link",
+            "label": "Set it up",
+            "to": "setup"
+          }
+        ]
+      },
+      "referee": [],
+      "changed": "I added one concrete example of the harm (renaming a tracked event ruins the data) to the text, and changed the button to say what the visitor gets back. I did not add steps or a read-only reassurance, because every extra line costs seconds from visitors who give a tool under a minute.",
+      "hypothesis": "If the first screen gives one concrete harm, a single sample pull request and a button that promises a verdict, then more first-time visitors will run a check, because the action is visible, the stakes are clear and nothing has to be read or chosen first.",
+      "why": "The control hides the button and never says what the product is for, so I cut it to one sentence, one concrete example and one button. I kept a single quiet Set it up link so the setup snippet stays easy to reach.",
+      "predicts": {
+        "control": 0.05,
+        "agent_a": 0.3,
+        "agent_b": 0.27
+      },
+      "ms": 8187,
+      "tokens": {
+        "in": 4091,
+        "out": 769
+      },
+      "cost": 0.021331700000000002
+    },
+    "agent_b": {
+      "screen": {
+        "version": 1,
+        "blocks": [
+          {
+            "type": "heading",
+            "text": "Catch the pull request that breaks your A/B test"
+          },
+          {
+            "type": "text",
+            "text": "Experiment Guard checks each pull request against your running Flagsmith experiments and blocks changes that would corrupt their results."
+          },
+          {
+            "type": "steps",
+            "items": [
+              "Look at the sample change: it renames a conversion event.",
+              "Press the button. A few seconds, no account, read-only."
+            ]
+          },
+          {
+            "type": "pull_request",
+            "scenario": "rename-event",
+            "caption": "Would the guard block this rename of the conversion event in one arm?"
+          },
+          {
+            "type": "run",
+            "label": "See if the guard blocks it",
+            "scenario": "rename-event"
+          },
+          {
+            "type": "link",
+            "label": "Set up the guard",
+            "to": "setup"
+          }
+        ]
+      },
+      "referee": [],
+      "changed": "I cut the steps from three to two and made them shorter so the button sits higher, removed the jargon-heavy opening sentence, and turned the caption and button into a verdict question. I kept the steps because a visitor who knows what the button will do and that it costs nothing is more likely to press it.",
+      "hypothesis": "If the first screen states the problem in plain words, shows one risky pull request and tells the visitor in two short steps what the button does, then more first-time visitors will press the check button, because they know what they will get and that it costs nothing.",
+      "why": "Visitors who can't say what an exposure event is still grasp 'a renamed event ruins your test', and a visible diff plus three plain steps removes the doubt about what pressing does. Keeping a setup link preserves the path to copying the setup snippet.",
+      "predicts": {
+        "control": 0.05,
+        "agent_a": 0.2,
+        "agent_b": 0.21
+      },
+      "ms": 9355,
+      "tokens": {
+        "in": 4109,
+        "out": 1018
+      },
+      "cost": 0.0238508
+    }
+  },
+  "finalists": {
+    "agent_a": {
+      "by": "Agent A",
+      "screen": {
+        "version": 1,
+        "blocks": [
+          {
+            "type": "heading",
+            "text": "Catch the pull request that breaks your A/B test"
+          },
+          {
+            "type": "text",
+            "text": "Renaming a tracked event can quietly ruin a running experiment's data. Experiment Guard checks pull requests against your live Flagsmith experiments and blocks those. No account or install."
+          },
+          {
+            "type": "pull_request",
+            "scenario": "rename-event",
+            "caption": "Sample: renames the conversion event in one arm."
+          },
+          {
+            "type": "run",
+            "label": "See if the guard blocks it",
+            "scenario": "rename-event"
+          },
+          {
+            "type": "link",
+            "label": "Set it up",
+            "to": "setup"
+          }
+        ]
+      },
+      "hypothesis": "If the first screen gives one concrete harm, a single sample pull request and a button that promises a verdict, then more first-time visitors will run a check, because the action is visible, the stakes are clear and nothing has to be read or chosen first.",
+      "predicts": {
+        "control": 0.05,
+        "agent_a": 0.3,
+        "agent_b": 0.27
+      },
+      "from": "revision"
+    },
+    "agent_b": {
+      "by": "Agent B",
+      "screen": {
+        "version": 1,
+        "blocks": [
+          {
+            "type": "heading",
+            "text": "Catch the pull request that breaks your A/B test"
+          },
+          {
+            "type": "text",
+            "text": "Experiment Guard checks each pull request against your running Flagsmith experiments and blocks changes that would corrupt their results."
+          },
+          {
+            "type": "steps",
+            "items": [
+              "Look at the sample change: it renames a conversion event.",
+              "Press the button. A few seconds, no account, read-only."
+            ]
+          },
+          {
+            "type": "pull_request",
+            "scenario": "rename-event",
+            "caption": "Would the guard block this rename of the conversion event in one arm?"
+          },
+          {
+            "type": "run",
+            "label": "See if the guard blocks it",
+            "scenario": "rename-event"
+          },
+          {
+            "type": "link",
+            "label": "Set up the guard",
+            "to": "setup"
+          }
+        ]
+      },
+      "hypothesis": "If the first screen states the problem in plain words, shows one risky pull request and tells the visitor in two short steps what the button does, then more first-time visitors will press the check button, because they know what they will get and that it costs nothing.",
+      "predicts": {
+        "control": 0.05,
+        "agent_a": 0.2,
+        "agent_b": 0.21
+      },
+      "from": "revision"
+    }
+  },
+  "usage": {
+    "calls": 6,
+    "seconds": 25,
+    "tokens": {
+      "in": 21786,
+      "out": 4149
+    },
+    "cost": 0.096
+  },
+  "steps": [
+    {
+      "at": "2026-11-27T18:33:17.542Z",
+      "step": "plan",
+      "line": {
+        "ok": true,
+        "flag": "first_screen",
+        "environment": "Duel",
+        "protected": true,
+        "arms": {
+          "control": 34,
+          "agent_a": 33,
+          "agent_b": 33
+        },
+        "goal": "check_run",
+        "guardrails": [
+          "setup_snippet_copied"
+        ],
+        "rule": "needs 300 visitors per arm; a version wins above 95.0% chance to beat control unless a guardrail falls below 5.0%",
+        "will": [
+          "create environment Duel",
+          "replace version agent_a",
+          "add version agent_b",
+          "create metric for check_run",
+          "create metric for setup_snippet_copied",
+          "create experiment",
+          "start it"
+        ],
+        "files_using": {
+          "first_screen": 4,
+          "check_run": 6,
+          "setup_snippet_copied": 6
+        },
+        "note": "Versions belong to the flag, not the environment: every environment that serves one gets the new value.",
+        "approve": "cba4b15673",
+        "next": "Show this line to the person and ask to start. After a yes: start --approve cba4b15673"
+      }
+    },
+    {
+      "at": "2026-11-27T18:59:51.282Z",
+      "step": "plan",
+      "line": {
+        "ok": true,
+        "flag": "first_screen",
+        "environment": "Duel",
+        "protected": true,
+        "arms": {
+          "control": 34,
+          "agent_a": 33,
+          "agent_b": 33
+        },
+        "goal": "check_run",
+        "guardrails": [
+          "setup_snippet_copied"
+        ],
+        "rule": "needs 300 visitors per arm; a version wins above a 95.0% chance to beat control on the goal, unless its chance to beat control on a guardrail is below 5.0%",
+        "will": [
+          "create environment Duel",
+          "replace version agent_a",
+          "add version agent_b",
+          "create metric for check_run",
+          "create metric for setup_snippet_copied",
+          "create experiment",
+          "start it"
+        ],
+        "files_using": {
+          "first_screen": 4,
+          "check_run": 6,
+          "setup_snippet_copied": 6
+        },
+        "note": "Versions belong to the flag, not the environment: every environment that serves one gets the new value.",
+        "approve": "cba4b15673",
+        "next": "Show this line to the person and ask to start. After a yes: start --approve cba4b15673"
+      }
+    },
+    {
+      "at": "2026-11-27T19:30:44.254Z",
+      "step": "plan",
+      "line": {
+        "ok": true,
+        "flag": "first_screen",
+        "environment": "Duel",
+        "protected": true,
+        "arms": {
+          "control": 34,
+          "agent_a": 33,
+          "agent_b": 33
+        },
+        "goal": "check_run",
+        "guardrails": [
+          "setup_snippet_copied"
+        ],
+        "rule": "needs 300 visitors per arm; a version wins above a 95.0% chance to beat control on the goal, unless its chance to beat control on a guardrail is below 5.0%",
+        "will": [
+          "create environment Duel",
+          "replace version agent_a",
+          "add version agent_b",
+          "create metric for check_run",
+          "create metric for setup_snippet_copied",
+          "create experiment",
+          "start it"
+        ],
+        "files_using": {
+          "first_screen": 5,
+          "check_run": 6,
+          "setup_snippet_copied": 6
+        },
+        "note": "Versions belong to the flag, not the environment: every environment that serves one gets the new value.",
+        "approve": "cba4b15673",
+        "next": "Show this line to the person and ask to start. After a yes: start --approve cba4b15673"
+      }
+    },
+    {
+      "at": "2026-11-27T19:51:58.669Z",
+      "step": "approve",
+      "line": {
+        "ok": true,
+        "approved": "start",
+        "code": "cba4b15673",
+        "next": "start --approve cba4b15673"
+      }
+    },
+    {
+      "at": "2026-11-27T19:52:56.289Z",
+      "step": "start",
+      "line": {
+        "ok": true,
+        "experiment": 1497,
+        "status": "running",
+        "environment": "Duel",
+        "served": {
+          "control": 10,
+          "agent_a": 9,
+          "agent_b": 11
+        },
+        "seal": "duels/first-screen/duel.seal.json",
+        "next": "Send visitors. Check with: audit. When each arm has 300: verdict"
+      }
+    },
+    {
+      "at": "2026-11-27T19:55:27.620Z",
+      "step": "audit",
+      "line": {
+        "ok": true,
+        "sealed": true,
+        "status": "running",
+        "experiment": 1497,
+        "since": "2026-11-27T19:52:53.578764Z",
+        "next": "verdict"
+      }
+    },
+    {
+      "at": "2026-11-27T20:35:34.223Z",
+      "step": "audit",
+      "line": {
+        "ok": true,
+        "sealed": true,
+        "status": "running",
+        "experiment": 1497,
+        "since": "2026-11-27T19:52:53.578764Z",
+        "next": "verdict"
+      }
+    },
+    {
+      "at": "2026-11-27T20:38:48.365Z",
+      "step": "verdict",
+      "line": {
+        "ok": true,
+        "state": "decided",
+        "winner": "agent_b",
+        "why": "Control 16.7%. agent_a 60.4% (100.0% chance to beat control): qualifies. agent_b 87.3% (100.0% chance to beat control): qualifies. Both qualify; agent_b has the higher rate. No guardrail fell (setup_snippet_copied: our exact test, Flagsmith gave no estimate).",
+        "read_at": "2026-11-27T20:38:48.355Z",
+        "arms": {
+          "control": "55/329",
+          "agent_a": "201/333",
+          "agent_b": "308/353"
+        },
+        "details": "duels/first-screen/duel.verdict.json",
+        "approve": "969b3a7cf3",
+        "next": "Show this line to the person and ask to roll out agent_b. After a yes: finish --approve 969b3a7cf3"
+      }
+    }
+  ]
+}

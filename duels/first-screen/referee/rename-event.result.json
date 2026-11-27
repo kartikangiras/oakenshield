@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "tool": "experiment-guard",
+  "toolVersion": "0.1.0",
+  "createdAt": "2026-11-27T19:56:27.781Z",
+  "durationMs": 15,
+  "source": "cli",
+  "snapshot": {
+    "fetchedAt": "2026-11-27T19:56:27.764Z",
+    "source": "flagsmith-api",
+    "running": 1
+  },
+  "stats": {
+    "filesChanged": 2,
+    "linesAdded": 3,
+    "linesRemoved": 3,
+    "filesScanned": 2
+  },
+  "findings": [
+    {
+      "id": "a5ed3d39b038",
+      "rule": "EG001",
+      "severity": "block",
+      "title": "Conversion event removed or renamed",
+      "experimentId": 1497,
+      "experimentName": "First screen duel",
+      "flagKey": "first_screen",
+      "file": "apps/dashboard/src/pages/FirstScreen.tsx",
+      "line": 34,
+      "side": "added",
+      "evidence": "- if (!preview) trackEvent('check_run');\n+ if (!preview) trackEvent('checkRun');",
+      "consequence": "Nothing in the codebase sends 'check_run' any more. Every conversion for \"First screen duel\" stops counting and its results freeze.",
+      "hint": "Renamed to 'checkRun'. Flagsmith matches event names exactly, so 'checkRun' counts toward nothing.",
+      "suggestion": {
+        "file": "apps/dashboard/src/pages/FirstScreen.tsx",
+        "line": 34,
+        "original": "    if (!preview) trackEvent('checkRun');",
+        "replacement": "    if (!preview) trackEvent('check_run');"
+      }
+    },
+    {
+      "id": "6d276705069f",
+      "rule": "EG001",
+      "severity": "block",
+      "title": "Conversion event removed or renamed",
+      "experimentId": 1497,
+      "experimentName": "First screen duel",
+      "flagKey": "first_screen",
+      "file": "apps/dashboard/src/pages/Playground.tsx",
+      "line": 54,
+      "side": "added",
+      "evidence": "- trackEvent('check_run');\n+ trackEvent('checkRun');",
+      "consequence": "Nothing in the codebase sends 'check_run' any more. Every conversion for \"First screen duel\" stops counting and its results freeze.",
+      "hint": "Renamed to 'checkRun'. Flagsmith matches event names exactly, so 'checkRun' counts toward nothing.",
+      "suggestion": {
+        "file": "apps/dashboard/src/pages/Playground.tsx",
+        "line": 54,
+        "original": "    trackEvent('checkRun');",
+        "replacement": "    trackEvent('check_run');"
+      }
+    },
+    {
+      "id": "ec72502437eb",
+      "rule": "EG001",
+      "severity": "block",
+      "title": "Conversion event removed or renamed",
+      "experimentId": 1497,
+      "experimentName": "First screen duel",
+      "flagKey": "first_screen",
+      "file": "apps/dashboard/src/pages/Playground.tsx",
+      "line": 72,
+      "side": "added",
+      "evidence": "- trackEvent('check_run');\n+ trackEvent('checkRun');",
+      "consequence": "Nothing in the codebase sends 'check_run' any more. Every conversion for \"First screen duel\" stops counting and its results freeze.",
+      "hint": "Renamed to 'checkRun'. Flagsmith matches event names exactly, so 'checkRun' counts toward nothing.",
+      "suggestion": {
+        "file": "apps/dashboard/src/pages/Playground.tsx",
+        "line": 72,
+        "original": "    trackEvent('checkRun');",
+        "replacement": "    trackEvent('check_run');"
+      }
+    }
+  ],
+  "counts": {
+    "block": 3,
+    "warn": 0,
+    "info": 0,
+    "ignored": 0
+  },
+  "verdict": "block",
+  "affectedExperiments": [
+    {
+      "id": 1497,
+      "name": "First screen duel",
+      "flagKey": "first_screen"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+diff --git a/apps/dashboard/src/App.tsx b/apps/dashboard/src/App.tsx
+--- a/apps/dashboard/src/App.tsx
++++ b/apps/dashboard/src/App.tsx
+@@ -60,7 +60,7 @@
+   // The duel (README, "The duel"): the first screen is whatever the first_screen flag serves.
+   // While a duel runs, each agent's version is the value of its variation; afterwards the flag
+   // serves the winner to everyone. Its control value is not a screen, and then demo_start decides.
+-  const duel = useExperiment('first_screen', { enroll: landedHome });
++  const duel = { ready: true, value: null as unknown };
+   const screen = useMemo(() => parseScreen(duel.value), [duel.value]);
+   const start = useExperiment('demo_start', { enroll: landedHome && duel.ready && !screen });
+   const redirected = useRef(false);

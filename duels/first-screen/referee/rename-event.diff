@@ -1,0 +1,33 @@
+diff --git a/apps/dashboard/src/pages/FirstScreen.tsx b/apps/dashboard/src/pages/FirstScreen.tsx
+--- a/apps/dashboard/src/pages/FirstScreen.tsx
++++ b/apps/dashboard/src/pages/FirstScreen.tsx
+@@ -31,7 +31,7 @@
+ 
+   const run = async () => {
+     if (!target) return;
+-    if (!preview) trackEvent('check_run');
++    if (!preview) trackEvent('checkRun');
+     setRunning(true);
+     setError(undefined);
+     setResult(undefined);
+diff --git a/apps/dashboard/src/pages/Playground.tsx b/apps/dashboard/src/pages/Playground.tsx
+--- a/apps/dashboard/src/pages/Playground.tsx
++++ b/apps/dashboard/src/pages/Playground.tsx
+@@ -51,7 +51,7 @@
+   useEffect(() => { setResult(undefined); setError(undefined); }, [selected?.id, mode, guided]);
+ 
+   const run = async () => {
+-    trackEvent('check_run');
++    trackEvent('checkRun');
+     setRunning(true);
+     setError(undefined);
+     setResult(undefined);
+@@ -69,7 +69,7 @@
+   };
+ 
+   const runAll = async () => {
+-    trackEvent('check_run');
++    trackEvent('checkRun');
+     const rows: MatrixRow[] = list.map(s => ({ s }));
+     setMatrix(rows);
+     for (let i = 0; i < rows.length; i++) {
