@@ -1,0 +1,52 @@
+/* The duel replay (duel-viz.ts). The page that mounts it sets the colours: --dv-1, --dv-2, …
+   for the lanes in the order of the data, --dv-track, --dv-text, --dv-muted and --dv-mono. */
+
+.dv { container-type: inline-size; display: grid; gap: 16px; color: var(--dv-text, inherit); }
+.dv-lanes { display: grid; gap: 12px; }
+.dv-lane { display: grid; grid-template-columns: 144px minmax(0, 1fr) 96px; align-items: center; gap: 16px; }
+
+.dv-who { display: grid; gap: 2px; min-width: 0; }
+.dv-name { display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 20px; font-weight: 600; }
+.dv-note { font-size: 12px; line-height: 16px; color: var(--dv-muted, inherit); }
+.dv-win {
+  padding: 2px 8px; border-radius: 9999px; font-size: 12px; line-height: 16px; font-weight: 600;
+  color: var(--dv-c); background: color-mix(in srgb, var(--dv-c) 16%, transparent);
+  opacity: 0; transform: translateY(4px) scale(0.92);
+  transition: opacity 700ms cubic-bezier(0.32, 0.72, 0, 1), transform 700ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.dv-done .dv-win { opacity: 1; transform: none; }
+
+.dv-field { min-width: 0; background: var(--dv-track, transparent); border-radius: 8px; }
+.dv-dots { display: block; max-width: 100%; color: var(--dv-c); }
+
+.dv-score { display: grid; gap: 2px; justify-items: end; font-variant-numeric: tabular-nums; }
+.dv-rate { font-size: 20px; line-height: 28px; font-weight: 600; transition: color 700ms cubic-bezier(0.32, 0.72, 0, 1); }
+.dv-rate::after, .dv-count::after { content: attr(data-v); }
+.dv-done .dv-won .dv-rate { color: var(--dv-c); }
+.dv-count { font-family: var(--dv-mono, inherit); font-size: 12px; line-height: 16px; color: var(--dv-muted, inherit); white-space: nowrap; }
+
+.dv-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 12px; line-height: 16px; color: var(--dv-muted, inherit); }
+.dv-key { display: inline-flex; align-items: center; gap: 8px; }
+.dv-key i { width: 8px; height: 8px; border-radius: 9999px; background: var(--dv-text, currentColor); }
+.dv-key .dv-miss { opacity: 0.24; }
+.dv-replay {
+  display: inline-flex; align-items: center; gap: 4px; margin-left: auto; padding: 4px 8px;
+  border: 0; border-radius: 9999px; background: none; color: inherit; font: inherit; font-weight: 600; cursor: pointer;
+  transition: color 300ms cubic-bezier(0.32, 0.72, 0, 1), background-color 300ms cubic-bezier(0.32, 0.72, 0, 1), transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.dv-replay:hover { color: var(--dv-text, inherit); background: var(--dv-track, transparent); }
+.dv-replay:active { transform: scale(0.98); }
+.dv-replay:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+/* The status outside the lanes says the result throughout; while the dots move, the count so far is drawn in its place. */
+[data-dv-count]::after { content: attr(data-dv-count); }
+.dv-sr, [data-dv-count] > .dv-said { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@container (max-width: 560px) {
+  .dv-lane { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
+  .dv-field { grid-column: 1 / -1; grid-row: 2; }
+  .dv-score { display: flex; align-items: baseline; gap: 8px; }
+  .dv-score .dv-count { order: -1; }
+  .dv-rate { font-size: 16px; line-height: 24px; }
+  .dv-caption { flex-basis: 100%; order: 1; }
+}
