@@ -143,6 +143,19 @@ export interface ClientConfig {
   experiments: { environmentKey: string; apiUrl?: string; eventsApiUrl?: string } | null;
 }
 
+/**
+ * The agent duel (README, "The duel"), as its files are on disk. The server passes them through
+ * unread: the shapes belong to the duel package (record) and the flagsmith-duel skill (the rest).
+ */
+export interface DuelView {
+  record: unknown;
+  seal: unknown;
+  verdict: unknown;
+  approvals: unknown;
+  /** The simulated visitors' run summary, when one has been written. */
+  traffic: unknown;
+}
+
 export interface Health {
   ok: true;
   version: string;

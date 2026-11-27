@@ -6,6 +6,7 @@ import {
   type GuardConfig, type Report, type RuleId, type ScenarioSet,
 } from '@oakenshield/guard';
 import type { CheckRecord, ClientConfig, FlagsmithAlert, Health, ScenarioView, Settings, StreamEvent } from './api-types.ts';
+import { readDuel } from './duel.ts';
 import type { ExperimentService } from './experiments.ts';
 import { newId } from './seed.ts';
 import { activityFor, buildOverview, experimentView, ruleViews } from './stats.ts';
@@ -26,6 +27,8 @@ export interface AppOptions {
   github?: GitHubPoster;
   /** Public settings for the dashboard, including the Flagsmith environment of its own A/B test. */
   client?: ClientConfig;
+  /** Where the agent duel's record lives (duels/first-screen). */
+  duelDir?: string;
 }
 
 class HttpError extends Error {
@@ -144,6 +147,7 @@ export function createApp(opts: AppOptions): { server: Server; broadcast: (e: St
 
   route('GET', '/api/health', (_q, res) => send(res, 200, health()));
   route('GET', '/api/client-config', (_q, res) => send(res, 200, opts.client ?? { experiments: null }));
+  route('GET', '/api/duel', (_q, res) => send(res, 200, readDuel(opts.duelDir)));
 
   route('GET', '/api/overview', (_q, res, _p, url) => {
     const days = Math.min(90, Math.max(7, Number(url.searchParams.get('days') ?? 30) || 30));

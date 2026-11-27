@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { after, before, describe, it } from 'node:test';
 import { loadScenarioSet } from '@oakenshield/guard';
@@ -8,6 +11,7 @@ import { generateDemoChecks } from '../src/seed.ts';
 import { Store } from '../src/store.ts';
 
 const scenarios = loadScenarioSet();
+const duelDir = mkdtempSync(join(tmpdir(), 'duel-'));
 let base = '';
 let close: () => void;
 
@@ -19,6 +23,7 @@ before(async () => {
   const { server } = createApp({
     store, experiments, scenarios, baseConfig: scenarios.config, ingestToken: 'secret',
     client: { experiments: { environmentKey: 'oak_demo_client_key' } },
+    duelDir,
   });
   await new Promise<void>(r => server.listen(0, '127.0.0.1', r));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -48,6 +53,16 @@ describe('API', () => {
     const { status, body } = await get('/api/client-config');
     assert.equal(status, 200);
     assert.deepEqual(body, { experiments: { environmentKey: 'oak_demo_client_key' } });
+  });
+
+  it('serves the agent duel from its files, and null when there is none', async () => {
+    assert.equal((await get('/api/duel')).body, null);
+    writeFileSync(join(duelDir, 'record.json'), JSON.stringify({ version: 1, name: 'Test duel' }));
+    writeFileSync(join(duelDir, 'duel.seal.json'), JSON.stringify({ experiment: 7 }));
+    const { body } = await get('/api/duel');
+    assert.equal(body.record.name, 'Test duel');
+    assert.equal(body.seal.experiment, 7);
+    assert.equal(body.verdict, null);
   });
 
   it('builds an overview with a filled daily series', async () => {
