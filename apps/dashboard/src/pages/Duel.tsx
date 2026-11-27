@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AgentKey } from '../../../../packages/duel/src/agents.ts';
 import type { DuelRecord } from '../../../../packages/duel/src/debate.ts';
 import { Icon } from '../components/Icons.tsx';
 import { Card, CodeBlock, Empty, ErrorState, PageHead, Section, Seg, Skeleton, cx } from '../components/ui.tsx';
 import { api } from '../lib/api.ts';
+import { mountDuelViz } from '../lib/duel-viz.ts';
 import { num, pct, plural } from '../lib/format.ts';
 import { useAsync } from '../lib/hooks.ts';
 import { FirstScreen } from './FirstScreen.tsx';
@@ -45,6 +46,8 @@ interface Traffic {
   inputTokens: number;
   outputTokens: number;
 }
+/** The same run one visitor at a time (scripts/traffic/replay.mjs). */
+interface Replay { arms: string[]; visits: string }
 type Arm = 'control' | AgentKey;
 
 const AGENTS: AgentKey[] = ['agent_a', 'agent_b'];
@@ -87,20 +90,24 @@ function stages(record: DuelRecord, seal: Seal | null, verdict: Verdict | null) 
   return list.map((s, i) => ({ ...s, state: s.done ? 'done' : i === now ? 'now' : 'later' }));
 }
 
-/** The duel in one line, for this page's result card and the overview's banner. */
+/** What is still to do once the verdict is in. */
+const afterVerdict = (seal: Seal, agentWon: boolean) => (agentWon
+  ? (seal.completed_at ? 'It now ships to everyone.' : 'The rollout waits for a person.')
+  : (seal.completed_at ? 'The experiment is closed.' : 'Closing the experiment waits for a person.'));
+
+/** The duel in one line, for this page's result card and the overview. */
 function duelHeadline(record: DuelRecord, seal: Seal | null, verdict: Verdict | null): { title: string; sub: string } {
   if (!seal?.started_at) return { title: 'Two agents have each written a new first screen', sub: 'Nothing exists in Flagsmith yet. The experiment starts when a person approves it.' };
   if (!verdict) return { title: 'The duel is running', sub: `Experiment ${seal.experiment} in Flagsmith. The verdict is read once, when every version has ${record.brief.rule.min_per_arm} visitors.` };
   if (verdict.state === 'void') return { title: 'No verdict: the run is void', sub: named(verdict.why) };
   const goal = verdict.table[record.brief.event.key] ?? {};
   const did = record.brief.event.name.toLowerCase();
-  const rolled = seal.completed_at ? 'It now ships to everyone.' : 'The rollout waits for a person.';
   if (verdict.winner === 'control' || !verdict.winner || !goal[verdict.winner] || !goal.control) {
-    return { title: "Today's screen stays", sub: `Neither agent's screen cleared the rule that was fixed before the start. ${seal.completed_at ? 'The experiment is closed.' : 'Closing the experiment waits for a person.'}` };
+    return { title: "Today's screen stays", sub: `Neither agent's screen cleared the rule that was fixed before the start. ${afterVerdict(seal, false)}` };
   }
   return {
     title: `${armLabel(verdict.winner)} won the duel`,
-    sub: `${pct(goal[verdict.winner]!.rate, 1)} of its visitors ${did}, against ${pct(goal.control.rate, 1)} on today's screen. ${rolled}`,
+    sub: `${pct(goal[verdict.winner]!.rate, 1)} of its visitors ${did}, against ${pct(goal.control.rate, 1)} on today's screen. ${afterVerdict(seal, true)}`,
   };
 }
 
@@ -310,20 +317,73 @@ function ResultCard({ record, seal, verdict, traffic }: { record: DuelRecord; se
   );
 }
 
-/** The duel in one line with a way in, for the overview. */
-export function DuelBanner() {
+/** The replay plays once per visit to the dashboard. Coming back to the overview finds it finished. */
+let replayed = false;
+
+/** The duel on the overview: its experiment replayed one visitor at a time, with a way in. */
+export function DuelReplay() {
   const duel = useAsync(() => api.duel(), []);
+  const stage = useRef<HTMLDivElement>(null);
+  const status = useRef<HTMLSpanElement>(null);
   const record = duel.data?.record as DuelRecord | null | undefined;
+  const seal = (duel.data?.seal ?? null) as Seal | null;
+  const verdict = (duel.data?.verdict ?? null) as Verdict | null;
+  const goal = record && seal?.started_at && verdict?.state === 'decided' ? verdict.table[record.brief.event.key] : undefined;
+  const simulated = !!duel.data?.traffic;
+  const agentWon = !!verdict?.winner && verdict.winner !== 'control';
+
+  useEffect(() => {
+    if (!stage.current || !record || !verdict || !goal) return;
+    const replay = (duel.data?.replay ?? null) as Replay | null;
+    // The replay numbers the versions in its own order. Without one, the page's order will do.
+    const logged = replay?.arms.every(k => goal[k]) ? replay : null;
+    const viz = mountDuelViz(stage.current, {
+      lanes: (logged?.arms ?? ARMS.filter(k => goal[k])).map(k => ({
+        key: k,
+        label: armLabel(k),
+        note: k === 'control' ? 'The overview as it was' : `Told to ${record.agents[k as AgentKey]?.stance.toLowerCase() ?? 'win'}`,
+        visitors: goal[k]!.visitors,
+        converted: goal[k]!.converted,
+      })),
+      visits: logged?.visits,
+      baseline: 'control',
+      did: record.brief.event.name.toLowerCase(),
+      winner: verdict.winner,
+      result: agentWon ? `${armLabel(verdict.winner!)} wins` : "Today's screen stays",
+      status: status.current,
+      caption: `One dot is one ${simulated ? 'simulated ' : ''}visitor.`,
+      autoplay: !replayed,
+      delay: 400,
+      onPlay: () => { replayed = true; },
+    });
+    return () => viz.destroy();
+  }, [duel.data]);
+
   if (!record) return null;
-  const head = duelHeadline(record, (duel.data?.seal ?? null) as Seal | null, (duel.data?.verdict ?? null) as Verdict | null);
-  return (
-    <div className="card banner fade-in">
-      <span className="banner-icon"><Icon name="swap" size={20} /></span>
-      <div className="banner-text">
-        <div className="banner-title">{head.title}</div>
-        <div className="banner-sub">{head.sub}</div>
+  const way = <a className="btn" href="#/duel">See the duel<Icon name="chevronRight" size={14} /></a>;
+  if (!goal || !seal) {
+    const head = duelHeadline(record, seal, verdict);
+    return (
+      <div className="card duel-replay fade-in">
+        <div className="card-head">
+          <div><div className="card-title">{head.title}</div><div className="card-sub">{head.sub}</div></div>
+          {way}
+        </div>
       </div>
-      <a className="btn" href="#/duel">See the duel<Icon name="chevronRight" size={14} /></a>
+    );
+  }
+  return (
+    <div className="card duel-replay fade-in">
+      <div className="card-head">
+        <div>
+          <div className="card-title">{record.name}<span ref={status} className="chip mono" /></div>
+          <div className="card-sub">
+            Two AI agents each wrote a new first screen. Experiment {seal.experiment} in Flagsmith ran both against today's{simulated && ' on simulated visitors'}. {afterVerdict(seal, agentWon)}
+          </div>
+        </div>
+        {way}
+      </div>
+      <div className="card-pad"><div ref={stage} /></div>
     </div>
   );
 }

@@ -172,9 +172,6 @@ code, pre, .mono { font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menl
 .grid.split { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
 .tx-list .tx { padding: 12px 0; border-top: 1px solid var(--border); }
 .tx-list .tx:first-child { border-top: 0; padding-top: 0; }
-.spotlight-card { padding: 24px; display: flex; flex-direction: column; gap: 16px; cursor: pointer; transition: border-color 400ms var(--ease), transform 400ms var(--ease); }
-.spotlight-card:hover { border-color: var(--border-2); transform: translateY(-2px); }
-.spotlight-card:active { transform: scale(0.99); }
 .steps { margin: 0; padding: 0; list-style: none; counter-reset: step; display: grid; gap: 12px; }
 .steps li { counter-increment: step; display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: 12px; row-gap: 2px; font-size: 14px; line-height: 20px; }
 .steps li::before {
@@ -184,17 +181,12 @@ code, pre, .mono { font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menl
 .steps li b { font-weight: 600; }
 .steps li span { color: var(--text-2); }
 
-/* The overview's numbers and the duel banner (pages/Overview.tsx). */
-.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
-.kpi { padding: 24px; display: flex; flex-direction: column; gap: 4px; }
-.kpi-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; line-height: 20px; color: var(--text-2); }
+/* The overview (pages/Overview.tsx): the duel replayed (lib/duel-viz.ts) and the numbers above the chart. */
+.duel-replay .dv { --dv-1: var(--text-3); --dv-2: var(--accent); --dv-3: var(--brand-1); --dv-track: var(--surface-2); --dv-text: var(--text); --dv-muted: var(--text-2); --dv-mono: 'Geist Mono', ui-monospace, monospace; }
+.duel-replay .card-head:last-child { padding-bottom: 24px; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
 .kpi-value { font-size: 30px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-.kpi-foot { font-size: 12px; line-height: 16px; color: var(--text-3); }
-.banner { display: flex; align-items: center; gap: 16px; padding: 16px 16px 16px 24px; flex-wrap: wrap; }
-.banner-icon { width: 40px; height: 40px; border-radius: 9999px; display: grid; place-items: center; flex: none; color: var(--accent); background: var(--accent-soft); }
-.banner-text { flex: 1; min-width: 240px; }
-.banner-title { font-size: 16px; line-height: 24px; font-weight: 600; }
-.banner-sub { color: var(--text-2); }
+.kpi-label { font-size: 14px; line-height: 20px; color: var(--text-2); }
 
 /* A first screen served by the first_screen flag (pages/FirstScreen.tsx). */
 .screen { max-width: 880px; margin: 0 auto; }
@@ -271,7 +263,6 @@ code, pre, .mono { font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menl
 .cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.cols-2-1 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
 .stack { display: flex; flex-direction: column; gap: 16px; }
 .row { display: flex; align-items: center; gap: 8px; }
 .row.wrap { flex-wrap: wrap; }
@@ -386,13 +377,6 @@ select.input { padding-right: 32px; cursor: pointer; }
 }
 @keyframes pop3 { from { opacity: 0; transform: translateY(-4px); } }
 .alert-row:first-child { border-top: 0; }
-.alert-strip {
-  display: flex; align-items: center; gap: 12px; padding: 12px 16px; margin-bottom: 16px; border-radius: 16px; cursor: pointer;
-  background: var(--surface); border: 1px solid var(--border-2);
-}
-.alert-strip.sev-block { border-color: color-mix(in srgb, var(--block) 40%, var(--border-2)); background: var(--block-soft); }
-.alert-strip.sev-warn { border-color: color-mix(in srgb, var(--warn) 40%, var(--border-2)); background: var(--warn-soft); }
-.alert-strip.sev-info { background: var(--info-soft); }
 
 /* ---------- charts ---------- */
 .chart-tip {
@@ -446,10 +430,6 @@ select.input { padding-right: 32px; cursor: pointer; }
 .exp-card:active { transform: scale(0.99); }
 .exp-card .exp-body { display: flex; flex-direction: column; gap: 12px; flex: 1; }
 .exp-name { font-weight: 600; font-size: 16px; line-height: 24px; letter-spacing: -0.01em; }
-.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.stat { background: var(--surface-2); border-radius: 12px; padding: 8px 12px; }
-.stat b { display: block; font-size: 16px; line-height: 24px; font-variant-numeric: tabular-nums; }
-.stat span { font-size: 12px; line-height: 16px; color: var(--text-3); }
 
 /* ---------- drawer, palette, toasts ---------- */
 .overlay { position: fixed; inset: 0; z-index: 50; background: rgba(42, 22, 54, 0.4); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: fade 400ms var(--ease); }
@@ -572,8 +552,8 @@ select.input { padding-right: 32px; cursor: pointer; }
 @media (max-width: 1180px) {
   .status b { display: none; }
   .status { padding: 0 8px; }
-  .cols-4, .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .cols-3, .cols-2-1, .grid.split { grid-template-columns: 1fr; }
+  .cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cols-3, .grid.split { grid-template-columns: 1fr; }
   .rule-row { grid-template-columns: 64px minmax(0, 1fr) 120px; }
   .rule-row .hide-sm { display: none; }
   .score-row { grid-template-columns: 168px minmax(0, 1fr) 248px; gap: 16px; }
@@ -588,12 +568,13 @@ select.input { padding-right: 32px; cursor: pointer; }
 @media (max-width: 720px) {
   .app { padding: 8px 16px 48px; }
   .topbar { top: 8px; }
-  .cols-2, .kpis { grid-template-columns: 1fr; }
+  .cols-2 { grid-template-columns: 1fr; }
   .page-hd { padding-top: 32px; }
   .page-title { font-size: 24px; line-height: 32px; }
   .score-row { grid-template-columns: 1fr; gap: 8px; padding: 16px; }
   .score-num { text-align: left; }
   .duel-stages { grid-template-columns: 1fr; }
+  .duel-replay .card-head { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
