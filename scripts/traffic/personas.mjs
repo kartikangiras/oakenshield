@@ -23,7 +23,7 @@
  *     [--api-url <url>] [--events-url <url>] [--chrome <path>] [--llm stub] [--self-test]
  *
  *   --out         a folder for decisions.jsonl (one line per decision, one per visitor),
- *                 summary.json and summary.md
+ *                 summary.json, summary.md and replay.json (replay.mjs)
  *   --until-each  after --visitors, keep sending visitors until every version has had this many
  *                 (at most twice --visitors in all), so the planned sample comes from one run
  *                 and nobody has to look at a summary to decide whether to send more
@@ -36,6 +36,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { createHarness, decisions, root, until } from './harness.mjs';
+import { replayOf } from './replay.mjs';
 
 const { values: opt } = parseArgs({
   options: {
@@ -586,11 +587,13 @@ try {
     }
   }));
   if (fatal) throw fatal;
+  const finished = [...visits];
   visits.sort((a, b) => a.visitor.localeCompare(b.visitor));
   const summary = summarise(visits, Math.round((Date.now() - started) / 100) / 10);
   if (out) {
     writeFileSync(join(out, 'summary.json'), `${JSON.stringify(summary, null, 2)}\n`);
     writeFileSync(join(out, 'summary.md'), `${markdown(summary)}\n`);
+    writeFileSync(join(out, 'replay.json'), `${JSON.stringify(replayOf(finished, summary.errors), null, 2)}\n`);
   }
   if (process.env.GITHUB_STEP_SUMMARY && !opt['self-test']) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${markdown(summary)}\n`);
   console.log(JSON.stringify(summary));
