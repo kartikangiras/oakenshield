@@ -1,8 +1,9 @@
 // A local stand-in for Flagsmith, built from Flagsmith's own source so Oakenshield can be run end to
 // end without a Flagsmith account:
 //   - the Admin API Experiment Guard reads (api/experimentation/serializers.py, features/,
-//     segments/, environments/), for two environments: demo_prod (the FirstPR demo project) and
-//     oak_demo (Oakenshield's own A/B test, docs/experiment.md);
+//     segments/, environments/), for three environments: demo_prod (the FirstPR demo project),
+//     oak_demo (Oakenshield's own A/B test, docs/experiment.md) and oak_duel (a duel: the
+//     first_screen flag, whose two variations each carry a whole first screen as JSON);
 //   - the SDK API the real @flagsmith/flagsmith SDK calls: flags/, identities/ with each flag's
 //     variant and experiment metadata (features/serializers.py SDKIdentityFeatureStateSerializer,
 //     experimentation/feature_state_metadata.py), and v1/events for exposures and conversions;
@@ -20,12 +21,39 @@ const project = { id: 7, name: 'FirstPR' };
 const environment = { id: 3, uuid: 'b9c1f0de-0000-4000-8000-000000000003', name: 'Production', api_key: ENV_KEY, project: 7, use_v2_feature_versioning: false, minimum_change_request_approvals: null };
 // Oakenshield's own A/B test lives in a second environment (same project here, for brevity).
 const OAK_KEY = 'oak_demo';
+// A duel has its own environment, so oak_demo keeps serving demo_start and nothing else.
+const DUEL_KEY = 'oak_duel';
 const environments = {
   [ENV_KEY]: environment,
   [OAK_KEY]: { id: 5, uuid: 'b9c1f0de-0000-4000-8000-000000000005', name: 'Oakenshield demo', api_key: OAK_KEY, project: 7, use_v2_feature_versioning: false, minimum_change_request_approvals: null },
+  [DUEL_KEY]: { id: 6, uuid: 'b9c1f0de-0000-4000-8000-000000000006', name: 'Oakenshield duel', api_key: DUEL_KEY, project: 7, use_v2_feature_versioning: false, minimum_change_request_approvals: null },
 };
 
-const opt = (id, key, pct) => ({ id, uuid: `00000000-0000-4000-8000-${String(id).padStart(12, '0')}`, type: 'unicode', integer_value: null, string_value: key, boolean_value: null, default_percentage_allocation: pct, key });
+// The two first screens in the stand-in's duel, in the format packages/duel/src/screen.ts checks.
+// One shows the pull request and its diff; the other explains the tool in three steps.
+const SCREEN_A = {
+  version: 1,
+  blocks: [
+    { type: 'heading', text: 'See a pull request break a running A/B test' },
+    { type: 'text', text: 'This change renames an event that a live experiment counts. The tests pass, and the experiment quietly stops counting.' },
+    { type: 'pull_request', scenario: 'rename-event', caption: 'A seeded pull request: one line changes the event name.' },
+    { type: 'run', label: 'Check this pull request', scenario: 'rename-event' },
+    { type: 'link', label: 'How to set it up', to: 'setup' },
+  ],
+};
+const SCREEN_B = {
+  version: 1,
+  blocks: [
+    { type: 'heading', text: 'Know what a change breaks before you merge' },
+    { type: 'steps', items: ['Open a pull request as usual', 'Experiment Guard compares it with your running experiments', 'It reports what the change would break'] },
+    { type: 'run', label: 'Try it on a sample', scenario: 'remove-exposure' },
+    { type: 'link', label: 'See the rules', to: 'rules' },
+    { type: 'link', label: 'Open the playground', to: 'playground' },
+  ],
+};
+
+/** A multivariate option. Its value is its key unless one is given (a duel's screens are JSON). */
+const opt = (id, key, pct, value = key) => ({ id, uuid: `00000000-0000-4000-8000-${String(id).padStart(12, '0')}`, type: 'unicode', integer_value: null, string_value: value, boolean_value: null, default_percentage_allocation: pct, key });
 const features = {
   9001: { id: 9001, name: 'onboarding_flow', type: 'MULTIVARIATE', initial_value: 'value_first', multivariate_options: [opt(51, 'github_first', 50)] },
   9002: { id: 9002, name: 'mentor_match', type: 'MULTIVARIATE', initial_value: 'directory', multivariate_options: [opt(52, 'match_quiz', 50)] },
@@ -33,8 +61,10 @@ const features = {
   9004: { id: 9004, name: 'digest_prompt', type: 'MULTIVARIATE', initial_value: 'control', multivariate_options: [opt(55, 'show-prompt', 50)] },
   9005: { id: 9005, name: 'docs_cta', type: 'MULTIVARIATE', initial_value: 'inline', multivariate_options: [opt(61, 'sticky', 0)] },
   9101: { id: 9101, name: 'demo_start', type: 'MULTIVARIATE', initial_value: 'overview', multivariate_options: [opt(71, 'try_it', 50)] },
+  // Split three ways: a third of visitors each see agent_a's screen, agent_b's, or the control (the Overview).
+  9201: { id: 9201, name: 'first_screen', type: 'MULTIVARIATE', initial_value: 'overview', multivariate_options: [opt(81, 'agent_a', 33, JSON.stringify(SCREEN_A)), opt(82, 'agent_b', 33, JSON.stringify(SCREEN_B))] },
 };
-const featuresByEnv = { [ENV_KEY]: [9001, 9002, 9003, 9004, 9005], [OAK_KEY]: [9101] };
+const featuresByEnv = { [ENV_KEY]: [9001, 9002, 9003, 9004, 9005], [OAK_KEY]: [9101], [DUEL_KEY]: [9201] };
 const metrics = {
   501: { name: 'Issue opened', event: 'issue_opened' }, 502: { name: 'GitHub connected', event: 'github_connected' },
   503: { name: 'Mentor requested', event: 'mentor_requested' }, 504: { name: 'Result clicked', event: 'result_clicked' },
@@ -59,6 +89,7 @@ const experiments = [
   { id: 104, feature: 9004, name: 'Weekly digest prompt', hypothesis: null, status: 'completed', metrics: [506], started_at: iso(now - 40 * 864e5), ended_at: iso(now - 12 * 864e5), audience: [] },
   { id: 105, feature: 9005, name: 'Sticky docs sign-up CTA', hypothesis: null, status: 'created', metrics: [507], started_at: null, ended_at: null, audience: [] },
   { id: 201, env: OAK_KEY, feature: 9101, name: 'Open the demo on a broken pull request', hypothesis: 'Opening the demo on a broken pull request gets more first-time visitors to run a check than opening it on the overview.', status: 'running', metrics: [601, 602], started_at: iso(now), ended_at: null, audience: [] },
+  { id: 202, env: DUEL_KEY, feature: 9201, name: 'First screen duel', hypothesis: 'One of two proposed first screens gets more first-time visitors to run a check than the overview.', status: 'running', metrics: [601, 602], started_at: iso(now), ended_at: null, audience: [] },
 ];
 const inEnv = (e, key) => (e.env ?? ENV_KEY) === key;
 // Segment overrides on flags in this environment (features/feature-segments/). 103's audience is
