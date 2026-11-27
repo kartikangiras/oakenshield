@@ -1,5 +1,6 @@
 /*
- * The dashboard's own A/B test, run with Flagsmith Experimentation. See docs/experiment.md.
+ * The dashboard's own experiments, run with Flagsmith Experimentation: the demo_start A/B test
+ * and the first_screen duel (README, "The duel").
  *
  * Off unless the server is started with DASHBOARD_FLAGSMITH_ENVIRONMENT: then nothing is loaded
  * and every visitor sees the control version. When it is on:
@@ -75,13 +76,19 @@ const timeout = <T,>(p: Promise<T>, ms: number, fallback: T) =>
   Promise.race([p, new Promise<T>(r => setTimeout(() => r(fallback), ms))]);
 
 // One assignment per flag per page load, so remounts (and React's strict mode) record one exposure.
-const assignments = new Map<string, Promise<string | null>>();
+const assignments = new Map<string, Promise<Served>>();
 
-export interface Assignment {
-  /** False while waiting for Flagsmith; render a placeholder rather than flash the wrong version. */
-  ready: boolean;
+interface Served {
   /** The variation key, or null for the control version (also when the test is off). */
   variant: string | null;
+  /** What the flag serves this visitor, when it is on. A duel keeps each version's screen here. */
+  value: unknown;
+}
+const CONTROL: Served = { variant: null, value: null };
+
+export interface Assignment extends Served {
+  /** False while waiting for Flagsmith; render a placeholder rather than flash the wrong version. */
+  ready: boolean;
 }
 
 /**
@@ -91,19 +98,20 @@ export interface Assignment {
  */
 export function useExperiment(flag: string, opts: { enroll?: boolean } = {}): Assignment {
   const enroll = opts.enroll ?? true;
-  const [state, setState] = useState<Assignment>({ ready: !enroll, variant: null });
+  const [state, setState] = useState<Assignment>({ ready: !enroll, ...CONTROL });
   useEffect(() => {
-    if (!enroll) { setState({ ready: true, variant: null }); return; }
+    if (!enroll) { setState({ ready: true, ...CONTROL }); return; }
     let live = true;
     let assignment = assignments.get(flag);
     if (!assignment) {
       assignment = timeout(startExperiments(), ASSIGN_TIMEOUT_MS, null).then(sdk => {
         const f = sdk?.getExperimentFlag(flag);
-        return f?.enabled && f.variant && f.variant !== 'control' ? f.variant : null;
+        if (!f?.enabled) return CONTROL;
+        return { variant: f.variant && f.variant !== 'control' ? f.variant : null, value: f.value };
       });
       assignments.set(flag, assignment);
     }
-    void assignment.then(variant => { if (live) setState({ ready: true, variant }); });
+    void assignment.then(served => { if (live) setState({ ready: true, ...served }); });
     return () => { live = false; };
   }, [flag, enroll]);
   return state;

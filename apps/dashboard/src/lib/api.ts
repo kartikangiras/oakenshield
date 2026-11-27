@@ -1,5 +1,5 @@
 import type {
-  ActivityItem, CheckRecord, CheckSummary, ClientConfig, ExperimentView, FlagsmithAlert, Health, Overview, RuleId, RuleView,
+  ActivityItem, CheckRecord, CheckSummary, ClientConfig, DuelView, ExperimentView, FlagsmithAlert, Health, Overview, RuleId, RuleView,
   ScenarioView, Settings, SeveritySetting, Verdict,
 } from '../../../server/src/api-types.ts';
 
@@ -63,6 +63,7 @@ const qs = (params: Record<string, string | number | undefined>) => {
 export const api = {
   health: () => request<Health>('GET', '/api/health'),
   clientConfig: () => request<ClientConfig>('GET', '/api/client-config'),
+  duel: () => request<DuelView | null>('GET', '/api/duel'),
   overview: (days: number) => request<Overview>('GET', `/api/overview?days=${days}`),
   experiments: () => request<ExperimentView[]>('GET', '/api/experiments'),
   experiment: (id: string | number) => request<ExperimentDetail>('GET', `/api/experiments/${encodeURIComponent(String(id))}`),
