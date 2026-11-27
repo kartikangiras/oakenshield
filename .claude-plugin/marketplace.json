@@ -1,0 +1,16 @@
+{
+  "name": "oakenshield",
+  "owner": {
+    "name": "Kartik Angiras"
+  },
+  "metadata": {
+    "description": "Agent skills from Oakenshield: run a Flagsmith experiment from plan to rollout, with a person approving the start and the rollout."
+  },
+  "plugins": [
+    {
+      "name": "flagsmith-duel",
+      "source": "./",
+      "description": "Settle a disagreement between competing versions with one Flagsmith experiment, from plan to rollout, using the Flagsmith CLI."
+    }
+  ]
+}

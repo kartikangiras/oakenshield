@@ -10,9 +10,10 @@ coverage/
 !.env.example
 apps/server/.data/
 
-# Markdown: only READMEs are published
+# Markdown: only READMEs and the agent skill are published
 *.md
 !README.md
+!skills/**/*.md
 
 # Design references and unused working files
 graphics/

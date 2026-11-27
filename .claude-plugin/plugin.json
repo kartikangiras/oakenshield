@@ -1,0 +1,10 @@
+{
+  "name": "flagsmith-duel",
+  "version": "0.1.0",
+  "description": "Settle a disagreement between competing versions with one Flagsmith experiment, from plan to rollout, using the Flagsmith CLI.",
+  "author": { "name": "Kartik Angiras", "url": "https://github.com/kartikangiras" },
+  "homepage": "https://github.com/kartikangiras/oakenshield",
+  "repository": "https://github.com/kartikangiras/oakenshield",
+  "license": "MIT",
+  "keywords": ["flagsmith", "feature-flags", "experiments", "ab-testing"]
+}
