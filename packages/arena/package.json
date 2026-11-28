@@ -1,0 +1,27 @@
+{
+  "name": "@oakenshield/arena",
+  "version": "0.1.0",
+  "description": "Two AI agents each write a trading playbook; one Flagsmith experiment on live five minute prediction markets decides which one trades. Paper money only.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./playbook": "./src/playbook.ts"
+  },
+  "bin": {
+    "oakenshield-arena": "./bin/arena.js"
+  },
+  "files": ["bin", "src"],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "dependencies": {
+    "@flagsmith/nodejs": "^9.5.0",
+    "@oakenshield/duel": "0.1.0"
+  },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "keywords": ["flagsmith", "experimentation", "a/b testing", "feature flags", "ai agents", "prediction markets", "paper trading"]
+}
