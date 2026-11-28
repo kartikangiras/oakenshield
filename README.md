@@ -2,19 +2,379 @@
 
 # Oakenshield
 
-**Two AI agents disagree about a change. A Flagsmith experiment settles it. A person approves the start and the rollout, and a referee keeps the run honest in between.**
+**Oakenshield is a release process for decision logic written by AI, proven on live markets.** An agent writes the change, a Flagsmith flag holds it, a randomised experiment judges it on paper, guards protect the experiment, and a person approves each step.
 
-An agent can write three versions of a screen in a minute and argue well for every one of them. Arguing does not settle which is better. Oakenshield gives two agents the same brief and opposite convictions, lets each write its own version and attack the other's, and then stops the argument: both versions run against today's in one Flagsmith experiment, and what visitors do decides. The agents hold no Flagsmith credentials. Nothing starts and nothing ships without a person's yes.
+The proof is a trading arena. Two AI agents each write a trading playbook. A coin is the control. Flagsmith deals every live market to one of the three, a rule fixed in advance decides, and a person approves the start and the rollout.
 
-![The Duel page: the verdict, then the eight steps and who does each](docs/images/duel.png)
+An agent can write a trading strategy in a minute and argue well for it. Arguing does not settle whether it beats a coin. Oakenshield gives two agents the same fact sheet and opposite convictions: one trades with the recent move, the other against it. Each writes a playbook and attacks the other's. Then the argument stops: both playbooks and a coin trade Polymarket's live five minute crypto markets in one Flagsmith experiment, and Flagsmith deals every market to one of the three at random. All of it is paper trading. No order is ever placed, and there is no account, wallet or key. The agents hold no credentials. Nothing starts and nothing rolls out without a person's yes.
+
+![The Arena page before the start: both playbooks in plain words, with their right calls on the hours the agents saw and on the hours held back](docs/images/arena.png)
+
+<!-- TODO(result): after the verdict is read, add a picture of the decided Arena page here. -->
 
 | Part | Path | What it is |
 |---|---|---|
-| **The duel** | `packages/duel`, `duels/first-screen` | Two agents compete to improve the first screen of this project's own dashboard. One Flagsmith experiment with three versions picks the winner. |
-| **The `flagsmith-duel` Agent Skill** | `skills/flagsmith-duel` | The same job for any coding agent and any flag, on the Flagsmith CLI: plan, start, seal, audit, verdict, rollout. One line of JSON per step. |
-| **Experiment Guard** | `packages/guard`, `action.yml` | The referee for code. It blocks pull requests that would silently corrupt a running Flagsmith experiment, the duel's included. |
+| **The arena** | `packages/arena`, `arenas/up-or-down` | Two playbooks written by AI agents and a coin paper trade live five minute markets. One Flagsmith experiment with three versions, where one market is one unit, says whether either playbook beats the coin. |
+| **The `flagsmith-duel` Agent Skill** | `skills/flagsmith-duel` | The Flagsmith half of the job for any coding agent and any flag, on the Flagsmith CLI: plan, start, seal, audit, verdict, rollout. One line of JSON per step. |
+| **Experiment Guard** | `packages/guard`, `action.yml` | The referee for code. It blocks pull requests that would silently corrupt a running Flagsmith experiment. |
+| **The first screen duel** | `packages/duel`, `duels/first-screen` | An earlier experiment on the same skill: two agents each wrote a first screen for this project's own dashboard, and experiment 1497 picked between them. |
 
-## How a duel runs
+## The promotion ladder
+
+An agent can write a new rule in a minute and argue well for it. Before that rule decides anything, it climbs one rung at a time, and a person approves each climb. The arena is the second rung.
+
+| | Rung | What it is here | State |
+|---|---|---|---|
+| 1 | Backtest | Each playbook is replayed on past markets. The agents saw 48 hours of them, and the newest 24 hours were held back and scored afterwards. A good backtest earns a place in the experiment and nothing more. | Built |
+| 2 | Paper experiment | The arena. One Flagsmith flag holds the versions, Flagsmith deals every live market to one of them at random, and a rule fixed before the start reads the result once. The fills come from real order books, and no money moves. | Built |
+| 3 | Small canary | With real stakes, the winner would next decide a small share of the traffic under the same loss limit. This project stops before that rung: everything here is paper, so there is no small real exposure to take. | Not built |
+| 4 | Full rollout | A person approves, Flagsmith completes the experiment with the winner, and the flag serves it to every market in that environment. Here that is still paper trading. | Built, on paper |
+
+Beating the coin is not making money: a playbook also has to pay for the spread and the fee. A win on one rung earns the next rung, not real money.
+
+### The same rungs for other decision logic
+
+Trading is the proof because a market answers in five minutes and a paper trade costs nothing. The same flag, experiment, guards and approvals fit any decision an agent can write as a flag's value and a metric can judge. These are examples of where it fits. None of them has been run with it yet.
+
+| Decision logic | Control | Unit | Goal | Guardrail |
+|---|---|---|---|---|
+| Pricing and discount rules | The price list in use today | One customer | Orders paid | Refunds |
+| Fraud thresholds | The threshold in use today | One payment | Fraud caught before it settles | Good payments declined |
+| Prompt or model version changes | The prompt and model in use today | One conversation | Tasks finished without a person | Answers a person had to correct |
+| Ranking | The order of results today | One visitor | Searches that end in a click | Searches typed again in other words |
+
+## How an arena runs
+
+| | Step | Who | What happens |
+|---|---|---|---|
+| 1 | The brief | A person | Writes one goal, the event that counts, the venue, the paper stake and the rule. |
+| 2 | Two playbooks | The agents | Same fact sheet, opposite convictions. Each writes rules over ten price signals, a hypothesis in one sentence, and a predicted result for all three versions. |
+| 3 | Cross examination | The agents | Each attacks the other's playbook, concedes what it does better, and may revise its own once. A referee rejects a playbook that is not valid data, leans to one side, or rests on a rule that almost never fired. The newest day of markets is held back from both agents and scored afterwards. |
+| 4 | Start approved | **A person** | Nothing exists in Flagsmith until now. The person types the environment's name on their own terminal and passes an approval code, which is a digest of the plan. |
+| 5 | The deal | Flagsmith | One flag, three versions: the coin as control and one variation per agent, whose value is that agent's whole playbook. For every live market the runner calls `getExperimentFlag` with the market as the identity, and Flagsmith answers who trades it. |
+| 6 | Paper trades | The runner | Makes that version's call, fills it from the real order book and settles it when Polymarket resolves the market. Each outcome goes to Flagsmith as an event. The run is sealed: a change to it in Flagsmith breaks the seal. |
+| 7 | The verdict | The referee | Read once, when every version has its planned sample, by a rule fixed before the start. "Neither beats the coin" is a valid answer. Each agent's prediction is scored. |
+| 8 | Rollout approved | **A person** | A second yes. Flagsmith completes the experiment with the winner, and the flag serves it to every market in that environment. |
+
+The plan, the start, the audit, the verdict and the rollout are the `flagsmith-duel` skill's script, which does every Flagsmith read and write of the experiment through the Flagsmith CLI. The runner only reads the flag and sends events, through Flagsmith's Node SDK.
+
+## The experiment
+
+Everything in this section is on disk in `arenas/up-or-down/`: the brief a person wrote (`brief.json`), the whole debate (`record.json`) and the plan (`duel.json`). A run adds the seal, the trade log (`trades.jsonl`), the verdict and the approvals. The dashboard's Arena page (`/app/#/arena`) is those files, rendered.
+
+### The venue
+
+Polymarket's five minute "Up or Down" markets on eight crypto assets (btc, eth, sol, xrp, doge, bnb, hype, zec). Every five minutes each asset gets a new market. It resolves Up when the asset's price at the end of the five minutes is at or above its price at the start, otherwise Down. The trader buys one side just before the market opens, when both sides cost about 50 cents a share. The winning side pays one dollar a share, the losing side nothing. Counting the spread and the fee, a trader breaks even at about 53 percent right calls.
+
+Every trade is on paper: 10 dollars a market, priced from the asks in Polymarket's real order book, cheapest offers first, plus the market's taker fee, and settled by the market's own resolution. All market data is public and read without an account: markets, order books and resolutions from Polymarket, one minute prices from Binance.
+
+### The hypothesis
+
+> A playbook written by an AI agent calls the direction of live five minute crypto markets more often than a coin flip.
+
+The control is a coin because it is the honest baseline. Both sides of a market cost about 50 cents when the trade is made, so a trader with no edge is right about half the time. The coin's call for a market is one bit of `sha256("<seed>:<market>")`, and the seed (`oakenshield-arena-2026-11-28`) is in the brief and in the flag's control value before the start, so anyone can recompute every flip.
+
+### The two agents and the coin
+
+Both agents are the same model (`opus`, called through the `claude` command with no tools). They get the same fact sheet: how often Up won on 4,608 past markets (25 November 07:30 to 27 November 07:30 UTC, 2026), overall, by day, and split by each of ten price signals. They get opposite convictions, so the experiment tests two ideas and not two samples of one.
+
+| | Agent A: Momentum | Agent B: Reversal |
+|---|---|---|
+| The conviction it was given | Short moves continue. Large orders are worked over minutes, and other traders chase what just moved, so the next five minutes tend to look like the last five. Trade with the recent move, and trust it more when it is broad, fresh and backed by volume. | Short moves overshoot. Most of a sharp five minute move is noise and thin liquidity, and it comes back once the pressure is gone. Trade against the recent move, hardest when it is stretched, late and unsupported by the wider market. |
+| Its playbook | Measured momentum, broad tape v3 | Fade the stretch, trimmed |
+| Its hypothesis, in its own words | "Moderate BTC-backed rises keep going and clear falls keep falling, but in five-minute crypto the edge is thin, so the live result will sit near the 52-53% breakeven and is unlikely to clear 95%." | "Fading stretched Bitcoin rallies and buying last-minute and high-volume dips edges past a coin, but by only 1 to 3 points, likely not enough to clear 95% in 240 markets." |
+| Its predicted right calls: coin, A, B | 50%, 52%, 51% | 50%, 51.5%, 52% |
+| Right calls on the 48 hours it saw | 54.5% (2,511 of 4,608) | 55.3% (2,548 of 4,608) |
+| Right calls on the 24 hours held back | 50.8% (1,170 of 2,304) | 50.4% (1,161 of 2,304) |
+
+The coin was right on 50.5% of the same 48 hours (2,329 of 4,608) and on 50.8% of the 24 hours held back (1,170 of 2,304).
+
+The playbooks in plain words. The first rule that fits makes the call.
+
+| | Agent A, when | Call |
+|---|---|---|
+| 1 | Bitcoin's 15 minute change is at least 0.21% | Down |
+| 2 | The 5 minute change is from 0.04% to 0.15%, and Bitcoin's 15 minute change is at least −0.04% | Up |
+| 3 | The 15 minute change is from −0.05% to 0.26%, and Bitcoin's 15 minute change is at least −0.04% | Up |
+| 4 | The 5 minute change is under −0.13% | Down |
+| | Otherwise | Up |
+
+| | Agent B, when | Call |
+|---|---|---|
+| 1 | The 5 minute change is at most −0.37%, and volume against the hour's average is at least 1.5× | Up |
+| 2 | Bitcoin's 15 minute change is at least 0.21% | Down |
+| 3 | The 1 minute change is under −0.06% | Up |
+| 4 | The 15 minute change is from −0.05% to 0.26% | Up |
+| 5 | Volume against the hour's average is under 0.67× | Up |
+| | Otherwise | Down |
+
+A playbook is data, not code. It is one JSON object: an ordered list of at most 8 rules, each with at most 4 conditions, and a side to take when no rule fits. A condition compares one of ten signals with a number. All ten are known a minute before the market opens: the asset's change over 1, 5, 15 and 60 minutes, Bitcoin's change over 5 and 15 minutes, the number of five minute steps in a row the same way, the 15 minute range, the last five minutes of volume against the hour's average, and the hour of the day. The whole playbook is the value of the agent's variation of the flag. So what trades is whatever the flag serves, and every call can be recomputed from the logged signals and the sealed value.
+
+### The debate
+
+Eight model calls, 67 seconds, 50,696 tokens (40,576 in and 10,120 out). The record keeps every answer.
+
+- **Two proposals.** The referee rejected each agent's first playbook and sent it back once. The second drafts passed: "Measured momentum, broad tape v2" with 5 rules, right on 54.2% of the past markets, and "Fade the stretch" with 7 rules, right on 52.4%.
+- **Two attacks.** Each agent got the other's playbook with its score on the past markets, rule by rule. Agent A on its rival: "Rules 3, 4, 5 and 7 each lost on past data: 44.9% of 296, 34.7% of 49, 47.3% of 112 and 47.3% of 476. That is 933 calls below 50%, worse than a coin." Agent B on its rival: "Strip out rule 1, which both playbooks share, and the momentum rules lose". Both conceded the same point: the strongest signal on the fact sheet is that Up won only 44.0% of the 904 markets that followed a Bitcoin rise of at least 0.21% in 15 minutes. Both playbooks carry that rule, and for the momentum agent it is a call against the move.
+- **Two revisions.** Agent A dropped one rule: "I dropped rule 5 (own 15m run-up -> down), which was right only 47.0% in-sample and faded a move against my own momentum conviction". Agent B cut its fades: "I dropped the four fade rules that lost on past data (15m run, 5m spike, up streak, last-minute pop)". Both finalists are the revised playbooks.
+- **The day nobody saw.** The newest 2,304 markets (27 November 07:30 to 28 November 07:30 UTC) were held back from both agents and scored after the last revision. There the playbooks were right 50.8% and 50.4% of the time, and the coin 50.8%. The 54.5% and 55.3% belong to the hours the playbooks were fitted to. So the result to expect, before the first live market, is that the coin stays, and both agents say as much in their own hypotheses. The two playbooks make the same call on 71.1% of the held back markets.
+
+### The experiment in Flagsmith
+
+| | |
+|---|---|
+| Flag | `trader`, multivariate: the coin as the control value, and the variations `agent_a` and `agent_b`, each holding that agent's playbook as JSON |
+| Environment | `Arena`, made by the start. It is protected: the start and the rollout need a person's own terminal |
+| Unit | One market: one asset in one five minute window. Eight assets give up to eight markets every five minutes |
+| Identity | The market's name, such as `btc-updown-5m-<start time>`. Flagsmith randomises markets, not people |
+| Split | Control 34%, `agent_a` 33%, `agent_b` 33% |
+| Exposure | Recorded when the runner asks Flagsmith who trades the market (`getExperimentFlag` in `packages/arena/src/desk.ts`) |
+| Goal metric | **Trade won**: the event `trade_won`, expected to increase. Its rate is the share of right calls |
+| Guardrail metric | **Trade placed**: the event `trade_placed`, must not decrease. A version that fails to place its trades cannot win on the few it does place |
+| Watched, not judged | **Paper profit per market (dollars)**: the event `paper_profit`, sent with the trade's profit as its value and aggregated as a mean. It is shown beside the verdict and no rule reads it |
+| Sample | 240 markets per version |
+
+### The rule, fixed before the start
+
+The rule is part of the plan, and the plan's digest is the approval code for the start. So it cannot be changed after the numbers are known without breaking the seal.
+
+1. **Seal broken: no verdict.** If the audit finds a difference between Flagsmith and the seal, the run cannot name a winner.
+2. **Sample first.** Until every version has 240 markets, `verdict` reads exposure counts only. Outcomes are not fetched, so nobody can stop the run on a lucky streak. Once every version has its 240 the runner opens nothing more until the result is read, so the experiment ends at the size fixed in advance.
+3. **Split check.** If the markets were not divided as planned (a sample ratio p value below 0.001), the verdict is void.
+4. **Qualify.** A playbook qualifies when Flagsmith gives it more than a 95% chance to beat the coin on Trade won, and its chance on Trade placed is not below 5%.
+5. **Decide.** Neither qualifies: the coin stays. One qualifies: it wins. Both qualify: the higher observed rate wins, and the verdict says when the two cannot be told apart.
+6. **Once.** The first verdict is kept. Asking again returns it and does not read Flagsmith's results a second time.
+
+Each agent's prediction is scored by its mean absolute error against the observed rates. The score never affects the decision. The rule in full is `skills/flagsmith-duel/references/rule.md`.
+
+### What keeps the run fair
+
+- **Flagsmith deals.** The market's name is the identity, so Flagsmith does the randomisation, records the exposure and counts the outcomes. The runner has no say in who trades what.
+- **A market is dropped before anyone is asked.** Missing prices, a book too thin for the stake, a side that costs more than 65 cents a share (no longer an even bet) or a quote taken more than 40 seconds after the open: the market is skipped before any version is asked for it, so a skip cannot favour one. After a version is asked, the market counts whatever happens.
+- **The same clock for every version.** A trade is decided 50 seconds before its market opens, from one minute prices that have already closed. A signal is the same number whether it is computed live or from history a week later.
+- **The outcome is Polymarket's.** A trade is settled by the market's own resolution, about 15 to 20 seconds after its five minutes end. A market that Polymarket has not resolved after six hours is void. Binance prices feed the signals and never decide who won.
+- **Outcomes are confirmed.** Flagsmith's SDK sends events in batches and does not report a failed batch. The runner watches which events Flagsmith accepted, sends an unconfirmed one again after 180 seconds, and asks for the market's version again when its exposure was lost, because Flagsmith counts an outcome only after the exposure.
+- **The flag is the kill switch.** Switch `trader` off in Flagsmith and the runner places nothing.
+- **The log is the evidence.** `trades.jsonl` is appended and never rewritten: every skip with its reason, and every trade with the signals it was decided on, the rule that fired, the fill and the outcome. The page is computed from those lines, and so is anyone's check of the result.
+
+<!-- TODO(rehearsal): the arena's whole path was rehearsed against Flagsmith on a disposable environment (experiment 1561, environment "Duel rehearsal", flag trader_rehearsal, 50 per version). Say here how its markets were made before quoting any of its numbers. -->
+
+### Result
+
+**TODO(result): not run yet.** This section is written once, after the verdict is read. Until then there is no result, and every number above is from before the start.
+
+| | Coin (control) | `agent_a`, Momentum | `agent_b`, Reversal |
+|---|---|---|---|
+| Markets (Flagsmith's exposures) | TODO(result) | TODO(result) | TODO(result) |
+| Trade won | TODO(result) | TODO(result) | TODO(result) |
+| Chance to beat the coin (Flagsmith) | | TODO(result) | TODO(result) |
+| Trade placed (guardrail) | TODO(result) | TODO(result) | TODO(result) |
+| Paper profit per market, mean (watched) | TODO(result) | TODO(result) | TODO(result) |
+| Predicted by Agent A before the start | 50% | 52% | 51% |
+| Predicted by Agent B before the start | 50% | 51.5% | 52% |
+
+- The experiment's number, its start and its end: TODO(result)
+- The verdict in one sentence (`why` in `duel.verdict.json`): TODO(result)
+- The split check, and who computed it: TODO(result)
+- Each agent's prediction error: TODO(result)
+- Who approved the start and the rollout, and when (`duel.approvals.json`): TODO(result)
+- Markets skipped before the deal, by reason: TODO(result)
+
+### What this does and does not show
+
+- **It is paper trading.** A fill is what the stake would have bought from the real order book at that moment. A real order would move the book, might arrive late and might not fill. None of that is modelled.
+- **Markets in one window move together.** The eight markets of one five minute window share much of their direction, because the assets follow Bitcoin. The experiment counts each market as its own unit, as Flagsmith's statistics do for any identity. So 240 markets hold less evidence than 240 unrelated trials, and the real chance of a false winner is higher than the 95% line suggests.
+- **The past stands in for the resolution.** The past markets were rebuilt from Binance one minute prices: a past market counts as Up when the price at its end was at or above the price at its start. Polymarket resolves the real markets from a Chainlink price feed, so a past outcome can differ from the real one on a close call. The live experiment uses Polymarket's own resolution only.
+- **The held back hours showed no edge.** On the 24 hours neither agent saw, neither playbook beat the coin. A playbook fitted to 48 hours is fitted to those 48 hours.
+- **One run, one day.** The sample is 240 markets per version from a single stretch of hours. A playbook that wins has beaten a coin on paper in that stretch, and nothing more.
+- **Both agents are one model.** They differ only in the conviction they were given.
+- **Not financial advice.** Nothing in this repository is.
+- **Approvals are a convention**, as described below.
+
+## How it uses Flagsmith
+
+| Flagsmith feature | Where | What it is used for |
+|---|---|---|
+| Flagsmith CLI 2.0 | `skills/flagsmith-duel/scripts/duel.mjs` | Every read and write that sets up, checks, judges and ends an experiment, for the arena and for the duel. `environment list` and `create`, `feature get` and `create`, `feature variant list`, `add` and `delete`, `config`, and `eval` to check what the SDK serves to test identities after a start, a rollout and a stop. `flagsmith api` with `--jq` for what the CLI has no command for yet. |
+| Experimentation | The same script, through `flagsmith api` | `experiment-metrics` (made, or reused when the environment has one for the event), `experiments` (made with every variation of the flag, then started), `exposures` for the counts per version, `results` for each version's chance to beat control and the sample ratio value, and `complete` with the rollout decision, which makes the flag serve the winner. |
+| Metrics with a value | The same script: `watch` in the plan | `paper_profit` is an event that carries a number. Its metric is made with the aggregation `mean` and attached to the experiment. The verdict reports Flagsmith's numbers for it and no rule reads it. |
+| Multivariate flags | `trader`, and `first_screen` in the duel | Each agent's whole playbook is the JSON value of its variation, and the coin with its seed is the control value. The versions under test are data in Flagsmith, so the experiment needs no code branch per agent and the rollout needs no deploy. |
+| Node SDK: experiment flags and events | `packages/arena/src/desk.ts` | `getExperimentFlag('trader', market)` once per market: Flagsmith picks the version, records the exposure and returns the playbook to trade. `trackExposureEvent` for the coin, because the SDK records an exposure only when the flag carries a variant key. `trackEvent` for `trade_placed`, `trade_won` and `paper_profit`, the last with the profit as its value. `flushEvents` after every window. |
+| The flag's on and off switch | `trader` | The kill switch. While the flag is off the runner places nothing. |
+| JavaScript SDK and experiment events | `apps/dashboard`, `examples/demo-app` | `useExperiment('first_screen')` records the exposure and returns the screen. `trackEvent('check_run')` and `trackEvent('setup_snippet_copied')` feed the metrics. |
+| Experimentation, through the Admin API | `packages/guard/src/flagsmith.ts` | Experiment Guard lists the running experiments with their metrics and each metric's expected direction, the flag's variation keys, and the traits the audience segments match on. Nothing about an experiment is written in this repository's config. |
+| Flagsmith CLI with GitHub OIDC | `action.yml` | The same requests go through `flagsmith api`, so a workflow needs no stored API key. |
+| Webhooks | `apps/server` | A change to a running experiment's flag or audience segment raises an alert. An experiment that starts, ends or changes makes the open pull requests be checked again. |
+
+The start and the rollout change what Flagsmith serves. Each needs an approval code, and in the protected `Arena` environment also a person who types the environment's name on their own terminal.
+
+Four things we learned about Flagsmith Cloud by testing, all on 27 November 2026, all worked around in the script: a running experiment is not locked against edits; a paused experiment keeps serving its versions; there is no sample ratio value for an experiment with three versions; and the visitor counts are recounted at most every five minutes, so a verdict asked for right after the last visitor still says `collecting`.
+
+Two more came with the arena, and both are worked around in `packages/arena/src/desk.ts`: the Node SDK records an exposure only when the flag carries a variant key, so the coin's exposure is sent with `trackExposureEvent`; and the SDK does not report a failed batch of events, so the runner watches which events Flagsmith accepted and sends the others again.
+
+## Run it yourself
+
+Requires Node 22.18 or newer, the [Flagsmith CLI](https://github.com/Flagsmith/flagsmith-cli) 2.0 (`brew install flagsmith/tap/flagsmith`), a Flagsmith organisation API key, and the `claude` command, logged in (each agent is a `claude -p` call with no tools). The rehearsal in the first step needs only Node.
+
+```bash
+npm install
+
+# A rehearsal without Flagsmith: live markets, paper trades, markets split by a hash of their name
+npm run arena -- run --dry --windows 3
+
+echo "FLAGSMITH_API_KEY=<organisation API key>" >> .env
+
+# 1 to 3: write a brief (copy arenas/up-or-down/brief.json), then let the agents argue
+npm run arena -- debate arenas/my-arena --model opus
+npm run arena -- show arenas/my-arena
+
+# 4: what would the start do? Reads Flagsmith, changes nothing, prints the approval code
+npm run arena -- plan arenas/my-arena
+npm run arena -- approve arenas/my-arena start       # a person, on their own terminal
+npm run arena -- start arenas/my-arena --approve <code>
+
+# 5 and 6: the runner trades every market with whatever the flag serves
+npm run arena -- run arenas/my-arena
+npm run arena -- audit arenas/my-arena
+
+# 7 and 8
+npm run arena -- verdict arenas/my-arena
+npm run arena -- approve arenas/my-arena finish      # a person again
+npm run arena -- finish arenas/my-arena --approve <code>
+
+# If the loss limit stops the arena: a person restarts it, on their own terminal
+npm run arena -- resume arenas/my-arena
+
+# After the verdict is read: a second reading of the trade log, by five minute window
+npm run arena -- check arenas/my-arena
+```
+
+Without a folder the commands use `arenas/up-or-down`. The brief names the Flagsmith project (`project`), or `FLAGSMITH_PROJECT` does. `debate` refuses to replace a record unless it is given `--again`.
+
+`run` waits for the start and then has to stay up for the whole sample. With a third of the markets going to each playbook, 240 markets per version means about 730 markets, which is at least seven and a half hours at eight markets every five minutes. The runner can be stopped and started again: open trades settle the next time it starts. Once every version has its markets it opens nothing more until the verdict is read. `run --dry` writes to the folder's `dry/` directory and never touches Flagsmith.
+
+To see the Arena page, run `npm run demo` and open `http://127.0.0.1:8787/app/#/arena` (`OAKENSHIELD_ARENA_DIR` points the server at another arena's folder). When the dashboard is hosted elsewhere, set `ARENA_PUSH_URL` to its `/api/arena/state` address and `OAKENSHIELD_TOKEN` to its token, and the runner sends the state and the arena's files there after every change.
+
+## The `flagsmith-duel` Agent Skill
+
+The Flagsmith half of both experiments is an [Agent Skill](https://agentskills.io): one job from plan to rollout, for any coding agent and any flag, on the Flagsmith CLI. It is not tied to trading or to screens. A version's value is any text or JSON, so it settles a disagreement about a message, a price, a screen or a trading playbook the same way.
+
+```
+/plugin install flagsmith-duel --marketplace kartikangiras/oakenshield
+```
+
+That line works on Claude Code 2.1.275 or later. On older versions: `claude plugin marketplace add kartikangiras/oakenshield`, then `claude plugin install flagsmith-duel@oakenshield`. For another agent, copy `skills/flagsmith-duel` into its skills folder. It needs the Flagsmith CLI 2.0 or later (logged in, or `FLAGSMITH_API_KEY` set), Node 20 or later and git.
+
+| Command | What it does | Changes Flagsmith |
+|---|---|---|
+| `init <flag> --version <key>=<file> … --goal <event>` | Writes the plan and checks it. Prints what the start would create, and the approval code. | No |
+| `plan` | Prints that line again after the plan is edited | No |
+| `start --approve <code>` | Creates what is missing (environment, flag, versions, metrics, experiment), starts it, checks what the SDK serves, writes the seal. Run again after a failure, it continues where it stopped. | Yes |
+| `audit` | Compares Flagsmith with the seal. Exit code 2 when something changed. | No |
+| `verdict` | `collecting` with visitor counts until the sample is in, then `decided` or `void` with the reason in one sentence. Read once. | No |
+| `finish --approve <code>` | Completes the experiment with the winner and checks what the SDK serves. `--remove-losers` only if the person asks. | Yes |
+| `stop --approve <code>` | Ends a run early: no winner, everyone gets today's version | Yes |
+| `approve start\|finish\|stop` | A person's confirmation on their own terminal, needed for protected environments | No |
+
+**Built to be cheap for the agent.** One script does every Flagsmith call and asks the CLI for only the fields it needs (`flagsmith api … --jq`). Each command prints one line of JSON with a `next` field that says what to do. The agent never reads the script, and reads the two reference files (`references/rule.md`, `references/safety.md`) only when a person asks why.
+
+**Metrics that carry a number.** A plan can list `watch` metrics: events sent with a value, aggregated as a mean, a sum or a count. The script makes and attaches them, `verdict` reports Flagsmith's numbers for them under `watch`, and no rule reads them. The arena's paper profit is one (`references/plan.md`).
+
+**The recorded run** (`examples/skill-demo/run.json`, kept as it happened): Claude Code with Sonnet, four things said by a person, from "two of us disagree about the first screen" to the rollout.
+
+| The person says | The agent runs | The script answers with |
+|---|---|---|
+| Two of us disagree … settle it with a Flagsmith experiment against what we show today. | `init first_screen_demo --environment "Skill demo" --new-environment … --min 50` | 779 characters: the plan and the code `3b6493d35c` |
+| Yes, start it. | `start --approve 3b6493d35c` | 216 characters: experiment 1485 running, what the SDK serves |
+| The visitors have been through. Is the run still clean, and which one won? | `audit; echo "exit $?"; verdict` | 747 characters: sealed, and the winner with the reason |
+| Yes, roll it out, and remove the version that lost. | `finish --approve 7a39f88fd2 --remove-losers` | 189 characters: completed, 10 of 10 test identities get the winner |
+
+| Token count for the whole job | |
+|---|---|
+| Requests to the model | 9 |
+| Output tokens | 1,653 |
+| Input side, all 9 requests | 98,009, of which 95,622 were read from cache |
+| Of that, Claude Code's own instructions and tool definitions | 75,483 (8,387 on every request, measured with a one word prompt and the same flags) |
+| **What the whole job added to the conversation** | **3,981 tokens**: the skill's instructions, four commands, four answers and the agent's replies |
+| Conversation size at the end | 12,368 tokens |
+
+The 205 visitors of that run were scripted at planted rates (`examples/skill-demo/visitors.mjs`), because the run measures the skill and not the screens. Its split came out uneven (50, 80 and 75 visitors; p = 0.026 by the chi square test, above the 0.001 line the rule voids at). The script has changed since the recording in small ways, all found by the rehearsals above: `approve` also works when the duel engine starts it, `collecting` says when Flagsmith last counted, the guardrail record names who judged each version, and a stopped run is reported as over.
+
+**The arena's count.** The debate that wrote the two playbooks took 8 model calls, 50,696 tokens (40,576 in and 10,120 out) and 67 seconds, with no tools. Every Flagsmith step after it is one command and one line of JSON, as in the recorded run above.
+
+**Safety around changes.** `references/safety.md` lists every risk the skill guards and the two it does not. The short version: nothing is written before a code the person has seen; a protected environment also needs the person's terminal; the flag is created switched off, so no other environment serves a version; a second experiment on the same flag is refused; a start that fails half way resumes instead of creating a second experiment; and `start`, `finish` and `stop` each check with `flagsmith eval` what the SDK really serves afterwards.
+
+## What the agents do alone, and where a person decides
+
+| Done without asking | Decided by a person |
+|---|---|
+| Writing the playbooks, the hypotheses, the attacks and the predictions | The brief: the goal, the event that counts, the venue, the paper stake and the rule |
+| Checking the plan against Flagsmith (`plan` only reads) | The start |
+| Paper trading every market with whatever the flag serves, and auditing the run against the seal as often as wanted | Stopping a run early, or switching the flag off |
+| Counting markets, and reading the result once when the sample is in | The rollout |
+| Stopping every version when the loss limit is reached | Restarting after that stop |
+
+Everything in the left column can be thrown away or repeated. Everything in the right column changes what trades or what the result means. Three things enforce the line:
+
+- **An approval code.** `plan` prints what the start would create, and a code. The code is a digest of what will be served and how it will be judged: the flag, the environment, the control value, the split, each version's contents, the events and the rule. Change any of them and the code no longer matches. The rollout has its own code, a digest of the winner and the counts the person was shown, so nothing is rolled out on numbers nobody saw.
+- **The person's own terminal.** For a protected environment (any named like production, and any the plan lists, here `Arena`) a code is not enough. `approve` refuses to run unless a terminal is attached, which an agent's shell is not, and asks the person to type the environment's name. Without it the script answers: "This environment is protected: start also needs the person to confirm on their own terminal."
+- **No credentials for the debaters.** The two agents run with no tools at all. What they produce is text that the referee parses.
+
+The limit of this is stated in the skill itself: approvals are a convention for an agent that follows its instructions. An agent that opens a pseudo terminal, or writes the approvals file, gets past them. We did exactly that, on a disposable environment, to rehearse the path. Against an agent that does not follow instructions, keep the Flagsmith key out of its reach.
+
+## What guards the run
+
+| Guard | What it stops | When |
+|---|---|---|
+| **The playbook referee** (`packages/arena/src/playbook.ts`) | An agent winning by a trick: an answer that is not a valid playbook (an agent ships data, never code), a playbook that says the same side more than 70% of the time and so rides the day's drift, or a rule that fired on fewer than 5 past markets | Before the start |
+| **The runner's order of steps** (`packages/arena/src/runner.ts`) | A skip that favours one version: a market is dropped for missing prices, a thin book, an uneven price or a late quote before any version is asked for it | During the run |
+| **The seal and the audit** (`skills/flagsmith-duel/scripts/duel.mjs`) | A change to the experiment in Flagsmith while it runs: the split, a version's contents, a version deleted, added or renamed, the metrics, the audience, a pause | During the run |
+| **Experiment Guard** (`packages/guard`) | A pull request that changes what the experiment depends on while it runs: the flag or an event renamed in the brief, the call that reads the flag removed, a playbook file changed, and ten more rules | During the run |
+
+**Why the seal exists.** We expected Flagsmith to lock a running experiment. Checked against Flagsmith Cloud on 27 November 2026, it does not: while an experiment was running, the Admin API accepted a change of split, an edit to a version's value and the deletion of a version, and a paused experiment went on serving every version. So the lock is the skill's own. The start writes a seal (`duel.seal.json`): the experiment, the split, the metrics and a hash of every version's contents. `audit` compares Flagsmith with the seal and exits with code 2 on any difference, so it can run in CI. `verdict` and `finish` run the audit first and refuse while the seal is broken.
+
+**Experiment Guard on the arena.** The arena's runner takes the flag's name and the event names from the brief (`arenas/up-or-down/brief.json` declares the flag `trader` and the events `trade_won`, `trade_placed` and `paper_profit`) and passes them to the SDK through variables. No call in the code names them, so Experiment Guard watches the lines that declare them. While the experiment runs, a pull request is blocked when it renames or removes one of those declarations, or removes the last call that reads a flag through a variable. The files that decide what a version does (`playbook.ts` and `signals.ts`) are listed under `treatment_paths` in `.experiment-guard.arena.yml`, and a change to one of them mid run is blocked as EG006, because the result would mix two traders. Every report carries a note that names the lines Guard watches and says what it cannot see: the call that sends an event through a variable, and one of several variable reads of a flag.
+
+Tried on a copy of this repository against a snapshot shaped like the arena's experiment, six branches got these answers:
+
+| Branch | Before this change | Now |
+|---|---|---|
+| A metric's display name and a comment edited | pass | pass |
+| `trade_won` renamed to `tradeWon` in the brief | block (EG001) | block (EG001) |
+| The watch metric `paper_profit` dropped from the brief | block (EG001) | block (EG001) |
+| The flag `trader` renamed in the brief | pass | block (EG002) |
+| The desk's `getExperimentFlag` call replaced by a plain flag read, which enrols nobody | pass | block (EG002) |
+| What a playbook's fallback side means changed in `playbook.ts` | pass | block (EG006) |
+
+The workflow in `.github/workflows/experiment-guard.yml` has a step for the arena. It runs on this repository's pull requests once the variable `ARENA_FLAGSMITH_ENVIRONMENT` holds the Arena environment's key.
+
+## Controls
+
+The guards above keep the experiment honest. The controls below keep the run itself in bounds while it trades.
+
+| Control | What it does |
+|---|---|
+| **Loss limit** | `risk` in the brief: `max_loss` 600 over the last 100 settled markets. Once those markets, every version together, have lost 600 paper dollars, the runner opens nothing for any version. All three stop, so the stop cannot favour one. |
+| **Restart by a person** | A stop outlasts a restart of the runner. `npm run arena -- resume` only works in a person's own terminal and asks them to type the environment's name. The trade log records who approved it, and losses are counted afresh from there. |
+| **Heartbeat** | The runner publishes its state at least once a minute. The Arena page shows that the runner is live, and after three quiet minutes it says when the runner was last heard. |
+| **Fixed sample, read once** | 240 markets per version, set before the start. Outcomes are not fetched before that, and the first verdict is kept. |
+| **Caps on every market** | 10 paper dollars a market and no more. A market is skipped, before any version is asked, when a side costs more than 65 cents a share or the order book is too thin for the stake. |
+| **One runner** | A lock file beside the trade log (`runner.lock`) keeps a second runner from trading the same markets twice. |
+| **Pull requests** | While the experiment runs, Experiment Guard blocks a pull request that renames the flag or an event in the brief, removes the flag read, or changes a playbook file. See "What guards the run". |
+
+**How the loss limit was sized.** The limit is there to catch a broken playbook or a broken feed, not ordinary bad luck. On 96 hours of past markets we simulated 4,000 runs of 720 markets with the plan's three traders. The worst stretch of 100 markets in any run lost 554 paper dollars. In one run out of 100 the worst stretch lost 455 or more, and in a typical run it lost 284. A loss of 600 over 100 markets means 21 or fewer right calls out of 100.
+
+**Break even beside the win rate.** Beating the coin is not making money. A right call pays one dollar a share, so the share of calls a version needs right to lose nothing is what it paid, fees included, divided by the shares it bought: about 53 percent on these markets. The Arena page shows that number beside each version's share of right calls. The rule judges right calls, and paper profit is watched, not judged. A win here earns the next rung of the ladder, not real money.
+
+**A second reading, by window.** The eight markets of one five minute window move together, so Flagsmith's chance to beat the coin, which counts every market as its own unit, is more confident than the evidence. After the verdict is read, `npm run arena -- check` reads `trades.jsonl` again: it draws whole windows with replacement, 10,000 times with a fixed seed, and writes `check.json` with each playbook's lead over the coin in right calls, the range that holds 95% of the draws, and the share of draws in which the playbook was ahead. The Arena page shows it beside Flagsmith's numbers. The check refuses to run before the verdict has been read, and it never changes the verdict: Flagsmith's numbers and the rule decide.
+
+## An earlier experiment: the first screen duel
+
+Before the arena, the same skill settled a different argument. Two agents each wrote a first screen for this project's own dashboard, and one Flagsmith experiment with three versions (experiment 1497) ran them against the overview. The visitors were 1,020 AI personas, not people. The engine is `packages/duel`, and everything the duel produced is kept as it happened. The dashboard's Duel page still shows it.
+
+![The Duel page: the verdict, then the eight steps and who does each](docs/images/duel.png)
+
+### How a duel runs
 
 | | Step | Who | What happens |
 |---|---|---|---|
@@ -29,11 +389,11 @@ An agent can write three versions of a screen in a minute and argue well for eve
 
 Steps 5 to 8 are the `flagsmith-duel` skill's script, which does every Flagsmith read and write through the Flagsmith CLI. The duel engine and an agent that uses the skill run exactly the same code.
 
-## The first duel: this dashboard's first screen
+### The first duel: this dashboard's first screen
 
 Everything in this section is on disk in `duels/first-screen/`: the brief a person wrote (`brief.json`), the whole debate (`record.json`), the plan (`duel.json`) and, once it has run, the seal, the verdict and the approvals. The dashboard's Duel page (`/app/#/duel`) is those files, rendered.
 
-### The brief
+#### The brief
 
 | | |
 |---|---|
@@ -43,7 +403,7 @@ Everything in this section is on disk in `duels/first-screen/`: the brief a pers
 | Today's screen, the control | The dashboard's overview: tiles of counts, charts and lists. Nothing on it says what the product is for, and running a check means finding a small button in the header or opening the Playground. |
 | Fact sheet | Eight statements a version may use, such as "A check only reads from Flagsmith. It changes nothing there." No customers, no testimonials, no number the sheet does not have. |
 
-### The two agents
+#### The two agents
 
 Both are Claude Sonnet, called through the `claude` command with no tools. An agent's whole output is one JSON object: it can propose, attack, revise and predict, and nothing else. The two are given the same brief and differ in one paragraph, their conviction, so the experiment tests two ideas and not two samples of one.
 
@@ -60,7 +420,7 @@ Both are Claude Sonnet, called through the `claude` command with no tools. An ag
 
 Both screens passed the referee the first time. The whole debate took 6 model calls, 25 seconds and 25,935 tokens. The two agents chose the same heading on their own, and after the cross examination they share a button label too. What is left between them is the disagreement they were given: A names the harm in its one paragraph and gets out of the way, B spends two numbered lines on what to look at and what the button costs. The attacks, the concessions and both first drafts are in `record.json` and on the Duel page.
 
-### The experiment
+#### The experiment
 
 | | |
 |---|---|
@@ -74,7 +434,7 @@ Both screens passed the referee the first time. The whole debate took 6 model ca
 | Guardrail metric | **Copied the setup snippet**: visitors who sent `setup_snippet_copied` at least once |
 | Sample | 300 visitors per version before any conversion is read |
 
-### The rule, fixed before the start
+#### The rule, fixed before the start
 
 The rule is part of the plan, and the plan's digest is the approval code for the start. So the rule cannot be changed once numbers exist without the change showing.
 
@@ -89,7 +449,7 @@ Each agent's prediction is scored by its mean absolute error against the observe
 
 **Why 300.** The number was fixed after a pilot on placeholder screens and before either agent's screen had a single visitor. Against today's screen the pilot's gap was so wide that a fraction of 300 would do. The question the duel exists for is the other one, which agent's screen is better. At rates like the pilot's, 300 per version finds a gap of 11 points between two versions four times out of five.
 
-### The visitors are AI personas, not people
+#### The visitors are AI personas, not people
 
 The demo of a developer tool does not get 900 first-time visitors in two days. The duel's visitors are simulated, and every number they produce is labelled as simulated.
 
@@ -134,7 +494,7 @@ The lists the persona is drawn from, and what it is shown on each turn, are in `
 
 **What this can and cannot show.** A persona is a model's guess at a person. The agents and the personas are the same model family, so a screen may win because it is written the way that family likes to read. The personas also click far more than people do: in the pilot 13% ran a check from today's screen, which would be a remarkable landing page. And with at most five actions almost none of them reach the setup page, so the guardrail is nearly idle (one snippet copied in 186 pilot visitors). What the run does show is that the whole chain holds on a real Flagsmith experiment with three versions, from the agents' JSON to the rollout, and which screen a model reader prefers. It is not a finding about people. Real visitors would be counted the same way, by pointing the dashboard at the duel's environment.
 
-### Result
+#### Result
 
 **Agent B's screen won.** The verdict was read once, on 27 November 2026 at 20:38 UTC, 46 minutes after the start. Every visitor was an AI persona, not a person.
 
@@ -184,7 +544,7 @@ Each agent forecast a narrow win for its own screen, and both were far too low a
 
 A reason is what a model says about its own choice. It is a lead, not a measurement, and the readers are the same model family as the writers.
 
-**The run.** 1,020 personas went through the dashboard in 35 minutes (seed `mwzeikie`): 1,646 calls to Claude Haiku, none failed, 2.49 million tokens in and 0.43 million out. Flagsmith counted 1,015 of them. The log shows the dashboard gave the other five today's screen and sent no exposure, which is what it does when Flagsmith's answer takes longer than the 2.5 seconds it waits. None of the five ran a check, and Flagsmith rightly left them out. For every version the script's own count of visitors who ran a check is the same as Flagsmith's. The run's summary is `duels/first-screen/traffic/summary.json`. The order the visits finished in, one character per counted visitor, is `duels/first-screen/traffic/replay.json`. The landing page and the dashboard's overview replay the experiment from that file, one dot per visitor.
+**The run.** 1,020 personas went through the dashboard in 35 minutes (seed `mwzeikie`): 1,646 calls to Claude Haiku, none failed, 2.49 million tokens in and 0.43 million out. Flagsmith counted 1,015 of them. The log shows the dashboard gave the other five today's screen and sent no exposure, which is what it does when Flagsmith's answer takes longer than the 2.5 seconds it waits. None of the five ran a check, and Flagsmith rightly left them out. For every version the script's own count of visitors who ran a check is the same as Flagsmith's. The run's summary is `duels/first-screen/traffic/summary.json`. The order the visits finished in, one character per counted visitor, is `duels/first-screen/traffic/replay.json`. The landing page and the dashboard's overview replayed the experiment from that file, one dot per visitor, until the arena took their place.
 
 **The screens as the visitors got them.** The dashboard was restyled on 28 November 2026, after the verdict was read. The agents' screens kept every word and every control. The overview did not: it was simplified as well as restyled, so the control of this duel is the overview as it was on the day, shown here. The pictures of the agents' screens above are from the day too.
 
@@ -192,43 +552,7 @@ A reason is what a model says about its own choice. It is a lead, not a measurem
 
 A persona is given the text on the screen and a list of what can be clicked, never the pixels. A rerun against the new overview would still be a new experiment, with a different control.
 
-## What the agents do alone, and where a person decides
-
-| Done without asking | Decided by a person |
-|---|---|
-| Writing the versions, the hypotheses, the attacks and the predictions | The brief: the goal, the event that counts, what may be claimed |
-| Checking the plan against Flagsmith (`plan` only reads) | The start |
-| Auditing the running experiment against the seal, as often as wanted | Stopping a run early |
-| Counting visitors, and reading the result once when the sample is in | The rollout, and whether the losing version is removed |
-
-Everything in the left column can be thrown away or repeated. Everything in the right column changes what visitors see or what the result means. Three things enforce the line:
-
-- **An approval code.** `plan` prints what the start would create, and a code. The code is a digest of what will be served and how it will be judged: the flag, the environment, the control value, the split, each version's contents, the events and the rule. Change any of them and the code no longer matches. The rollout has its own code, a digest of the winner and the counts the person was shown, so nothing is rolled out on numbers nobody saw.
-- **The person's own terminal.** For a protected environment (any named like production, and any the plan lists, here `Duel`) a code is not enough. `approve` refuses to run unless a terminal is attached, which an agent's shell is not, and asks the person to type the environment's name. Without it the script answers: "This environment is protected: start also needs the person to confirm on their own terminal."
-- **No credentials for the debaters.** The two agents run with no tools at all. What they produce is text that the referee parses.
-
-The limit of this is stated in the skill itself: approvals are a convention for an agent that follows its instructions. An agent that opens a pseudo terminal, or writes the approvals file, gets past them. We did exactly that, on a disposable environment, to rehearse the path. Against an agent that does not follow instructions, keep the Flagsmith key out of its reach.
-
-## Three guards
-
-| Guard | What it stops | When |
-|---|---|---|
-| **The screen referee** (`packages/duel/src/screen.ts`) | An agent winning by cheating: a version with no check button or two of them, a button that checks a different pull request from the one shown, markup, web addresses, or a claim the fact sheet does not support | Before the start |
-| **The seal and the audit** (`skills/flagsmith-duel/scripts/duel.mjs`) | A change to the experiment in Flagsmith while it runs: the split, a version's contents, a version deleted, added or renamed, the metrics, the audience, a pause | During the run |
-| **Experiment Guard** (`packages/guard`) | A pull request that changes the code the experiment depends on while it runs: the event renamed, the exposure call removed, and eleven more rules | During the run |
-
-**Why the seal exists.** We expected Flagsmith to lock a running experiment. Checked against Flagsmith Cloud on 27 November 2026, it does not: while an experiment was running, the Admin API accepted a change of split, an edit to a version's value and the deletion of a version, and a paused experiment went on serving every version. So the lock is the duel's own. The start writes a seal (`duel.seal.json`): the experiment, the split, the metrics and a hash of every version's contents. `audit` compares Flagsmith with the seal and exits with code 2 on any difference, so it can run in CI. `verdict` and `finish` run the audit first and refuse while the seal is broken.
-
-**Experiment Guard on the duel.** `duels/first-screen/referee/` holds two changes a tidy teammate or agent might make while the duel runs, as diffs: one renames `check_run` to `checkRun`, the other removes the `useExperiment('first_screen')` call. With `FLAGSMITH_API_KEY` set:
-
-```bash
-GUARD_FLAGSMITH_ENVIRONMENT=<the duel environment's client-side key> \
-  npm run guard -- check --diff duels/first-screen/referee/rename-event.diff
-```
-
-Run against the duel itself while experiment 1497 was running, the rename was blocked with three findings of rule EG001, one for each place the dashboard sends the event, and the removed call was blocked by rule EG002: "No new users enter First screen duel, so its results stop growing." Both answers are kept beside the diffs as `*.result.json`.
-
-## Rehearsed on real Flagsmith first
+### Rehearsed on real Flagsmith first
 
 Every path of the script ran against Flagsmith Cloud, on disposable environments, before the real duel. Three of those runs are worth reading about.
 
@@ -255,68 +579,18 @@ Flagsmith judged one version on the guardrail and gave no estimate for the other
 
 **An edit in the middle of a run.** After a start, one version's value was changed through the Admin API. Flagsmith accepted it. `audit` and `verdict` both answered "seal broken: version agent_b was edited", no verdict was given, and the run was stopped with a person's approval: the experiment was completed with control, and 10 of 10 test identities got today's version.
 
-## The `flagsmith-duel` Agent Skill
+### Experiment Guard on the duel
 
-The duel's Flagsmith half is an [Agent Skill](https://agentskills.io): one job from plan to rollout, for any coding agent and any flag, on the Flagsmith CLI. It is not tied to screens. A version's value is any text or JSON, so it settles a disagreement about a message, a price or a setting the same way.
+`duels/first-screen/referee/` holds two changes a tidy teammate or agent might make while the duel runs, as diffs: one renames `check_run` to `checkRun`, the other removes the `useExperiment('first_screen')` call. With `FLAGSMITH_API_KEY` set:
 
+```bash
+GUARD_FLAGSMITH_ENVIRONMENT=<the duel environment's client-side key> \
+  npm run guard -- check --diff duels/first-screen/referee/rename-event.diff
 ```
-/plugin install flagsmith-duel --marketplace kartikangiras/oakenshield
-```
 
-That line works on Claude Code 2.1.275 or later. On older versions: `claude plugin marketplace add kartikangiras/oakenshield`, then `claude plugin install flagsmith-duel@oakenshield`. For another agent, copy `skills/flagsmith-duel` into its skills folder. It needs the Flagsmith CLI 2.0 or later (logged in, or `FLAGSMITH_API_KEY` set), Node 20 or later and git.
+Run against the duel itself while experiment 1497 was running, the rename was blocked with three findings of rule EG001, one for each place the dashboard sends the event, and the removed call was blocked by rule EG002: "No new users enter First screen duel, so its results stop growing." Both answers are kept beside the diffs as `*.result.json`.
 
-| Command | What it does | Changes Flagsmith |
-|---|---|---|
-| `init <flag> --version <key>=<file> … --goal <event>` | Writes the plan and checks it. Prints what the start would create, and the approval code. | No |
-| `plan` | Prints that line again after the plan is edited | No |
-| `start --approve <code>` | Creates what is missing (environment, flag, versions, metrics, experiment), starts it, checks what the SDK serves, writes the seal. Run again after a failure, it continues where it stopped. | Yes |
-| `audit` | Compares Flagsmith with the seal. Exit code 2 when something changed. | No |
-| `verdict` | `collecting` with visitor counts until the sample is in, then `decided` or `void` with the reason in one sentence. Read once. | No |
-| `finish --approve <code>` | Completes the experiment with the winner and checks what the SDK serves. `--remove-losers` only if the person asks. | Yes |
-| `stop --approve <code>` | Ends a run early: no winner, everyone gets today's version | Yes |
-| `approve start\|finish\|stop` | A person's confirmation on their own terminal, needed for protected environments | No |
-
-**Built to be cheap for the agent.** One script does every Flagsmith call and asks the CLI for only the fields it needs (`flagsmith api … --jq`). Each command prints one line of JSON with a `next` field that says what to do. The agent never reads the script, and reads the two reference files (`references/rule.md`, `references/safety.md`) only when a person asks why.
-
-**The recorded run** (`examples/skill-demo/run.json`, kept as it happened): Claude Code with Sonnet, four things said by a person, from "two of us disagree about the first screen" to the rollout.
-
-| The person says | The agent runs | The script answers with |
-|---|---|---|
-| Two of us disagree … settle it with a Flagsmith experiment against what we show today. | `init first_screen_demo --environment "Skill demo" --new-environment … --min 50` | 779 characters: the plan and the code `3b6493d35c` |
-| Yes, start it. | `start --approve 3b6493d35c` | 216 characters: experiment 1485 running, what the SDK serves |
-| The visitors have been through. Is the run still clean, and which one won? | `audit; echo "exit $?"; verdict` | 747 characters: sealed, and the winner with the reason |
-| Yes, roll it out, and remove the version that lost. | `finish --approve 7a39f88fd2 --remove-losers` | 189 characters: completed, 10 of 10 test identities get the winner |
-
-| Token count for the whole job | |
-|---|---|
-| Requests to the model | 9 |
-| Output tokens | 1,653 |
-| Input side, all 9 requests | 98,009, of which 95,622 were read from cache |
-| Of that, Claude Code's own instructions and tool definitions | 75,483 (8,387 on every request, measured with a one word prompt and the same flags) |
-| **What the whole job added to the conversation** | **3,981 tokens**: the skill's instructions, four commands, four answers and the agent's replies |
-| Conversation size at the end | 12,368 tokens |
-
-The 205 visitors of that run were scripted at planted rates (`examples/skill-demo/visitors.mjs`), because the run measures the skill and not the screens. Its split came out uneven (50, 80 and 75 visitors; p = 0.026 by the chi square test, above the 0.001 line the rule voids at). The script has changed since the recording in small ways, all found by the rehearsals above: `approve` also works when the duel engine starts it, `collecting` says when Flagsmith last counted, the guardrail record names who judged each version, and a stopped run is reported as over.
-
-**Safety around changes.** `references/safety.md` lists every risk the skill guards and the two it does not. The short version: nothing is written before a code the person has seen; a protected environment also needs the person's terminal; the flag is created switched off, so no other environment serves a version; a second experiment on the same flag is refused; a start that fails half way resumes instead of creating a second experiment; and `start`, `finish` and `stop` each check with `flagsmith eval` what the SDK really serves afterwards.
-
-## How it uses Flagsmith
-
-| Flagsmith feature | Where | What it is used for |
-|---|---|---|
-| Flagsmith CLI 2.0 | `skills/flagsmith-duel/scripts/duel.mjs` | Every read and write of a duel. `environment list` and `create`, `feature get` and `create`, `feature variant list`, `add` and `delete`, `config`, and `eval` to check what the SDK serves to test identities after a start, a rollout and a stop. `flagsmith api` with `--jq` for what the CLI has no command for yet. |
-| Experimentation | The same script, through `flagsmith api` | `experiment-metrics` (made, or reused when the environment has one for the event), `experiments` (made with every variation of the flag, then started), `exposures` for the visitor counts, `results` for each version's chance to beat control and the sample ratio value, and `complete` with the rollout decision, which makes the flag serve the winner. |
-| Multivariate flags | `first_screen` | Each agent's whole screen is the JSON value of its variation. The versions under test are data in Flagsmith, so the experiment needs no code branch per agent and the rollout needs no deploy. |
-| JavaScript SDK and experiment events | `apps/dashboard`, `examples/demo-app` | `useExperiment('first_screen')` records the exposure and returns the screen. `trackEvent('check_run')` and `trackEvent('setup_snippet_copied')` feed the metrics. |
-| Experimentation, through the Admin API | `packages/guard/src/flagsmith.ts` | Experiment Guard lists the running experiments with their metrics and each metric's expected direction, the flag's variation keys, and the traits the audience segments match on. Nothing about an experiment is written in this repository's config. |
-| Flagsmith CLI with GitHub OIDC | `action.yml` | The same requests go through `flagsmith api`, so a workflow needs no stored API key. |
-| Webhooks | `apps/server` | A change to a running experiment's flag or audience segment raises an alert. An experiment that starts, ends or changes makes the open pull requests be checked again. |
-
-Four things we learned about Flagsmith Cloud by testing, all on 27 November 2026, all worked around in the script: a running experiment is not locked against edits; a paused experiment keeps serving its versions; there is no sample ratio value for an experiment with three versions; and the visitor counts are recounted at most every five minutes, so a verdict asked for right after the last visitor still says `collecting`.
-
-## Run it yourself
-
-Requires Node 22.18 or newer, the [Flagsmith CLI](https://github.com/Flagsmith/flagsmith-cli) 2.0 (`brew install flagsmith/tap/flagsmith`), a Flagsmith organisation API key, and Claude Code logged in (the agents and the personas are `claude -p` calls).
+### Run a duel yourself
 
 ```bash
 npm install
@@ -345,7 +619,7 @@ npm run duel -- finish duels/my-duel --approve <code> --remove-losers
 
 Without a folder the commands use `duels/first-screen`. The engine in `packages/duel` is built for this dashboard's first screen: its versions are made of the dashboard's own blocks and sample pull requests. For any other flag, the skill is the general tool. To see the Duel page, run `npm run demo` and open `http://127.0.0.1:8787/app/#/duel` (`OAKENSHIELD_DUEL_DIR` points the server at another duel's folder). `REAL_VISITOR_ENVIRONMENTS` takes the keys of environments where real people are counted, and the traffic scripts refuse to send to those.
 
-## What this does and does not show
+### What the duel does and does not show
 
 - **The visitors are simulated.** A persona is a model's guess at a person, and the agents and personas are the same model family. The result says which screen a model reader prefers and that the machinery works. It is not evidence about people.
 - **The debate was run twice.** The first record was spoiled by a bug of ours that cut the agents' attacks in the middle of a sentence. The bug was fixed and the second debate is the record. Neither had been shown to any visitor, and nothing was chosen between them.
@@ -390,7 +664,7 @@ Nothing is published to npm or the GitHub Marketplace yet. To use it today, refe
 | GitHub Action | `action.yml` | Comments on the PR, posts suggested changes, fails the check, honours an override label. Flagsmith auth over OIDC, no stored key. |
 | MCP server | `experiment-guard mcp` | Lets coding agents (Claude Code, Cursor, …) ask "will this edit break an experiment?" before they make it. |
 | API server | `apps/server` | Collects reports from every repo, live event stream, playground, rule settings. |
-| Dashboard | `apps/dashboard` | React 19 dashboard: overview, the duel, experiments and their code, checks, playground, rules, integrations. |
+| Dashboard | `apps/dashboard` | React 19 dashboard: overview, the arena, the duel, experiments and their code, checks, playground, rules, integrations. |
 | Demo app | `examples/demo-app` | FirstPR, a small Next.js app with a running "Connect-first onboarding" experiment, plus 22 seeded pull requests. |
 
 ### Quick start
@@ -439,12 +713,12 @@ flowchart LR
 
 | Rule | Catches | Default |
 |---|---|---|
-| EG001 | A metric event renamed or removed at a call site | block |
-| EG002 | The experiment exposure call removed | block |
+| EG001 | A metric event renamed or removed, at a call site or in the config file that declares it | block |
+| EG002 | The experiment exposure call removed, or the flag key removed from the config file that declares it | block |
 | EG003 | `enableEvents` switched off | block |
 | EG004 | SDK pinned below the version that can send experiment events | block |
 | EG005 | Code checks a variation key Flagsmith does not serve | block |
-| EG006 | Code that only one arm renders changed mid-run | warn |
+| EG006 | Code that only one arm renders changed mid-run, or a file listed under `treatment_paths` for the flag | warn |
 | EG007 | Identity logic changed (users get a new bucket) | warn |
 | EG008 | The exposure call moved (who counts as exposed changed) | warn |
 | EG009 | An event name that almost matches a metric | info |
@@ -506,6 +780,9 @@ identity_patterns:
 calls:                        # your own functions that wrap the SDK
   exposure: [useVariant]      # read like getExperimentFlag and useExperiment
   conversion: [track]         # read like trackEvent
+treatment_paths:              # per flag: files that decide what its value does,
+  checkout_flow:              # when that code sits far from the flag read
+    - src/pricing/**
 rules:
   EG006: warn                 # block | warn | info | off
 override:
@@ -514,6 +791,8 @@ override:
 ```
 
 Guard recognises the SDK's own calls. If your code reaches the SDK through a wrapper with another name, list it under `calls`. When a running experiment's flag or event appears in your code but not inside a call Guard can read, the report carries a note that says so and points here.
+
+Some projects keep flag keys and event names in a config file (json, yaml, toml, ini, properties or `.env`) and pass them to the SDK through a variable. Guard then treats the line that declares a key as the place the experiment depends on: removing or renaming it is caught by EG001 and EG002, and so is removing the last call that reads a flag through a variable. Guard cannot prove the variable is filled from that file, so the finding says "if that variable is filled from here", and a maintainer's override stays available. `treatment_paths` covers what no call shows: list the files that decide what a flag's value does, and a change to one of them while that flag's experiment runs is reported as EG006.
 
 Silence a single line, with a reason that ends up in the report:
 
@@ -559,7 +838,7 @@ Pass `--demo` to try it without Flagsmith; set `FLAGSMITH_API_KEY` and `GUARD_FL
 
 **A person stays in charge.** Experiment Guard only reads from Flagsmith. It never changes a flag, an experiment or your code. A fix is a suggestion: the agent is handed the line to put back, and on a pull request a person accepts the suggested change with a click. A block can be lifted only by a person with the `maintain` role or higher adding the override label, and who did it is written into the report.
 
-### An earlier experiment: what the demo opens on
+### The first experiment: what the demo opens on
 
 Before the duel, Oakenshield ran a simpler test on the same screen, with two versions written by a person. It is still running on the public demo, and Experiment Guard guards the code it depends on. The duel falls back to it: where `first_screen` serves no screen, `demo_start` decides what the dashboard opens on.
 
@@ -571,7 +850,7 @@ Before the duel, Oakenshield ran a simpler test on the same screen, with two ver
 |---|---|
 | ![The overview, which the control version opens on](docs/images/overview.png) | ![The guided screen, which the try_it version opens on](docs/images/guided.png) |
 
-The overview is this test's control, and it changed twice on 28 November 2026, while the test was running. A restyle simplified it. A second pass put the duel's replay at the top and cut the rest down to one section about pull requests. The pictures show both screens after the second change. Whatever Production counts after each redeploy is about the overview as it was then.
+The overview is this test's control, and it changed twice on 28 November 2026, while the test was running. A restyle simplified it. A second pass put the duel's replay at the top and cut the rest down to one section about pull requests. A third change put the trading arena's score where the replay was. The pictures show both screens after the second change. Whatever Production counts after each redeploy is about the overview as it was then.
 
 | | |
 |---|---|
@@ -654,8 +933,9 @@ The server keeps a JSON store (`apps/server/.data/`), streams events over SSE, a
 | `FLAGSMITH_API_KEY`, `GUARD_FLAGSMITH_ENVIRONMENT` | | Live Flagsmith data |
 | `OAKENSHIELD_REPO_PATH` | | A checkout to scan for code references |
 | `DASHBOARD_FLAGSMITH_ENVIRONMENT` | | Client-side key of the environment the dashboard's own experiments run in. Unset, they are off |
+| `OAKENSHIELD_ARENA_DIR` | `arenas/up-or-down` | The arena the Arena page shows |
 | `OAKENSHIELD_DUEL_DIR` | `duels/first-screen` | The duel the Duel page shows |
-| `OAKENSHIELD_TOKEN` | | Bearer token required on `POST /api/reports` |
+| `OAKENSHIELD_TOKEN` | | Bearer token required on `POST /api/reports` and `POST /api/arena/state` |
 | `OAKENSHIELD_WEBHOOK_SECRET` | | Secret set on the Flagsmith webhooks; unsigned deliveries are rejected when set |
 | `GITHUB_TOKEN`, `GITHUB_API_URL` | | Lets webhook re-checks update PR comments and commit statuses |
 | `OAKENSHIELD_DEMO_TICK` | `45` | Seconds between replayed demo checks, `0` to stop |
@@ -663,12 +943,12 @@ The server keeps a JSON store (`apps/server/.data/`), streams events over SSE, a
 
 Send any CLI or CI run to it with `--report-url https://your-dashboard` (and `OAKENSHIELD_TOKEN`).
 
-Endpoints: `POST /api/webhooks/flagsmith`, `GET /api/alerts`, `POST /api/flagsmith/simulate` (demo), `GET /api/health`, `GET /api/client-config`, `GET /api/duel`, `/api/overview?days=30`, `/api/experiments[/:id]`, `/api/checks?verdict=&repo=&rule=&q=`, `/api/checks/:id`, `POST /api/checks` (`{scenarioId}` or `{diff}`), `POST /api/reports`, `GET|PUT /api/rules[/:id]`, `GET|PUT /api/settings`, `GET /api/scenarios`, `GET /api/stream`.
+Endpoints: `POST /api/webhooks/flagsmith`, `GET /api/alerts`, `POST /api/flagsmith/simulate` (demo), `GET /api/health`, `GET /api/client-config`, `GET /api/arena`, `POST /api/arena/state` (the runner's push), `GET /api/duel`, `/api/overview?days=30`, `/api/experiments[/:id]`, `/api/checks?verdict=&repo=&rule=&q=`, `/api/checks/:id`, `POST /api/checks` (`{scenarioId}` or `{diff}`), `POST /api/reports`, `GET|PUT /api/rules[/:id]`, `GET|PUT /api/settings`, `GET /api/scenarios`, `GET /api/stream`.
 
 ## Development
 
 ```bash
-npm test             # engine scenarios, parsers, git integration, MCP, API, the duel's debate and screen referee
+npm test             # engine scenarios, parsers, git integration, MCP, API, the duel's debate and screen referee, the arena's playbooks, paper fills, ledger and runner
 npm run e2e          # every surface end to end: CLI, Action, MCP, live server, signed webhooks, the Flagsmith SDK
 npm run typecheck
 npm run build        # dashboard -> apps/dashboard/dist
@@ -685,6 +965,19 @@ packages/guard/src
   flagsmith.ts     Admin API and CLI clients, snapshot files
   github.ts        PR comment, suggestions, override label, step summary
   mcp.ts           stdio MCP server
+packages/arena/src
+  playbook.ts      the playbook language, the coin, and the playbook referee
+  signals.ts       the ten signals, from one minute prices that have closed
+  history.ts       past markets: the fact sheet, and the day held back
+  agents.ts        the two agents: what each is told and asked
+  debate.ts        propose, attack, revise; the record and the plan
+  market.ts        Polymarket, read only: markets, order books, resolutions
+  spot.ts          one minute prices from Binance's public data
+  paper.ts         a paper fill from the real order book, and its settlement
+  desk.ts          Flagsmith's Node SDK: who trades a market, and its events
+  ledger.ts        the trade log, and the state the page shows
+  runner.ts        every five minutes, for every asset, one live market
+  cli.ts           debate, show, run, and the skill's steps
 packages/duel/src
   agents.ts        the two agents: what each is told and asked
   debate.ts        propose, attack, revise; the record and the plan
@@ -692,7 +985,7 @@ packages/duel/src
   llm.ts           the claude command, with no tools
   cli.ts           debate, show, and the skill's steps
 skills/flagsmith-duel
-  SKILL.md         the whole job in under 4,000 characters
+  SKILL.md         the whole job in about 4,100 characters
   scripts/duel.mjs every Flagsmith step, through the Flagsmith CLI
   references/      the plan file, the rule, what is and is not guarded
 scripts/traffic    persona visitors and scripted visitors, on the built dashboard in headless Chrome
@@ -707,6 +1000,8 @@ apps/dashboard/src React dashboard, hand-written CSS and SVG charts
 - Go, Java and Flutter call-site scanners (the SDK version rule already covers them; the scanner reads JS/TS and Python).
 - Pull the metric definitions straight from Flagsmith experiment results as the API grows.
 - GitLab merge request comments.
+- An arena where the unit is a whole five minute window, so markets that move together count once.
+- An arena that runs over several days, so a result does not rest on one day's market.
 - A workflow that audits a running duel on a schedule.
 - A duel between more than two agents (the skill already takes up to four challengers).
 
