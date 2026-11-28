@@ -27,7 +27,8 @@ The plan file defaults to `duel.json` in the current directory.
    It writes `duel.json`, changes nothing in Flagsmith, and prints what `start` would do, with an
    approval code. **Show the person that line and ask.**
 2. `plan` prints that line again after the plan file is edited by hand (its other fields are in
-   `references/plan.md`; read it only if one is needed).
+   `references/plan.md`; read it only if one is needed). One of them is `watch`: events that
+   carry a number, which `verdict` reports and no rule judges.
 3. `start --approve <code>` creates what is missing (flag, versions, metrics, experiment), starts
    the experiment, checks what the SDK now serves, and writes the seal. If it fails half way, run
    it again with the same code: it continues from where it stopped.

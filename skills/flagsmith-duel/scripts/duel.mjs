@@ -111,13 +111,20 @@ function loadPlan() {
   if (!p.goal?.event) bad.push('goal.event: the event that counts');
   const rule = { min_per_arm: 100, win_above: 0.95, harm_below: 0.05, ...(p.rule ?? {}) };
   if (!(rule.min_per_arm >= 50)) bad.push('rule.min_per_arm: at least 50 (Flagsmith shows no result below that)');
+  // Watch metrics carry a number (a mean, a sum or a count per visitor). They are reported next to the verdict and never judged.
+  const watch = (p.watch ?? []).filter(w => w.event).map(w => ({ name: w.name || w.event, event: w.event, aggregation: w.aggregation ?? 'mean' }));
+  const judged = [p.goal?.event, ...(p.guardrails ?? []).map(g => g.event)];
+  for (const w of watch) {
+    if (!['mean', 'sum', 'count'].includes(w.aggregation)) bad.push(`watch.${w.event}: aggregation is mean, sum or count`);
+    if (judged.includes(w.event) || watch.filter(x => x.event === w.event).length > 1) bad.push(`watch.${w.event}: an event has one metric in a plan`);
+  }
   if (bad.length) throw new Stop(`The plan is incomplete: ${bad.join('; ')}.`, 'Fix the plan, then: plan');
   return {
     name: p.name || `${p.flag} duel`, flag: p.flag, environment: p.environment, project: p.project, hypothesis: p.hypothesis, control, versions,
     split: { control: 100 - used, ...Object.fromEntries(keys.map(k => [k, split[k]])) },
     goal: { name: p.goal?.name || p.goal?.event, event: p.goal?.event },
     guardrails: (p.guardrails ?? []).filter(g => g.event).map(g => ({ name: g.name || g.event, event: g.event })),
-    rule, protect: p.protect ?? [], create_environment: p.create_environment === true,
+    watch, rule, protect: p.protect ?? [], create_environment: p.create_environment === true,
   };
 }
 function tryRead(p) { try { return readFileSync(p, 'utf8').trim(); } catch { return undefined; } }
@@ -127,6 +134,8 @@ const planDigest = plan => short(canonical({
   flag: plan.flag, environment: plan.environment, control: plan.control, split: plan.split, rule: plan.rule,
   versions: Object.fromEntries(Object.entries(plan.versions).map(([k, v]) => [k, sha(v.value)])),
   goal: plan.goal.event, guardrails: plan.guardrails.map(g => g.event),
+  // Only when the plan has any, so that a plan without them keeps the code it was approved under.
+  ...(plan.watch.length ? { watch: plan.watch.map(w => `${w.event}:${w.aggregation}`) } : {}),
 }));
 
 function findEnvironment(plan) {
@@ -291,13 +300,15 @@ const commands = {
     const events = [plan.goal.event, ...plan.guardrails.map(g => g.event)];
     const known = env ? metricsIn(env.key) : [];
     for (const e of events) if (!known.some(m => m.event === e && m.aggregation === 'occurrence')) will.push(`create metric for ${e}`);
+    for (const w of plan.watch) if (!known.some(m => m.event === w.event && m.aggregation === w.aggregation)) will.push(`create metric for ${w.event} (${w.aggregation})`);
     will.push('create experiment', 'start it');
     const code = planDigest(plan);
-    const code_ = usedInCode([plan.flag, ...events]);
+    const code_ = usedInCode([plan.flag, ...events, ...plan.watch.map(w => w.event)]);
     const missing = Object.entries(code_).filter(([, n]) => n === 0).map(([w]) => w);
     return {
       ok: true, flag: plan.flag, environment: env?.name ?? plan.environment, protected: isProtected(plan, env),
       arms: plan.split, goal: plan.goal.event, guardrails: plan.guardrails.map(g => g.event),
+      ...(plan.watch.length ? { watch: plan.watch.map(w => `${w.event} (${w.aggregation}, shown and not judged)`) } : {}),
       rule: `needs ${plan.rule.min_per_arm} visitors per arm; a version wins above a ${pct(plan.rule.win_above)} chance to beat control on the goal, unless its chance to beat control on a guardrail is below ${pct(plan.rule.harm_below)}`,
       will, files_using: code_,
       ...(missing.length ? { warning: `Nothing in this repository mentions ${missing.join(', ')}. Without the flag read and the event, no data arrives.` } : {}),
@@ -380,10 +391,11 @@ const commands = {
     }
     // The metrics: one per event, reused when the environment already has it.
     const metrics = {};
-    for (const m of [plan.goal, ...plan.guardrails]) {
-      const found = metricsIn(env.key).find(x => x.event === m.event && x.aggregation === 'occurrence');
+    for (const m of [plan.goal, ...plan.guardrails, ...plan.watch]) {
+      const aggregation = m.aggregation ?? 'occurrence';
+      const found = metricsIn(env.key).find(x => x.event === m.event && x.aggregation === aggregation);
       metrics[m.event] = found?.id ?? api(`environments/${env.key}/experiment-metrics/`, {
-        body: { name: m.name, aggregation: 'occurrence', direction: 'up', definition: { version: 1, event: m.event } }, jq: '.id',
+        body: { name: m.name, aggregation, direction: 'up', definition: { version: 1, event: m.event } }, jq: '.id',
       });
     }
     const experiment = api(`environments/${env.key}/experiments/`, {
@@ -441,6 +453,12 @@ const commands = {
     };
     const table = { [plan.goal.event]: Object.fromEntries(arms.map(k => [k, row(goal, k)])) };
     for (const g of plan.guardrails) table[g.event] = Object.fromEntries(arms.map(k => [k, row(of(g.event), k)]));
+    // Watch metrics: Flagsmith's numbers as they are. No rule reads them.
+    const watched = Object.fromEntries(plan.watch.map(w => [w.event, Object.fromEntries(arms.map(k => {
+      const m = of(w.event); const v = m?.variants?.[k]; const i = m?.inference?.[k];
+      return [k, v ? { visitors: v.n, sum: v.sum, mean: v.mean ?? (v.n ? v.sum / v.n : 0),
+        ...(i ? { lift: i.lift, ci: [i.ci_low, i.ci_high], chance_to_win: i.chance_to_win } : {}) } : null];
+    }))]));
     const g = table[plan.goal.event];
     const challengers = arms.filter(k => k !== 'control');
     // Flagsmith gives no estimate for a metric with few conversions. A guardrail it cannot judge is judged
@@ -494,6 +512,7 @@ const commands = {
       results_as_of: r.as_of, sample_ratio_p: srm, sample_ratio_by: r.srm === null || r.srm === undefined ? 'our chi-square test on Flagsmith\'s visitor counts' : 'Flagsmith',
       excluded_visitors: exposed.excluded ?? 0, rule: plan.rule, table, head_to_head: headToHead, predictions: scores,
       guardrails_by: Object.fromEntries(plan.guardrails.map(x => [x.event, judgedBy(x.event)])),
+      ...(plan.watch.length ? { watch: watched } : {}),
     };
     writeJson(beside('.verdict.json'), verdict);
     return verdictLine(plan, verdict);

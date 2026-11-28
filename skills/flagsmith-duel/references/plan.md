@@ -30,6 +30,7 @@
 | `split` | Percent of visitors per challenger. Control gets the rest. Default: equal shares. |
 | `goal.event` | The event the code sends with `trackEvent`. A metric counting visitors who sent it at least once is created, or reused if the environment has one. |
 | `guardrails` | Events that must not get worse. |
+| `watch` | Optional: events that carry a number, such as `[{ "event": "paper_profit", "name": "Profit per market", "aggregation": "mean" }]`. `aggregation` is `mean`, `sum` or `count` per visitor. A metric is created and attached, `verdict` reports Flagsmith's numbers for it under `watch`, and no rule reads it. |
 | `rule` | See `rule.md`. `min_per_arm` is the sample every arm needs before outcomes are read. |
 | `protect` | Extra environment names or keys that need the person's own `approve`. |
 
