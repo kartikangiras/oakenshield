@@ -6,8 +6,8 @@ import type { CheckSummary, Overview } from '../lib/api.ts';
 import { SOURCE_LABEL, num, pct } from '../lib/format.ts';
 import { navigate, useAsync } from '../lib/hooks.ts';
 import { useLive } from '../lib/live.tsx';
+import { ArenaHeadline } from './Arena.tsx';
 import { SOURCE_ICON } from './Checks.tsx';
-import { DuelReplay } from './Duel.tsx';
 
 const DAYS = 30;
 
@@ -24,14 +24,14 @@ export function OverviewPage() {
         title="Overview"
         sub={(
           <>
-            The latest duel between two agents, and what Experiment Guard decided on recent pull requests.
+            The trading arena, where two AI written playbooks and a coin paper trade live markets, and what Experiment Guard decided on recent pull requests.
             {o?.mode === 'demo' && <> <a href="#/integrations" className="chip" title="Connect Flagsmith on the Set up page">Demo data</a></>}
           </>
         )}
         actions={<button className="btn primary" onClick={() => navigate('/playground')}><Icon name="play" size={14} />Run a check</button>}
       />
 
-      <DuelReplay />
+      <ArenaHeadline />
 
       <Section title="Pull requests" sub={`Experiment Guard checks each one against the A/B tests running in Flagsmith. These are the last ${DAYS} days.`}>
         <div className="grid split">

@@ -241,6 +241,76 @@ code, pre, .mono { font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menl
 .more-body { padding: 4px 16px 16px; display: grid; gap: 16px; color: var(--text-2); }
 .more-body b { color: var(--text); font-weight: 600; }
 
+/* The trading arena (pages/Arena.tsx). Its lanes are the duel's (lib/duel-viz.ts), one dot per market. */
+.arena-stage-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.arena-stage-head .section-title { margin: 0; }
+.arena-arms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.arena-arm { display: grid; align-content: start; gap: 16px; padding: 24px; }
+.arena-arm-name { display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 20px; font-weight: 600; }
+.arena-arm-name small { margin-left: auto; font-size: 12px; line-height: 16px; font-weight: 400; color: var(--text-3); }
+.arena-arm-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.arena-arm-stats > div { display: grid; gap: 4px; }
+.arena-arm-stats b { font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.02em; }
+.arena-arm-stats b small { font-size: 14px; line-height: 20px; font-weight: 400; letter-spacing: 0; color: var(--text-2); }
+.gain { color: var(--pass); }
+.loss { color: var(--block); }
+.arena-bar { height: 8px; border-radius: 9999px; background: var(--surface-3); overflow: hidden; }
+.arena-bar i { display: block; height: 100%; border-radius: 9999px; background: var(--c); transition: width 700ms var(--ease); }
+.arena-chart { display: grid; gap: 12px; }
+.arena-plot { position: relative; height: 240px; padding-left: 80px; }
+.arena-plot svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.arena-zero { stroke: var(--text-3); stroke-width: 1; stroke-dasharray: 4 4; opacity: 0.6; }
+.arena-axis { position: absolute; left: 0; font-size: 12px; line-height: 16px; color: var(--text-2); }
+.arena-axis.mid { transform: translateY(-50%); color: var(--text-3); }
+.arena-times { display: flex; justify-content: space-between; gap: 12px; padding-left: 80px; }
+.arena-scroll { overflow-x: auto; }
+.table.plain tbody tr { cursor: default; }
+.table.plain tbody tr:hover td { background: none; }
+.table.plain tbody tr.won td { background: var(--pass-soft); }
+.table .num { text-align: right; }
+.arena-feed td { white-space: nowrap; }
+.arena-who { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.arena-nowrap { white-space: nowrap; }
+.arena-approval { display: inline-flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 8px; text-align: right; }
+.arena-result .kv-row { align-items: flex-start; }
+.arena-claim { margin: 0; font-size: 14px; line-height: 20px; color: var(--text); text-wrap: pretty; }
+.arena-rules { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.arena-rules li { display: grid; grid-template-columns: 24px minmax(0, 1fr) 48px; gap: 12px; align-items: start; padding: 12px 16px; border-radius: 12px; background: var(--surface-2); font-size: 14px; line-height: 20px; }
+.arena-rules li > b { text-align: right; font-weight: 600; line-height: 24px; }
+.arena-rules li > span:not(.arena-rule-n) { padding-top: 2px; }
+.arena-rules small { display: block; margin-top: 4px; font-size: 12px; line-height: 16px; color: var(--text-3); text-wrap: pretty; }
+.arena-rule-n { width: 24px; height: 24px; border-radius: 9999px; display: grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--text-2); background: var(--surface-3); }
+.arena-rule-n:empty { background: none; }
+.arena-tape { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.arena-tape .fact { border: 1px solid transparent; }
+.arena-tape .fact b { font-size: 20px; line-height: 28px; }
+.arena-tape .fact.honest { border-color: color-mix(in srgb, var(--accent) 48%, transparent); background: var(--accent-soft); }
+.arena-tape .fact.honest span { color: var(--text-2); }
+.arena-facts .fact b, .arena-before .fact b { white-space: normal; text-wrap: balance; }
+.arena-before .fact span:last-child { margin-top: 2px; color: var(--text-2); }
+.arena-even { display: flex; justify-content: space-between; gap: 12px; color: var(--text-2); }
+.arena-even b { color: var(--text); font-weight: 600; }
+.arena-fine { display: grid; gap: 4px; max-width: 760px; text-wrap: pretty; }
+/* Controls: the loss limit with its meter, and what needs a person. The stopped state is the same red as a blocked check. */
+.arena-controls { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 24px; padding: 24px; }
+.arena-limit { --c: var(--accent); display: grid; align-self: start; gap: 12px; padding: 16px; border-radius: 12px; background: var(--surface-2); border: 1px solid transparent; }
+.arena-limit.stopped { --c: var(--block); background: var(--block-soft); border-color: color-mix(in srgb, var(--block) 36%, transparent); }
+.arena-limit .section-title { margin: 0; }
+.arena-limit-n { font-size: 14px; line-height: 20px; color: var(--text-2); }
+.arena-limit-n b { margin-right: 4px; font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.02em; color: var(--text); }
+.arena-control-list { margin: 0; display: grid; align-content: start; gap: 12px; }
+.arena-control-list > div { display: grid; grid-template-columns: 144px minmax(0, 1fr); gap: 16px; font-size: 14px; line-height: 20px; }
+.arena-control-list dt { font-weight: 600; }
+.arena-control-list dd { margin: 0; color: var(--text-2); text-wrap: pretty; }
+.card.arena-stopped { background: color-mix(in srgb, var(--block) 8%, var(--surface)); border-color: color-mix(in srgb, var(--block) 36%, var(--border)); }
+.arena-stopped-why { margin: 0; max-width: 760px; font-size: 16px; line-height: 24px; color: var(--text); text-wrap: pretty; }
+.arena-beat { animation: beat 1600ms var(--ease) infinite; }
+@keyframes beat { 50% { opacity: 0.32; } }
+.arena-second { padding: 16px; border-radius: 12px; border: 1px solid var(--border); }
+.arena-second .section-title { margin-bottom: 4px; }
+.arena-second .small { max-width: 760px; text-wrap: pretty; }
+.arena-second td { white-space: nowrap; }
+
 .sim {
   display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px; border-radius: 12px; text-align: left; cursor: pointer;
   background: var(--surface-2); border: 1px solid var(--border); transition: border-color 400ms var(--ease), transform 400ms var(--ease), background-color 400ms var(--ease);
@@ -564,6 +634,7 @@ select.input { padding-right: 32px; cursor: pointer; }
   .nav { order: 3; width: 100%; margin: 0 0 0 -8px; overflow-x: auto; scrollbar-width: none; }
   .nav::-webkit-scrollbar { display: none; }
   .duel-stages, .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .arena-arm { padding: 16px; }
 }
 @media (max-width: 720px) {
   .app { padding: 8px 16px 48px; }
@@ -575,6 +646,15 @@ select.input { padding-right: 32px; cursor: pointer; }
   .score-num { text-align: left; }
   .duel-stages { grid-template-columns: 1fr; }
   .duel-replay .card-head { flex-wrap: wrap; }
+  .arena-arms { grid-template-columns: 1fr; }
+  .arena-controls { grid-template-columns: 1fr; padding: 16px; }
+  .arena-control-list > div { grid-template-columns: 1fr; gap: 2px; }
+  .arena-plot { height: 192px; }
+  .arena-feed th:nth-child(4), .arena-feed td:nth-child(4), .arena-feed th:nth-child(5), .arena-feed td:nth-child(5) { display: none; }
+  .arena-feed th, .arena-feed td { padding: 12px 8px; }
+  .arena-feed th:first-child, .arena-feed td:first-child { padding-left: 16px; }
+  .arena-feed th:last-child, .arena-feed td:last-child { padding-right: 16px; }
+  .arena-result .table { min-width: 800px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }

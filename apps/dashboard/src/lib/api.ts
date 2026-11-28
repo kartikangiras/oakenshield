@@ -1,9 +1,12 @@
 import type {
-  ActivityItem, CheckRecord, CheckSummary, ClientConfig, DuelView, ExperimentView, FlagsmithAlert, Health, Overview, RuleId, RuleView,
+  ActivityItem, ArenaView, CheckRecord, CheckSummary, ClientConfig, DuelView, ExperimentView, FlagsmithAlert, Health, Overview, RuleId, RuleView,
   ScenarioView, SeveritySetting, Verdict,
 } from '../../../server/src/api-types.ts';
 
 export type * from '../../../server/src/api-types.ts';
+/* The server passes the arena's files through untyped. These are the shapes the runner and the arena CLI write. */
+export type { ArenaState, Totals } from '../../../../packages/arena/src/ledger.ts';
+export type { ArenaCheck } from '../../../../packages/arena/src/check.ts';
 
 export class ApiError extends Error {
   status: number;
@@ -64,6 +67,7 @@ export const api = {
   health: () => request<Health>('GET', '/api/health'),
   clientConfig: () => request<ClientConfig>('GET', '/api/client-config'),
   duel: () => request<DuelView | null>('GET', '/api/duel'),
+  arena: () => request<ArenaView | null>('GET', '/api/arena'),
   overview: (days: number) => request<Overview>('GET', `/api/overview?days=${days}`),
   experiments: () => request<ExperimentView[]>('GET', '/api/experiments'),
   experiment: (id: string | number) => request<ExperimentDetail>('GET', `/api/experiments/${encodeURIComponent(String(id))}`),

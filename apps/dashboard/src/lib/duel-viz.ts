@@ -33,6 +33,10 @@ export interface VizOptions {
   visits?: string;
   /** What a converted visitor did: "ran a check". */
   did: string;
+  /** What one dot is, in the plural. "visitors" unless the page says otherwise (the arena: "markets"). */
+  unit?: string;
+  /** The key under the lanes for a dim dot. "Did not" unless the page says otherwise. */
+  missed?: string;
   winner?: string | null;
   /** What `status` says once every visitor is in: "Agent B wins". */
   result: string;
@@ -105,6 +109,7 @@ const REPLAY_ICON = '<svg viewBox="0 0 256 256" width="14" height="14" fill="cur
 
 export function mountDuelViz(root: HTMLElement, opt: VizOptions): { destroy(): void } {
   const { lanes } = opt;
+  const unit = opt.unit ?? 'visitors';
   const order = codes(lanes, opt.visits);
   const n = order.length;
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -152,7 +157,7 @@ export function mountDuelViz(root: HTMLElement, opt: VizOptions): { destroy(): v
     const rate = el('span', 'dv-rate');
     const tally = el('span', 'dv-count');
     score.append(rate, tally);
-    const spoken = el('span', 'dv-sr', `${lane.label}: ${count(lane.converted)} of ${count(lane.visitors)} visitors ${opt.did}, ${share(lane.converted, lane.visitors)}.${lane.key === opt.winner ? ' Winner.' : ''}`);
+    const spoken = el('span', 'dv-sr', `${lane.label}: ${count(lane.converted)} of ${count(lane.visitors)} ${unit} ${opt.did}, ${share(lane.converted, lane.visitors)}.${lane.key === opt.winner ? ' Winner.' : ''}`);
     row.append(who, field, score, spoken);
     return { row, field, canvas, rate, tally, ctx: canvas.getContext('2d'), colour: '', hits: 0, misses: 0 };
   });
@@ -161,7 +166,7 @@ export function mountDuelViz(root: HTMLElement, opt: VizOptions): { destroy(): v
 
   const foot = el('div', 'dv-foot');
   const did = opt.did.charAt(0).toUpperCase() + opt.did.slice(1);
-  for (const [cls, text] of [['dv-hit', did], ['dv-miss', 'Did not']] as const) {
+  for (const [cls, text] of [['dv-hit', did], ['dv-miss', opt.missed ?? 'Did not']] as const) {
     const key = el('span', 'dv-key');
     key.append(el('i', cls), text);
     foot.append(key);
@@ -248,7 +253,7 @@ export function mountDuelViz(root: HTMLElement, opt: VizOptions): { destroy(): v
       r.ctx.fill();
     }
     if (opt.status) {
-      const counting = at === Infinity ? undefined : `${count(landed)} of ${count(n)} visitors`;
+      const counting = at === Infinity ? undefined : `${count(landed)} of ${count(n)} ${unit}`;
       if (counting === undefined) delete opt.status.dataset.dvCount;
       else if (opt.status.dataset.dvCount !== counting) opt.status.dataset.dvCount = counting;
     }

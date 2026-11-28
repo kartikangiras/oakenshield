@@ -10,6 +10,7 @@ import { parseScreen } from '../../../packages/duel/src/screen.ts';
 import { useExperiment } from './lib/experiments.ts';
 import { navigate, useKey, useLocalStorage, useRoute } from './lib/hooks.ts';
 import { useLive } from './lib/live.tsx';
+import { ArenaPage } from './pages/Arena.tsx';
 import { CheckDetailPage } from './pages/CheckDetail.tsx';
 import { ChecksPage } from './pages/Checks.tsx';
 import { ExperimentsPage } from './pages/Experiments.tsx';
@@ -22,6 +23,7 @@ import { RulesPage } from './pages/Rules.tsx';
 
 const NAV: Array<{ path: string; label: string; icon: IconName }> = [
   { path: '/', label: 'Overview', icon: 'grid' },
+  { path: '/arena', label: 'Arena', icon: 'activity' },
   { path: '/duel', label: 'Duel', icon: 'swap' },
   { path: '/experiments', label: 'Experiments', icon: 'flask' },
   { path: '/checks', label: 'Checks', icon: 'pr' },
@@ -77,6 +79,7 @@ export function App() {
     case 'experiments': page = <ExperimentsPage selected={route.parts[1]} />; break;
     case 'checks': page = route.parts[1] ? <CheckDetailPage id={route.parts[1]} /> : <ChecksPage />; break;
     case 'playground': page = <PlaygroundPage />; break;
+    case 'arena': page = <ArenaPage />; break;
     case 'duel': page = <DuelPage />; break;
     case 'rules': page = <RulesPage focus={route.query.get('focus') ?? undefined} />; break;
     case 'integrations': page = <IntegrationsPage />; break;
