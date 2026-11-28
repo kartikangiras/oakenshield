@@ -45,6 +45,7 @@ const { server, simulate } = createApp({
   // Demo pull requests are not real, so only live mode writes back to GitHub.
   github: mode === 'live' && env.GITHUB_TOKEN ? gitHubPoster(env.GITHUB_TOKEN, env.GITHUB_API_URL) : undefined,
   duelDir: env.OAKENSHIELD_DUEL_DIR ?? here('../../../duels/first-screen'),
+  arenaDir: env.OAKENSHIELD_ARENA_DIR ?? here('../../../arenas/up-or-down'),
   // The dashboard's own A/B test (docs/experiment.md). Off unless an environment key is set.
   client: {
     experiments: env.DASHBOARD_FLAGSMITH_ENVIRONMENT ? {

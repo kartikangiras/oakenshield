@@ -158,6 +158,25 @@ export interface DuelView {
   replay: unknown;
 }
 
+/**
+ * The trading arena. Like the duel, the server passes its parts on unread: the record belongs to
+ * the arena package, the seal, verdict and approvals to the flagsmith-duel skill, and the state
+ * (totals, the feed of paper trades, one character per settled market) to the arena's runner.
+ */
+export interface ArenaView {
+  record: unknown;
+  seal: unknown;
+  verdict: unknown;
+  approvals: unknown;
+  state: unknown;
+  /** The arena's own reading of its trade log, grouped by five minute window. Null until the result has been read. */
+  check: unknown;
+  /** The operator's loss limit from the brief: paper dollars lost over the last `over` settled markets. Null when the brief sets none. */
+  limit: { max_loss: number; over: number } | null;
+  /** When the runner last sent its state to this server. Null when it never has since the server started. */
+  heard_at: string | null;
+}
+
 export interface Health {
   ok: true;
   version: string;
