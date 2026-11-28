@@ -6,6 +6,11 @@ export function langOf(path: string): Lang {
   return 'other';
 }
 
+/** Files that hold values for code to read. A project that keeps its flag keys and event names here passes them to the SDK through a variable. */
+export function isConfigFile(path: string): boolean {
+  return /\.(?:json[c5]?|ya?ml|toml|ini|properties)$/i.test(path) || /(^|\/)\.env(?:\.[\w.-]+)?$/i.test(path);
+}
+
 interface Pattern {
   kind: HitKind;
   re: RegExp;
@@ -69,6 +74,19 @@ function customPatterns(calls: CustomCalls, lang: 'js' | 'py'): Pattern[] {
 
 const LITERAL_RE = /(['"`])((?:(?!\1)[^\\\n]|\\.)*)\1/g;
 
+// Config formats leave most names unquoted: `flag: checkout_v2`, `GOAL_EVENT=order_paid`, `- order_paid`.
+const BARE_RE = /(?:^\s*(?:-\s+)?|[:=,[{]\s*)([A-Za-z_][\w.-]*)(?=\s*(?:[:=,\]}#]|$))/g;
+
+/** The calls that evaluate or record an experiment flag, by name: what a `dynamic` hit carries when the flag key is a variable. */
+export function exposureCalls(calls?: CustomCalls): string[] {
+  return ['getExperimentFlag', 'useExperiment', 'trackExposureEvent', 'get_experiment_flag', 'track_exposure_event', ...(calls?.exposure ?? [])];
+}
+
+/** The same for the calls that send a conversion event. */
+export function conversionCalls(calls?: CustomCalls): string[] {
+  return ['trackEvent', 'track_event', ...(calls?.conversion ?? [])];
+}
+
 export const FLUSH_RE = /\b(?:flushEvents|flush_events|flush)\s*\(|\.close\s*\(|max_buffer_items\s*=\s*1\b/;
 
 export function scanText(text: string, lang: Lang, calls?: CustomCalls): { hits: Hit[]; literals: Set<string> } {
@@ -95,6 +113,13 @@ export function scanText(text: string, lang: Lang, calls?: CustomCalls): { hits:
 export function scanLine(file: string, line: number, text: string, side: ScannedLine['side'], calls?: CustomCalls): ScannedLine {
   const lang = langOf(file);
   const { hits, literals } = scanText(text, lang, calls);
+  if (isConfigFile(file)) {
+    for (const m of text.replace(LITERAL_RE, '""').matchAll(BARE_RE)) {
+      if (literals.has(m[1])) continue;
+      literals.add(m[1]);
+      hits.push({ kind: 'literal', value: m[1] });
+    }
+  }
   return { file, line, text, side, lang, hits, literals };
 }
 

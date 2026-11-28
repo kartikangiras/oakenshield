@@ -40,6 +40,8 @@ export interface GuardConfig {
     exposure: string[];
     conversion: string[];
   };
+  /** Per flag key, the files that decide what the flag's value does when that code sits far from the flag read. */
+  treatmentPaths: Record<string, string[]>;
   report: {
     url?: string;
   };
@@ -71,6 +73,7 @@ export function defaultConfig(): GuardConfig {
     ai: { enabled: false, modelEnv: 'GUARD_AI_MODEL', keyEnv: 'GUARD_AI_KEY', maxFindings: 5, redactSecrets: true },
     identityPatterns: [],
     calls: { exposure: [], conversion: [] },
+    treatmentPaths: {},
     report: {},
   };
 }
@@ -113,7 +116,7 @@ export function normalizeConfig(raw: YamlValue): { config: GuardConfig; warnings
   const warnings: string[] = [];
   const config = defaultConfig();
   const root = obj(raw, 'config');
-  const known = new Set(['version', 'flagsmith', 'scan', 'rules', 'override', 'ai', 'identity_patterns', 'calls', 'report']);
+  const known = new Set(['version', 'flagsmith', 'scan', 'rules', 'override', 'ai', 'identity_patterns', 'calls', 'treatment_paths', 'report']);
   for (const k of Object.keys(root)) if (!known.has(k)) warnings.push(`Unknown top-level key "${k}" ignored`);
 
   if (root.version !== undefined && root.version !== 1) throw new ConfigError('version must be 1');
@@ -165,6 +168,10 @@ export function normalizeConfig(raw: YamlValue): { config: GuardConfig; warnings
       if (!/^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/.test(n)) throw new ConfigError(`calls.${kind} must list function names such as track or analytics.track, got "${n}"`);
     }
     config.calls[kind] = names;
+  }
+
+  for (const [flag, globs] of Object.entries(obj(root.treatment_paths, 'treatment_paths'))) {
+    config.treatmentPaths[flag] = list(globs, `treatment_paths.${flag}`) ?? [];
   }
 
   const rep = obj(root.report, 'report');

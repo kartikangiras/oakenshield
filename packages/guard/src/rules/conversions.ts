@@ -1,4 +1,4 @@
-import { hitValues, norm, renameKind, replaceLiteral } from '../scanner.ts';
+import { hitValues, isConfigFile, norm, renameKind, replaceLiteral } from '../scanner.ts';
 import type { ExpectedDirection } from '../types.ts';
 import { closest, hasLiteral, trimEvidence, type RawFinding, type Rule } from './context.ts';
 
@@ -21,7 +21,7 @@ export const eg001: Rule = ctx => {
       if (removed.length === 0) continue;
       // Restored or moved anywhere in the PR: not a loss.
       if (ctx.added.some(l => hasLiteral(l, event))) continue;
-      const stillSent = ctx.headLines(event).some(l => l.literals.has(event));
+      const named = ctx.headLines(event).find(l => l.literals.has(event));
       const direction = exp.metrics?.find(m => m.event === event)?.expectedDirection;
       const seen = new Set<string>();
       for (const r of removed) {
@@ -35,8 +35,11 @@ export const eg001: Rule = ctx => {
           .filter(c => c.kind !== null)
           .map(c => ({ ...c, line: c.a.line }));
         const cand = closest(candidates, r.line);
-        const consequence = stillSent
-          ? `This call site stops sending '${event}'. Other code still sends it, so only users who reach this path stop counting. If this path belongs to one arm, ${undercounted(direction)}.`
+        const consequence = named
+          ? isConfigFile(r.file)
+            // A config line declares the name; the call that sends it reads the name from a variable.
+            ? `This file no longer declares '${event}'. Code that takes the event name from here sends another name, or none, and those events stop counting toward "${exp.name}". ${named.file}:${named.line} still names '${event}'.`
+            : `This call site stops sending '${event}'. Other code still sends it, so only users who reach this path stop counting. If this path belongs to one arm, ${undercounted(direction)}.`
           : isGuardrail(direction)
             ? `Nothing in the codebase sends '${event}' any more. It is a guardrail for "${exp.name}", so the experiment can no longer show whether the change does harm.`
             : `Nothing in the codebase sends '${event}' any more. Every conversion for "${exp.name}" stops counting and its results freeze.`;

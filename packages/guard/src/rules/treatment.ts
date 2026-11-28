@@ -1,6 +1,7 @@
+import { matchesAny } from '../glob.ts';
 import { hasHit, hitValues, renameKind, replaceLiteral, scanText, langOf } from '../scanner.ts';
 import type { LiveExperiment } from '../types.ts';
-import { closest, firstWiredHere, hasLiteral, trimEvidence, type RawFinding, type Rule } from './context.ts';
+import { closest, firstWiredHere, hasLiteral, trimEvidence, type RawFinding, type Rule, type RuleContext } from './context.ts';
 
 function keyIndex(running: LiveExperiment[]): Map<string, LiveExperiment> {
   const m = new Map<string, LiveExperiment>();
@@ -209,9 +210,37 @@ function basename(path: string): string {
   return (path.split('/').pop() ?? path).replace(/\.[^.]+$/, '');
 }
 
+/**
+ * Files the project lists under `treatment_paths` for a running flag. When the flag's value is data
+ * (a JSON document, a rule set) the code that gives it meaning has no branch on a variation key,
+ * so Guard cannot find it by reading: the project says where it is.
+ */
+function listedTreatment(ctx: RuleContext): RawFinding[] {
+  const out: RawFinding[] = [];
+  for (const exp of ctx.running) {
+    const globs = ctx.config.treatmentPaths[exp.flagKey] ?? [];
+    if (globs.length === 0 || firstWiredHere(ctx, exp)) continue;
+    for (const f of ctx.files) {
+      if (!matchesAny(f.path, globs)) continue;
+      const first = ctx.added.find(l => l.file === f.path && l.text.trim() !== '') ?? ctx.removed.find(l => l.file === f.path);
+      if (!first) continue;
+      out.push({
+        rule: 'EG006',
+        experiment: exp,
+        file: f.path,
+        line: first.line,
+        side: first.side,
+        evidence: `${first.side === 'added' ? '+' : '-'} ${trimEvidence(first.text)}`,
+        consequence: `${f.path} is listed under treatment_paths for '${exp.flagKey}': it decides what the flag's value does. Results for "${exp.name}" will mix users served by the old and the new code, so the interval describes neither.`,
+      });
+    }
+  }
+  return out;
+}
+
 /** EG006: code inside one arm changes while the experiment runs. */
 export const eg006: Rule = ctx => {
-  const out: RawFinding[] = [];
+  const out: RawFinding[] = listedTreatment(ctx);
   const keys = keyIndex(ctx.running);
   if (keys.size === 0) return out;
 

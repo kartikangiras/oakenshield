@@ -5,7 +5,7 @@ import { addedLines, removedLines } from './diff.ts';
 import type { RepoView } from './repo.ts';
 import { RULE_IMPLS, RULES, RULES_BY_ID } from './rules/index.ts';
 import { buildContext, type RawFinding, type RuleContext } from './rules/context.ts';
-import { hasHit, scanLine } from './scanner.ts';
+import { conversionCalls, exposureCalls, hasHit, isConfigFile, scanLine } from './scanner.ts';
 import type { FileDiff, Finding, PullRequestInfo, Report, RuleId, ScannedLine, Severity, Snapshot, Verdict } from './types.ts';
 import { VERSION } from './version.ts';
 
@@ -157,18 +157,28 @@ export function runCheck(input: CheckInput): Report {
 /**
  * Says where Guard is blind: a running experiment's flag or event is named in the code, but never
  * inside a call Guard recognises, which is what a project's own wrapper around the SDK looks like.
+ * A key that is only declared in a config file, in a codebase that passes keys to the SDK through a
+ * variable, gets a note that says what Guard watches instead.
  * A key that appears nowhere belongs to another codebase and gets no note.
  */
 export function coverageNotes(ctx: RuleContext): string[] {
   if (ctx.repo.kind === 'diff-only') return []; // only the pasted lines are visible, so nothing can be concluded
   const unread: Record<'exposure' | 'conversion', Array<{ key: string; at: string }>> = { exposure: [], conversion: [] };
+  const declared: Array<{ key: string; at: string }> = [];
+  const calls = { exposure: exposureCalls(ctx.config.calls), conversion: conversionCalls(ctx.config.calls) };
   const look = (kind: 'exposure' | 'conversion', key: string) => {
-    if (unread[kind].some(u => u.key === key)) return;
-    const named = ctx.headLines(key).filter(l => l.lang !== 'other' && l.literals.has(key));
-    if (named.length === 0 || named.some(l => hasHit(l, kind, key))) return;
+    if (unread[kind].some(u => u.key === key) || declared.some(d => d.key === key)) return;
+    const lines = ctx.headLines(key).filter(l => l.literals.has(key));
+    const named = lines.filter(l => l.lang !== 'other');
+    if (named.some(l => hasHit(l, kind, key))) return;
     // The base code had a call Guard could read, so this pull request removed it: a finding, not a blind spot.
     if (ctx.baseLines(key).some(l => hasHit(l, kind, key))) return;
-    unread[kind].push({ key, at: `${named[0].file}:${named[0].line}` });
+    if (named.length > 0) {
+      unread[kind].push({ key, at: `${named[0].file}:${named[0].line}` });
+      return;
+    }
+    const config = lines.find(l => isConfigFile(l.file));
+    if (config && calls[kind].some(fn => ctx.headLines(fn).some(l => hasHit(l, 'dynamic', fn)))) declared.push({ key, at: `${config.file}:${config.line}` });
   };
   for (const exp of ctx.running) {
     look('exposure', exp.flagKey);
@@ -183,6 +193,10 @@ export function coverageNotes(ctx: RuleContext): string[] {
   if (unread.conversion.length > 0) {
     notes.push(`Guard cannot see the call that sends ${list(unread.conversion)}: the code names ${unread.conversion.length === 1 ? 'the event' : 'these events'}, but not inside a call Guard recognises. ` +
       'If your code wraps the SDK, list the wrapper under `calls.conversion` in `.experiment-guard.yml`. Removing or renaming the event is still caught (EG001); a new call with a name that almost matches (EG009) is not.');
+  }
+  if (declared.length > 0) {
+    notes.push(`Guard watches where ${list(declared)} ${declared.length === 1 ? 'is' : 'are'} declared: the code passes ${declared.length === 1 ? 'this key' : 'these keys'} to the SDK through a variable, so no call names ${declared.length === 1 ? 'it' : 'them'}. ` +
+      'Removing or renaming a declaration is caught (EG001, EG002), and so is removing the last call that reads a flag through a variable (EG002). Other changes to the call that reads or sends a key are not.');
   }
   return notes;
 }
