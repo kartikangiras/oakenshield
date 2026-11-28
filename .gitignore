@@ -29,3 +29,7 @@ docs/images/experiment.png
 .vscode/
 *.swp
 *.log
+
+# arena: rehearsals and the runner's lock
+arenas/**/dry/
+arenas/**/runner.lock
