@@ -4,6 +4,10 @@
 # variable DASHBOARD_FLAGSMITH_ENVIRONMENT and the secret FLAGSMITH_API_KEY, the action reads
 # that live experiment from Flagsmith and guards the code it depends on. Until then it runs
 # against the bundled demo snapshot, so changes to examples/demo-app still get a PR comment.
+#
+# The trading arena's experiment lives in its own Flagsmith environment, and the action reads one
+# environment per run. While the variable ARENA_FLAGSMITH_ENVIRONMENT is set, the arena's step runs
+# instead: every step writes the same pull request comment, so only one of them runs.
 name: Experiment Guard
 on:
   pull_request:
@@ -21,8 +25,19 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+      - name: Guard the trading arena's experiment (live Flagsmith)
+        if: vars.ARENA_FLAGSMITH_ENVIRONMENT != ''
+        uses: ./
+        with:
+          config: .experiment-guard.arena.yml
+          flagsmith-environment: ${{ vars.ARENA_FLAGSMITH_ENVIRONMENT }}
+          flagsmith-api-url: ${{ vars.FLAGSMITH_API_URL }}
+          auth: api-key
+          flagsmith-api-key: ${{ secrets.FLAGSMITH_API_KEY }}
+          report-url: ${{ vars.OAKENSHIELD_URL }}
+          report-token: ${{ secrets.OAKENSHIELD_TOKEN }}
       - name: Guard this repo's own experiment (live Flagsmith)
-        if: vars.DASHBOARD_FLAGSMITH_ENVIRONMENT != ''
+        if: vars.ARENA_FLAGSMITH_ENVIRONMENT == '' && vars.DASHBOARD_FLAGSMITH_ENVIRONMENT != ''
         uses: ./
         with:
           config: .experiment-guard.yml
@@ -34,7 +49,7 @@ jobs:
           report-url: ${{ vars.OAKENSHIELD_URL }}
           report-token: ${{ secrets.OAKENSHIELD_TOKEN }}
       - name: Guard the demo app (bundled demo snapshot)
-        if: vars.DASHBOARD_FLAGSMITH_ENVIRONMENT == ''
+        if: vars.ARENA_FLAGSMITH_ENVIRONMENT == '' && vars.DASHBOARD_FLAGSMITH_ENVIRONMENT == ''
         uses: ./
         with:
           demo: "true"

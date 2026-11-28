@@ -1,0 +1,16 @@
+# Experiment Guard config for the trading arena (arenas/up-or-down). The arena keeps its flag key
+# and event names in the brief and passes them to the SDK through variables, so Guard watches the
+# lines that declare them, the call that reads the flag, and the files that decide what a version does.
+version: 1
+flagsmith:
+  auth: api_key               # the workflow passes the Arena environment's key and an organisation API key
+scan:
+  include:
+    - arenas/**
+    - packages/arena/src/**
+treatment_paths:              # per flag: code that decides what the flag's value does
+  trader:
+    - packages/arena/src/playbook.ts
+    - packages/arena/src/signals.ts
+rules:
+  EG006: block                # a playbook file changed mid run mixes two traders in one result
