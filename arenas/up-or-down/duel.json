@@ -1,0 +1,60 @@
+{
+  "name": "Up or down: momentum against reversal",
+  "project": 55894,
+  "flag": "trader",
+  "environment": "Arena",
+  "create_environment": true,
+  "hypothesis": "A playbook written by an AI agent calls the direction of live five minute crypto markets more often than a coin flip.",
+  "control": "{\"version\":1,\"kind\":\"coin\",\"seed\":\"oakenshield-arena-2026-11-28\"}",
+  "versions": {
+    "agent_a": {
+      "by": "Agent A (momentum)",
+      "hypothesis": "Moderate BTC-backed rises keep going and clear falls keep falling, but in five-minute crypto the edge is thin, so the live result will sit near the 52-53% breakeven and is unlikely to clear 95%.",
+      "predicts": {
+        "control": 0.5,
+        "agent_a": 0.52,
+        "agent_b": 0.51
+      },
+      "value": "{\"version\":1,\"kind\":\"playbook\",\"name\":\"Measured momentum, broad tape v3\",\"rules\":[{\"when\":[{\"signal\":\"btc_ret_15m\",\"op\":\">=\",\"value\":0.21}],\"side\":\"down\",\"why\":\"BTC already ran hard over 15m: the chase is spent and the next five minutes give back (44.0% up on 904).\"},{\"when\":[{\"signal\":\"ret_5m\",\"op\":\">=\",\"value\":0.04},{\"signal\":\"ret_5m\",\"op\":\"<\",\"value\":0.15},{\"signal\":\"btc_ret_15m\",\"op\":\">=\",\"value\":-0.04}],\"side\":\"up\",\"why\":\"Fresh, moderate 5m rise with a calm-to-firm BTC tape: the move is still being worked, not exhausted.\"},{\"when\":[{\"signal\":\"ret_15m\",\"op\":\">=\",\"value\":-0.05},{\"signal\":\"ret_15m\",\"op\":\"<\",\"value\":0.26},{\"signal\":\"btc_ret_15m\",\"op\":\">=\",\"value\":-0.04}],\"side\":\"up\",\"why\":\"Steady 15m drift up with BTC agreeing: broad, orderly buying tends to carry on.\"},{\"when\":[{\"signal\":\"ret_5m\",\"op\":\"<\",\"value\":-0.13}],\"side\":\"down\",\"why\":\"A clear 5m fall keeps falling as sellers work their orders over minutes.\"}],\"otherwise\":\"up\"}"
+    },
+    "agent_b": {
+      "by": "Agent B (reversal)",
+      "hypothesis": "Fading stretched Bitcoin rallies and buying last-minute and high-volume dips edges past a coin, but by only 1 to 3 points, likely not enough to clear 95% in 240 markets.",
+      "predicts": {
+        "control": 0.5,
+        "agent_a": 0.515,
+        "agent_b": 0.52
+      },
+      "value": "{\"version\":1,\"kind\":\"playbook\",\"name\":\"Fade the stretch, trimmed\",\"rules\":[{\"when\":[{\"signal\":\"ret_5m\",\"op\":\"<=\",\"value\":-0.37},{\"signal\":\"volume_ratio\",\"op\":\">=\",\"value\":1.5}],\"side\":\"up\",\"why\":\"A sharp 5m drop on a volume burst is forced selling in thin books that snaps back (60% up on 85, a small sample).\"},{\"when\":[{\"signal\":\"btc_ret_15m\",\"op\":\">=\",\"value\":0.21}],\"side\":\"down\",\"why\":\"A stretched 15m Bitcoin rally lifts every asset on borrowed momentum and gives back once the push fades (44% up on 904).\"},{\"when\":[{\"signal\":\"ret_1m\",\"op\":\"<\",\"value\":-0.06}],\"side\":\"up\",\"why\":\"A last-minute dip is mostly thin-book noise that gets bought back (54.6% up on 868).\"},{\"when\":[{\"signal\":\"ret_15m\",\"op\":\">=\",\"value\":-0.05},{\"signal\":\"ret_15m\",\"op\":\"<\",\"value\":0.26}],\"side\":\"up\",\"why\":\"An unstretched 15m tape has no overshoot to unwind, so the drift holds (mid ret_15m bands about 55% up).\"},{\"when\":[{\"signal\":\"volume_ratio\",\"op\":\"<\",\"value\":0.67}],\"side\":\"up\",\"why\":\"Quiet volume means no pressure to unwind, so the drift holds (about 54% up below 0.67).\"}],\"otherwise\":\"down\"}"
+    }
+  },
+  "split": {
+    "agent_a": 33,
+    "agent_b": 33
+  },
+  "goal": {
+    "event": "trade_won",
+    "name": "Trade won"
+  },
+  "guardrails": [
+    {
+      "event": "trade_placed",
+      "name": "Trade placed"
+    }
+  ],
+  "watch": [
+    {
+      "event": "paper_profit",
+      "name": "Paper profit per market (dollars)",
+      "aggregation": "mean"
+    }
+  ],
+  "rule": {
+    "min_per_arm": 240,
+    "win_above": 0.95,
+    "harm_below": 0.05
+  },
+  "protect": [
+    "Arena"
+  ]
+}

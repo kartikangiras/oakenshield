@@ -1,0 +1,1133 @@
+{
+  "version": 1,
+  "name": "Up or down: momentum against reversal",
+  "created_at": "2026-11-28T07:31:05.968Z",
+  "model": "opus",
+  "brief": {
+    "name": "Up or down: momentum against reversal",
+    "project": 55894,
+    "flag": "trader",
+    "environment": "Arena",
+    "goal": "A playbook written by an AI agent calls the direction of live five minute crypto markets more often than a coin flip.",
+    "event": {
+      "key": "trade_won",
+      "name": "Trade won"
+    },
+    "guardrails": [
+      {
+        "key": "trade_placed",
+        "name": "Trade placed"
+      }
+    ],
+    "watch": [
+      {
+        "key": "paper_profit",
+        "name": "Paper profit per market (dollars)",
+        "aggregation": "mean"
+      }
+    ],
+    "placed": "trade_placed",
+    "venue": {
+      "assets": [
+        "btc",
+        "eth",
+        "sol",
+        "xrp",
+        "doge",
+        "bnb",
+        "hype",
+        "zec"
+      ],
+      "stake": 10,
+      "max_price": 0.65,
+      "about": "Polymarket's five minute \"Up or Down\" markets on eight crypto assets (btc, eth, sol, xrp, doge, bnb, hype, zec). Every five minutes each asset gets a new market. It resolves Up when the asset's price at the end of the five minutes is at or above its price at the start (a tie is Up), otherwise Down. The trader buys one side just before the market opens, when both sides cost about 50 cents a share. The winning side pays one dollar a share, the losing side nothing. Counting the spread and the fee, a trader breaks even at about 52 to 53 percent right calls."
+    },
+    "coin": {
+      "seed": "oakenshield-arena-2026-11-28"
+    },
+    "past": {
+      "hours": 72,
+      "held_hours": 24
+    },
+    "rule": {
+      "min_per_arm": 240,
+      "win_above": 0.95,
+      "harm_below": 0.05
+    },
+    "split": {
+      "agent_a": 33,
+      "agent_b": 33
+    }
+  },
+  "agents": {
+    "agent_a": {
+      "name": "Agent A",
+      "stance": "Momentum",
+      "conviction": "Short moves continue. Large orders are worked over minutes, and other traders chase what just moved, so the next five minutes tend to look like the last five. Trade with the recent move, and trust it more when it is broad, fresh and backed by volume."
+    },
+    "agent_b": {
+      "name": "Agent B",
+      "stance": "Reversal",
+      "conviction": "Short moves overshoot. Most of a sharp five minute move is noise and thin liquidity, and it comes back once the pressure is gone. Trade against the recent move, hardest when it is stretched, late and unsupported by the wider market."
+    }
+  },
+  "past": {
+    "from": 1795591800,
+    "cut": 1795764600,
+    "to": 1795851000,
+    "seen": 4608,
+    "held": 2304,
+    "up_seen": 0.517,
+    "up_held": 0.487
+  },
+  "facts": "4608 five minute markets on 8 assets, 2026-11-25 07:30 to 2026-11-27 07:30 UTC, rebuilt from one minute prices.\nUp won 51.7% of them (a tie counts as up).\nBy day: 2026-11-25: 52.0% of 1584 | 2026-11-26: 50.5% of 2304 | 2026-11-27: 55.0% of 720. The overall share drifts from day to day, so leaning on it is not an edge.\nA share measured on 1,000 markets is uncertain by about 3 points either way, on 300 markets by about 6. Most differences below are inside that noise.\n\nHow often up won, split by each signal (share, then number of markets):\nret_1m  below -0.06: 54.6% of 868 | -0.06 to -0.01: 51.5% of 1100 | -0.01 to 0.02: 50.7% of 882 | 0.02 to 0.06: 51.2% of 847 | 0.06 or more: 50.7% of 911\nret_5m  below -0.13: 48.6% of 910 | -0.13 to -0.04: 53.0% of 870 | -0.04 to 0.04: 51.7% of 982 | 0.04 to 0.15: 54.8% of 940 | 0.15 or more: 50.4% of 906\nret_15m  below -0.23: 49.2% of 914 | -0.23 to -0.05: 50.5% of 901 | -0.05 to 0.08: 55.6% of 954 | 0.08 to 0.26: 55.3% of 914 | 0.26 or more: 47.9% of 925\nret_60m  below -0.43: 53.0% of 924 | -0.43 to -0.05: 52.9% of 927 | -0.05 to 0.21: 53.5% of 910 | 0.21 to 0.55: 49.2% of 915 | 0.55 or more: 50.0% of 932\nbtc_ret_5m  below -0.1: 48.5% of 920 | -0.1 to -0.03: 52.7% of 896 | -0.03 to 0.03: 51.8% of 912 | 0.03 to 0.11: 53.9% of 968 | 0.11 or more: 51.6% of 912\nbtc_ret_15m  below -0.16: 52.0% of 960 | -0.16 to -0.04: 50.3% of 888 | -0.04 to 0.07: 56.5% of 920 | 0.07 to 0.21: 55.4% of 936 | 0.21 or more: 44.0% of 904\nstreak  -3 or lower: 52.1% of 530 | -2: 49.0% of 565 | -1: 51.7% of 1151 | 0: 51.6% of 91 | 1: 53.6% of 1153 | 2: 54.4% of 575 | 3 or higher: 47.3% of 543\nrange_15m  below 0.27: 54.3% of 961 | 0.27 to 0.37: 52.1% of 831 | 0.37 to 0.52: 50.6% of 983 | 0.52 to 0.82: 50.8% of 919 | 0.82 or more: 50.8% of 914\nvolume_ratio  below 0.48: 55.0% of 933 | 0.48 to 0.67: 53.1% of 910 | 0.67 to 0.93: 51.6% of 918 | 0.93 to 1.41: 48.9% of 926 | 1.41 or more: 49.9% of 921\nhour_utc  0 to 5: 53.1% of 1152 | 6 to 11: 45.7% of 1152 | 12 to 17: 55.2% of 1152 | 18 to 23: 52.9% of 1152\nasset  bnb: 52.6% of 576 | btc: 50.7% of 576 | doge: 54.3% of 576 | eth: 50.7% of 576 | hype: 50.5% of 576 | sol: 53.8% of 576 | xrp: 51.4% of 576 | zec: 49.7% of 576\n\nTwo signals at once:\nret_5m up, ret_60m up  50.9% of 1438 | ret_5m up, ret_60m down  54.6% of 813 | ret_5m down, ret_60m up  50.2% of 1083 | ret_5m down, ret_60m down  51.8% of 1139\nret_5m at least 0.37: with volume_ratio 1.5 or more  47.4% of 116 | with less  46.7% of 150\nret_5m at most -0.37: with volume_ratio 1.5 or more  60.0% of 85 | with less  49.5% of 109",
+  "proposals": {
+    "agent_a": {
+      "playbook": {
+        "version": 1,
+        "kind": "playbook",
+        "name": "Measured momentum, broad tape v2",
+        "rules": [
+          {
+            "when": [
+              {
+                "signal": "btc_ret_15m",
+                "op": ">=",
+                "value": 0.21
+              }
+            ],
+            "side": "down",
+            "why": "BTC already ran hard over 15m: the chase is spent and the next five minutes give back (44.0% up on 904)."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_5m",
+                "op": ">=",
+                "value": 0.04
+              },
+              {
+                "signal": "ret_5m",
+                "op": "<",
+                "value": 0.15
+              },
+              {
+                "signal": "btc_ret_15m",
+                "op": ">=",
+                "value": -0.04
+              }
+            ],
+            "side": "up",
+            "why": "Fresh, moderate 5m rise with a calm-to-firm BTC tape: the move is being worked, not yet exhausted (ret_5m 0.04-0.15 won up 54.8%)."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_15m",
+                "op": ">=",
+                "value": -0.05
+              },
+              {
+                "signal": "ret_15m",
+                "op": "<",
+                "value": 0.26
+              },
+              {
+                "signal": "btc_ret_15m",
+                "op": ">=",
+                "value": -0.04
+              }
+            ],
+            "side": "up",
+            "why": "Steady 15m drift up with BTC agreeing: broad, orderly buying tends to carry on (ret_15m and btc_ret_15m mid bands both ~55-56% up)."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_5m",
+                "op": "<",
+                "value": -0.13
+              }
+            ],
+            "side": "down",
+            "why": "A clear 5m fall keeps falling as sellers work their orders (ret_5m below -0.13 won up only 48.6%)."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_15m",
+                "op": ">=",
+                "value": 0.26
+              }
+            ],
+            "side": "down",
+            "why": "The asset's own 15m run is overextended and tends to stall (ret_15m 0.26+ won up 47.9%)."
+          }
+        ],
+        "otherwise": "up"
+      },
+      "hypothesis": "Moderate, broad up-moves keep going for five more minutes and clear falls keep falling, while overextended runs stall; call up on measured BTC-backed rises, down on falls and blow-offs.",
+      "why": "I lean on the fact sheet's clearest pattern: moderate positive ret_5m, ret_15m and btc_ret_15m bands win up 54.8-56.5%, while big falls (48.6%) and extended runs (btc_ret_15m 0.21+ at 44.0%, ret_15m 0.26+ at 47.9%) lean down. I am wrong if on the held-out day the up calls from rules 2-3 win no more than about 52%, or if the down calls on falls and big runs win under half.",
+      "referee": [],
+      "repaired": true,
+      "seen": {
+        "markets": 4608,
+        "right": 2498,
+        "rate": 0.5421006944444444,
+        "up": 0.6030815972222222,
+        "rules": [
+          {
+            "rule": 1,
+            "fired": 904,
+            "right": 506
+          },
+          {
+            "rule": 2,
+            "fired": 486,
+            "right": 281
+          },
+          {
+            "rule": 3,
+            "fired": 856,
+            "right": 484
+          },
+          {
+            "rule": 4,
+            "fired": 706,
+            "right": 363
+          },
+          {
+            "rule": 5,
+            "fired": 219,
+            "right": 103
+          },
+          {
+            "rule": 0,
+            "fired": 1437,
+            "right": 761
+          }
+        ]
+      },
+      "ms": 37325,
+      "tokens": {
+        "in": 9099,
+        "out": 3481
+      },
+      "cost": 0.13140580000000002
+    },
+    "agent_b": {
+      "playbook": {
+        "version": 1,
+        "kind": "playbook",
+        "name": "Fade the stretch",
+        "rules": [
+          {
+            "when": [
+              {
+                "signal": "ret_5m",
+                "op": "<=",
+                "value": -0.37
+              },
+              {
+                "signal": "volume_ratio",
+                "op": ">=",
+                "value": 1.5
+              }
+            ],
+            "side": "up",
+            "why": "A sharp 5m drop on a volume burst is forced selling in thin books. Once it clears, price snaps back (60% up on 85 markets)."
+          },
+          {
+            "when": [
+              {
+                "signal": "btc_ret_15m",
+                "op": ">=",
+                "value": 0.21
+              }
+            ],
+            "side": "down",
+            "why": "A stretched 15m Bitcoin rally lifts every asset on borrowed momentum, and it gives back once the push fades (44% up on 904 markets)."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_15m",
+                "op": ">=",
+                "value": 0.26
+              }
+            ],
+            "side": "down",
+            "why": "The asset's own 15m run-up is overextended, so fade it (47.9% up)."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_5m",
+                "op": ">=",
+                "value": 0.37
+              }
+            ],
+            "side": "down",
+            "why": "A sharp 5m spike overshoots whatever the volume, so fade it (about 47% up on 266 markets)."
+          },
+          {
+            "when": [
+              {
+                "signal": "streak",
+                "op": ">=",
+                "value": 3
+              }
+            ],
+            "side": "down",
+            "why": "Three or more rising steps in a row is a late, tired move that tends to reverse (47.3% up)."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_1m",
+                "op": "<",
+                "value": -0.06
+              }
+            ],
+            "side": "up",
+            "why": "A last-minute dip is mostly noise and gets bought back (54.6% up on 868 markets)."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_1m",
+                "op": ">=",
+                "value": 0.06
+              }
+            ],
+            "side": "down",
+            "why": "A last-minute pop is the mirror case: thin-book noise that tends to fade (50.7% up on 911 markets)."
+          }
+        ],
+        "otherwise": "up"
+      },
+      "hypothesis": "Stretched short moves overshoot and revert: fade 15m rallies, 5m spikes, up streaks and last-minute pops, and buy sharp high-volume drops and last-minute dips.",
+      "why": "It leans on reversal after stretched moves in the fact sheet: up wins only 44% after a 0.21%+ BTC 15m rally, 47.9% after a 0.26%+ asset 15m rally and 47.3% after a 3+ up streak, against 60% after high-volume 0.37%+ 5m drops. It is proven wrong if Trade won over 240 live markets does not clearly beat the coin, especially if the down calls after rallies win at 50% or less.",
+      "referee": [],
+      "repaired": true,
+      "seen": {
+        "markets": 4608,
+        "right": 2415,
+        "rate": 0.5240885416666666,
+        "up": 0.6015625,
+        "rules": [
+          {
+            "rule": 1,
+            "fired": 85,
+            "right": 51
+          },
+          {
+            "rule": 2,
+            "fired": 903,
+            "right": 506
+          },
+          {
+            "rule": 3,
+            "fired": 296,
+            "right": 133
+          },
+          {
+            "rule": 4,
+            "fired": 49,
+            "right": 17
+          },
+          {
+            "rule": 5,
+            "fired": 112,
+            "right": 53
+          },
+          {
+            "rule": 6,
+            "fired": 540,
+            "right": 292
+          },
+          {
+            "rule": 7,
+            "fired": 476,
+            "right": 225
+          },
+          {
+            "rule": 0,
+            "fired": 2147,
+            "right": 1138
+          }
+        ]
+      },
+      "ms": 25959,
+      "tokens": {
+        "in": 9051,
+        "out": 2450
+      },
+      "cost": 0.1104018
+    }
+  },
+  "attacks": {
+    "agent_a": {
+      "attacks": [
+        "Rules 3, 4, 5 and 7 each lost on past data: 44.9% of 296, 34.7% of 49, 47.3% of 112 and 47.3% of 476. That is 933 calls below 50%, worse than a coin. The fades are backwards: up won 47.9% after 15m runs, so rule 3's down call was right only 44.9%.",
+        "Rule 1's 60% rests on 85 markets, uncertain by about 11 points, so the true rate could be near 50%. Rule 6 reached 54.1% on 540, which is about plus or minus 4 points and barely above the 52-53% break-even. Neither rule can carry the 240-market test.",
+        "Overall it was right 52.4%, below break-even even on the data it was fitted to. Nearly all its edge is rule 2, btc_ret_15m >= 0.21 -> down (56.0% of 903), and that rule is also in my playbook. Take rule 2 away and the reversal thesis loses money."
+      ],
+      "concedes": "Rival is right that a stretched 15-minute Bitcoin rally gives back, with up winning only 44% of 904 markets, which is the strongest single edge in the data and is also my own first rule.",
+      "ms": 10016,
+      "tokens": {
+        "in": 5382,
+        "out": 626
+      },
+      "cost": 0.0445778
+    },
+    "agent_b": {
+      "attacks": [
+        "Rule 4 (ret_5m < -0.13 -> down) fires 706 times and was right only 51.4% in-sample, below the 52-53% breakeven. It also sweeps in the ret_5m <= -0.37 high-volume drops that went up 60% of 85, so it sells exactly the forced-selling washouts that bounce.",
+        "Rules 2 and 3 copy fact-sheet band edges (0.04/0.15, -0.05/0.26, -0.04) chosen after seeing the data. Their 57.8% and 56.5% sit on 486 and 856 overlapping markets with roughly ±4-6 point noise, and they call up in calm tapes, so they mostly ride up's 51.7% base rate.",
+        "Strip out rule 1, which both playbooks share, and the momentum rules lose: rule 4 is 51.4%, rule 5 is 47.0%, and otherwise-up is 53.0% from base-rate drift (50.5% on 11-26). Over 240 markets it needs about 55.5% to clear 95%, and its own edge cannot get there."
+      ],
+      "concedes": "Its strongest rule is a fade, not momentum: putting btc_ret_15m >= 0.21 -> down first is the best single signal on the sheet (56.0% on 904), and it is right to give that rule priority.",
+      "ms": 11741,
+      "tokens": {
+        "in": 5383,
+        "out": 849
+      },
+      "cost": 0.0490458
+    }
+  },
+  "revisions": {
+    "agent_a": {
+      "playbook": {
+        "version": 1,
+        "kind": "playbook",
+        "name": "Measured momentum, broad tape v3",
+        "rules": [
+          {
+            "when": [
+              {
+                "signal": "btc_ret_15m",
+                "op": ">=",
+                "value": 0.21
+              }
+            ],
+            "side": "down",
+            "why": "BTC already ran hard over 15m: the chase is spent and the next five minutes give back (44.0% up on 904)."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_5m",
+                "op": ">=",
+                "value": 0.04
+              },
+              {
+                "signal": "ret_5m",
+                "op": "<",
+                "value": 0.15
+              },
+              {
+                "signal": "btc_ret_15m",
+                "op": ">=",
+                "value": -0.04
+              }
+            ],
+            "side": "up",
+            "why": "Fresh, moderate 5m rise with a calm-to-firm BTC tape: the move is still being worked, not exhausted."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_15m",
+                "op": ">=",
+                "value": -0.05
+              },
+              {
+                "signal": "ret_15m",
+                "op": "<",
+                "value": 0.26
+              },
+              {
+                "signal": "btc_ret_15m",
+                "op": ">=",
+                "value": -0.04
+              }
+            ],
+            "side": "up",
+            "why": "Steady 15m drift up with BTC agreeing: broad, orderly buying tends to carry on."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_5m",
+                "op": "<",
+                "value": -0.13
+              }
+            ],
+            "side": "down",
+            "why": "A clear 5m fall keeps falling as sellers work their orders over minutes."
+          }
+        ],
+        "otherwise": "up"
+      },
+      "hypothesis": "Moderate BTC-backed rises keep going and clear falls keep falling, but in five-minute crypto the edge is thin, so the live result will sit near the 52-53% breakeven and is unlikely to clear 95%.",
+      "why": "I lean on the fact sheet's clearest pattern: moderate positive ret_5m, ret_15m and btc_ret_15m bands win up 54.8-56.5%, while big falls (48.6%) and extended runs (btc_ret_15m 0.21+ at 44.0%, ret_15m 0.26+ at 47.9%) lean down. I am wrong if on the held-out day the up calls from rules 2-3 win no more than about 52%, or if the down calls on falls and big runs win under half.",
+      "changed": "I dropped rule 5 (own 15m run-up -> down), which was right only 47.0% in-sample and faded a move against my own momentum conviction; those markets now fall to rule 2 or to otherwise-up, and the up share stays about 65%, under the 70% cap.",
+      "predicts": {
+        "control": 0.5,
+        "agent_a": 0.52,
+        "agent_b": 0.51
+      },
+      "referee": [],
+      "seen": {
+        "markets": 4608,
+        "right": 2511,
+        "rate": 0.544921875,
+        "up": 0.6506076388888888,
+        "rules": [
+          {
+            "rule": 1,
+            "fired": 904,
+            "right": 506
+          },
+          {
+            "rule": 2,
+            "fired": 486,
+            "right": 281
+          },
+          {
+            "rule": 3,
+            "fired": 856,
+            "right": 484
+          },
+          {
+            "rule": 4,
+            "fired": 706,
+            "right": 363
+          },
+          {
+            "rule": 0,
+            "fired": 1656,
+            "right": 877
+          }
+        ]
+      },
+      "ms": 12928,
+      "tokens": {
+        "in": 5849,
+        "out": 1115
+      },
+      "cost": 0.0580938
+    },
+    "agent_b": {
+      "playbook": {
+        "version": 1,
+        "kind": "playbook",
+        "name": "Fade the stretch, trimmed",
+        "rules": [
+          {
+            "when": [
+              {
+                "signal": "ret_5m",
+                "op": "<=",
+                "value": -0.37
+              },
+              {
+                "signal": "volume_ratio",
+                "op": ">=",
+                "value": 1.5
+              }
+            ],
+            "side": "up",
+            "why": "A sharp 5m drop on a volume burst is forced selling in thin books that snaps back (60% up on 85, a small sample)."
+          },
+          {
+            "when": [
+              {
+                "signal": "btc_ret_15m",
+                "op": ">=",
+                "value": 0.21
+              }
+            ],
+            "side": "down",
+            "why": "A stretched 15m Bitcoin rally lifts every asset on borrowed momentum and gives back once the push fades (44% up on 904)."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_1m",
+                "op": "<",
+                "value": -0.06
+              }
+            ],
+            "side": "up",
+            "why": "A last-minute dip is mostly thin-book noise that gets bought back (54.6% up on 868)."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_15m",
+                "op": ">=",
+                "value": -0.05
+              },
+              {
+                "signal": "ret_15m",
+                "op": "<",
+                "value": 0.26
+              }
+            ],
+            "side": "up",
+            "why": "An unstretched 15m tape has no overshoot to unwind, so the drift holds (mid ret_15m bands about 55% up)."
+          },
+          {
+            "when": [
+              {
+                "signal": "volume_ratio",
+                "op": "<",
+                "value": 0.67
+              }
+            ],
+            "side": "up",
+            "why": "Quiet volume means no pressure to unwind, so the drift holds (about 54% up below 0.67)."
+          }
+        ],
+        "otherwise": "down"
+      },
+      "hypothesis": "Fading stretched Bitcoin rallies and buying last-minute and high-volume dips edges past a coin, but by only 1 to 3 points, likely not enough to clear 95% in 240 markets.",
+      "why": "It leans on reversal after stretched moves in the fact sheet: up wins only 44% after a 0.21%+ BTC 15m rally, 47.9% after a 0.26%+ asset 15m rally and 47.3% after a 3+ up streak, against 60% after high-volume 0.37%+ 5m drops. It is proven wrong if Trade won over 240 live markets does not clearly beat the coin, especially if the down calls after rallies win at 50% or less.",
+      "changed": "I dropped the four fade rules that lost on past data (15m run, 5m spike, up streak, last-minute pop) and kept the Bitcoin-stretch fade, the dip and drop buys and the calm-tape up calls, with otherwise down so busy, stretched tapes lean down and the up share stays under 70%.",
+      "predicts": {
+        "control": 0.5,
+        "agent_a": 0.515,
+        "agent_b": 0.52
+      },
+      "referee": [],
+      "seen": {
+        "markets": 4608,
+        "right": 2548,
+        "rate": 0.5529513888888888,
+        "up": 0.6022135416666666,
+        "rules": [
+          {
+            "rule": 1,
+            "fired": 85,
+            "right": 51
+          },
+          {
+            "rule": 2,
+            "fired": 903,
+            "right": 506
+          },
+          {
+            "rule": 3,
+            "fired": 608,
+            "right": 342
+          },
+          {
+            "rule": 4,
+            "fired": 1450,
+            "right": 829
+          },
+          {
+            "rule": 5,
+            "fired": 632,
+            "right": 327
+          },
+          {
+            "rule": 0,
+            "fired": 930,
+            "right": 493
+          }
+        ]
+      },
+      "ms": 17463,
+      "tokens": {
+        "in": 5812,
+        "out": 1599
+      },
+      "cost": 0.0674778
+    }
+  },
+  "finalists": {
+    "agent_a": {
+      "by": "Agent A",
+      "playbook": {
+        "version": 1,
+        "kind": "playbook",
+        "name": "Measured momentum, broad tape v3",
+        "rules": [
+          {
+            "when": [
+              {
+                "signal": "btc_ret_15m",
+                "op": ">=",
+                "value": 0.21
+              }
+            ],
+            "side": "down",
+            "why": "BTC already ran hard over 15m: the chase is spent and the next five minutes give back (44.0% up on 904)."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_5m",
+                "op": ">=",
+                "value": 0.04
+              },
+              {
+                "signal": "ret_5m",
+                "op": "<",
+                "value": 0.15
+              },
+              {
+                "signal": "btc_ret_15m",
+                "op": ">=",
+                "value": -0.04
+              }
+            ],
+            "side": "up",
+            "why": "Fresh, moderate 5m rise with a calm-to-firm BTC tape: the move is still being worked, not exhausted."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_15m",
+                "op": ">=",
+                "value": -0.05
+              },
+              {
+                "signal": "ret_15m",
+                "op": "<",
+                "value": 0.26
+              },
+              {
+                "signal": "btc_ret_15m",
+                "op": ">=",
+                "value": -0.04
+              }
+            ],
+            "side": "up",
+            "why": "Steady 15m drift up with BTC agreeing: broad, orderly buying tends to carry on."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_5m",
+                "op": "<",
+                "value": -0.13
+              }
+            ],
+            "side": "down",
+            "why": "A clear 5m fall keeps falling as sellers work their orders over minutes."
+          }
+        ],
+        "otherwise": "up"
+      },
+      "hypothesis": "Moderate BTC-backed rises keep going and clear falls keep falling, but in five-minute crypto the edge is thin, so the live result will sit near the 52-53% breakeven and is unlikely to clear 95%.",
+      "from": "revision",
+      "predicts": {
+        "control": 0.5,
+        "agent_a": 0.52,
+        "agent_b": 0.51
+      },
+      "seen": {
+        "markets": 4608,
+        "right": 2511,
+        "rate": 0.544921875,
+        "up": 0.6506076388888888,
+        "rules": [
+          {
+            "rule": 1,
+            "fired": 904,
+            "right": 506
+          },
+          {
+            "rule": 2,
+            "fired": 486,
+            "right": 281
+          },
+          {
+            "rule": 3,
+            "fired": 856,
+            "right": 484
+          },
+          {
+            "rule": 4,
+            "fired": 706,
+            "right": 363
+          },
+          {
+            "rule": 0,
+            "fired": 1656,
+            "right": 877
+          }
+        ]
+      },
+      "held": {
+        "markets": 2304,
+        "right": 1170,
+        "rate": 0.5078125,
+        "up": 0.7417534722222222,
+        "rules": [
+          {
+            "rule": 1,
+            "fired": 216,
+            "right": 125
+          },
+          {
+            "rule": 2,
+            "fired": 294,
+            "right": 140
+          },
+          {
+            "rule": 3,
+            "fired": 508,
+            "right": 235
+          },
+          {
+            "rule": 4,
+            "fired": 379,
+            "right": 197
+          },
+          {
+            "rule": 0,
+            "fired": 907,
+            "right": 473
+          }
+        ]
+      }
+    },
+    "agent_b": {
+      "by": "Agent B",
+      "playbook": {
+        "version": 1,
+        "kind": "playbook",
+        "name": "Fade the stretch, trimmed",
+        "rules": [
+          {
+            "when": [
+              {
+                "signal": "ret_5m",
+                "op": "<=",
+                "value": -0.37
+              },
+              {
+                "signal": "volume_ratio",
+                "op": ">=",
+                "value": 1.5
+              }
+            ],
+            "side": "up",
+            "why": "A sharp 5m drop on a volume burst is forced selling in thin books that snaps back (60% up on 85, a small sample)."
+          },
+          {
+            "when": [
+              {
+                "signal": "btc_ret_15m",
+                "op": ">=",
+                "value": 0.21
+              }
+            ],
+            "side": "down",
+            "why": "A stretched 15m Bitcoin rally lifts every asset on borrowed momentum and gives back once the push fades (44% up on 904)."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_1m",
+                "op": "<",
+                "value": -0.06
+              }
+            ],
+            "side": "up",
+            "why": "A last-minute dip is mostly thin-book noise that gets bought back (54.6% up on 868)."
+          },
+          {
+            "when": [
+              {
+                "signal": "ret_15m",
+                "op": ">=",
+                "value": -0.05
+              },
+              {
+                "signal": "ret_15m",
+                "op": "<",
+                "value": 0.26
+              }
+            ],
+            "side": "up",
+            "why": "An unstretched 15m tape has no overshoot to unwind, so the drift holds (mid ret_15m bands about 55% up)."
+          },
+          {
+            "when": [
+              {
+                "signal": "volume_ratio",
+                "op": "<",
+                "value": 0.67
+              }
+            ],
+            "side": "up",
+            "why": "Quiet volume means no pressure to unwind, so the drift holds (about 54% up below 0.67)."
+          }
+        ],
+        "otherwise": "down"
+      },
+      "hypothesis": "Fading stretched Bitcoin rallies and buying last-minute and high-volume dips edges past a coin, but by only 1 to 3 points, likely not enough to clear 95% in 240 markets.",
+      "from": "revision",
+      "predicts": {
+        "control": 0.5,
+        "agent_a": 0.515,
+        "agent_b": 0.52
+      },
+      "seen": {
+        "markets": 4608,
+        "right": 2548,
+        "rate": 0.5529513888888888,
+        "up": 0.6022135416666666,
+        "rules": [
+          {
+            "rule": 1,
+            "fired": 85,
+            "right": 51
+          },
+          {
+            "rule": 2,
+            "fired": 903,
+            "right": 506
+          },
+          {
+            "rule": 3,
+            "fired": 608,
+            "right": 342
+          },
+          {
+            "rule": 4,
+            "fired": 1450,
+            "right": 829
+          },
+          {
+            "rule": 5,
+            "fired": 632,
+            "right": 327
+          },
+          {
+            "rule": 0,
+            "fired": 930,
+            "right": 493
+          }
+        ]
+      },
+      "held": {
+        "markets": 2304,
+        "right": 1161,
+        "rate": 0.50390625,
+        "up": 0.6744791666666666,
+        "rules": [
+          {
+            "rule": 1,
+            "fired": 72,
+            "right": 36
+          },
+          {
+            "rule": 2,
+            "fired": 216,
+            "right": 125
+          },
+          {
+            "rule": 3,
+            "fired": 265,
+            "right": 142
+          },
+          {
+            "rule": 4,
+            "fired": 876,
+            "right": 414
+          },
+          {
+            "rule": 5,
+            "fired": 341,
+            "right": 174
+          },
+          {
+            "rule": 0,
+            "fired": 534,
+            "right": 270
+          }
+        ]
+      }
+    }
+  },
+  "coin": {
+    "trader": {
+      "version": 1,
+      "kind": "coin",
+      "seed": "oakenshield-arena-2026-11-28"
+    },
+    "seen": {
+      "markets": 4608,
+      "right": 2329,
+      "rate": 0.5054253472222222,
+      "up": 0.4969618055555556,
+      "rules": [
+        {
+          "rule": 0,
+          "fired": 4608,
+          "right": 2329
+        }
+      ]
+    },
+    "held": {
+      "markets": 2304,
+      "right": 1170,
+      "rate": 0.5078125,
+      "up": 0.4952256944444444,
+      "rules": [
+        {
+          "rule": 0,
+          "fired": 2304,
+          "right": 1170
+        }
+      ]
+    }
+  },
+  "agreement": 0.711,
+  "usage": {
+    "calls": 8,
+    "seconds": 67,
+    "tokens": {
+      "in": 40576,
+      "out": 10120
+    },
+    "cost": 0.461
+  },
+  "steps": [
+    {
+      "at": "2026-11-28T07:32:17.862Z",
+      "step": "plan",
+      "line": {
+        "ok": true,
+        "flag": "trader",
+        "environment": "Arena",
+        "protected": true,
+        "arms": {
+          "control": 34,
+          "agent_a": 33,
+          "agent_b": 33
+        },
+        "goal": "trade_won",
+        "guardrails": [
+          "trade_placed"
+        ],
+        "watch": [
+          "paper_profit (mean, shown and not judged)"
+        ],
+        "rule": "needs 240 visitors per arm; a version wins above a 95.0% chance to beat control on the goal, unless its chance to beat control on a guardrail is below 5.0%",
+        "will": [
+          "create environment Arena",
+          "create flag trader",
+          "add version agent_a",
+          "add version agent_b",
+          "create metric for trade_won",
+          "create metric for trade_placed",
+          "create metric for paper_profit (mean)",
+          "create experiment",
+          "start it"
+        ],
+        "files_using": {
+          "trader": 0,
+          "trade_won": 0,
+          "trade_placed": 0,
+          "paper_profit": 1
+        },
+        "warning": "Nothing in this repository mentions trader, trade_won, trade_placed. Without the flag read and the event, no data arrives.",
+        "approve": "81bc221176",
+        "next": "Show this line to the person and ask to start. After a yes: start --approve 81bc221176"
+      }
+    },
+    {
+      "at": "2026-11-28T07:40:26.573Z",
+      "step": "plan",
+      "line": {
+        "ok": true,
+        "flag": "trader",
+        "environment": "Arena",
+        "protected": true,
+        "arms": {
+          "control": 34,
+          "agent_a": 33,
+          "agent_b": 33
+        },
+        "goal": "trade_won",
+        "guardrails": [
+          "trade_placed"
+        ],
+        "watch": [
+          "paper_profit (mean, shown and not judged)"
+        ],
+        "rule": "needs 240 visitors per arm; a version wins above a 95.0% chance to beat control on the goal, unless its chance to beat control on a guardrail is below 5.0%",
+        "will": [
+          "create environment Arena",
+          "create flag trader",
+          "add version agent_a",
+          "add version agent_b",
+          "create metric for trade_won",
+          "create metric for trade_placed",
+          "create metric for paper_profit (mean)",
+          "create experiment",
+          "start it"
+        ],
+        "files_using": {
+          "trader": 0,
+          "trade_won": 0,
+          "trade_placed": 0,
+          "paper_profit": 1
+        },
+        "warning": "Nothing in this repository mentions trader, trade_won, trade_placed. Without the flag read and the event, no data arrives.",
+        "approve": "81bc221176",
+        "next": "Show this line to the person and ask to start. After a yes: start --approve 81bc221176"
+      }
+    },
+    {
+      "at": "2026-11-28T10:23:54.813Z",
+      "step": "plan",
+      "line": {
+        "ok": true,
+        "flag": "trader",
+        "environment": "Arena",
+        "protected": true,
+        "arms": {
+          "control": 34,
+          "agent_a": 33,
+          "agent_b": 33
+        },
+        "goal": "trade_won",
+        "guardrails": [
+          "trade_placed"
+        ],
+        "watch": [
+          "paper_profit (mean, shown and not judged)"
+        ],
+        "rule": "needs 240 visitors per arm; a version wins above a 95.0% chance to beat control on the goal, unless its chance to beat control on a guardrail is below 5.0%",
+        "will": [
+          "create environment Arena",
+          "create flag trader",
+          "add version agent_a",
+          "add version agent_b",
+          "create metric for trade_won",
+          "create metric for trade_placed",
+          "create metric for paper_profit (mean)",
+          "create experiment",
+          "start it"
+        ],
+        "files_using": {
+          "trader": 2,
+          "trade_won": 2,
+          "trade_placed": 2,
+          "paper_profit": 3
+        },
+        "approve": "81bc221176",
+        "next": "Show this line to the person and ask to start. After a yes: start --approve 81bc221176"
+      }
+    }
+  ]
+}

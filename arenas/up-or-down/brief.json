@@ -1,0 +1,60 @@
+{
+  "name": "Up or down: momentum against reversal",
+  "project": 55894,
+  "flag": "trader",
+  "environment": "Arena",
+  "goal": "A playbook written by an AI agent calls the direction of live five minute crypto markets more often than a coin flip.",
+  "event": {
+    "key": "trade_won",
+    "name": "Trade won"
+  },
+  "guardrails": [
+    {
+      "key": "trade_placed",
+      "name": "Trade placed"
+    }
+  ],
+  "watch": [
+    {
+      "key": "paper_profit",
+      "name": "Paper profit per market (dollars)",
+      "aggregation": "mean"
+    }
+  ],
+  "placed": "trade_placed",
+  "venue": {
+    "assets": [
+      "btc",
+      "eth",
+      "sol",
+      "xrp",
+      "doge",
+      "bnb",
+      "hype",
+      "zec"
+    ],
+    "stake": 10,
+    "max_price": 0.65,
+    "about": "Polymarket's five minute \"Up or Down\" markets on eight crypto assets (btc, eth, sol, xrp, doge, bnb, hype, zec). Every five minutes each asset gets a new market. It resolves Up when the asset's price at the end of the five minutes is at or above its price at the start (a tie is Up), otherwise Down. The trader buys one side just before the market opens, when both sides cost about 50 cents a share. The winning side pays one dollar a share, the losing side nothing. Counting the spread and the fee, a trader breaks even at about 52 to 53 percent right calls."
+  },
+  "coin": {
+    "seed": "oakenshield-arena-2026-11-28"
+  },
+  "past": {
+    "hours": 72,
+    "held_hours": 24
+  },
+  "rule": {
+    "min_per_arm": 240,
+    "win_above": 0.95,
+    "harm_below": 0.05
+  },
+  "split": {
+    "agent_a": 33,
+    "agent_b": 33
+  },
+  "risk": {
+    "max_loss": 600,
+    "over": 100
+  }
+}
